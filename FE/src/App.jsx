@@ -7,17 +7,14 @@ import HomePage from './member/page/HomePage';
 import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
 import UserProfilePage from './member/page/UserProfilePage';
-import AdminLayout from './admin/AdminLayout';
-import AdminProfilePage from './admin/page/AdminProfilePage'; 
-import UserManage from './admin/page/UserManage';
-import CourseManage from './admin/page/CourseManage';
-
+import Servey from './member/page/Servey';
+import CouresListPage from './member/page/CouresListPage';
+import ConsultantList from './member/page/ConsultantList';
+import ForgotPassword from './member/page/ForgotPassword';
+import EnterNewPassword from './member/page/EnterNewPassword';
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  // Kiểm tra cả role là chuỗi "ADMIN" hoặc role_id là 1
-  if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
-    return <LoginPage />;
-  }
+  if (!user || user.role_id !== 1) return <LoginPage />;
   return children;
 }
 
@@ -39,18 +36,27 @@ const router = createBrowserRouter([
     element: <UserProfilePage />,
   },
   {
-    path: "/admin",
-    element: (
-      <RequireAdmin>
-        <AdminLayout />
-      </RequireAdmin>
-    ),
-    children: [
-      { path: "profile", element: <AdminProfilePage /> },
-      { path: "users", element: <UserManage /> },
-      { path: "courses", element: <CourseManage /> },
-    ],
+    path: "/servey",
+    element: <Servey />,
   },
+  {
+    path: "/courseList",
+    element: <CouresListPage />,
+  },
+
+ {
+    path: "/consultantList",
+    element: <ConsultantList />,
+  },
+   {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+     {
+    path: "/reset-password",
+    element: <EnterNewPassword />,
+  },
+
 ]);
 
 function App() {

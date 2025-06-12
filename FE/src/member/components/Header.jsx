@@ -18,7 +18,7 @@ function Header() {
   const currentUser = userSliceState ? userSliceState.user : null;
   
   // Sử dụng fullName từ đối tượng user thực tế để hiển thị tên người dùng
-  const display_name = currentUser ? currentUser.fullName : null; 
+  const display_name = currentUser ? currentUser.userName : null; 
 
   // useEffect để kiểm tra và khôi phục trạng thái người dùng khi component mount hoặc Redux state thay đổi
   useEffect(() => {
@@ -79,7 +79,7 @@ function Header() {
   const menuItems = [
     { label: 'About Us', path: '#' },
     { label: 'Courses', path: '/courseList' },
-    { label: 'Survey', path: '#' },
+    { label: 'Survey', path: '/servey' },
     { label: 'Online Consultant', path: '/consultantList' },
     { label: 'News', path: '#' },
     { label: 'Blogs', path: '#' },
