@@ -8,10 +8,12 @@ function CourseQuiz() {
     useEffect(() => {
         const courseId = localStorage.getItem('course_id');
         if (courseId) {
-            fetch(`http://localhost:5000/Courses/${courseId}`)
+            // Đổi sang API mới
+            fetch(`http://localhost:8080/api/courses/${courseId}`)
                 .then(res => res.json())
                 .then(data => setCourse(data));
 
+            // TODO: Đổi API lấy quiz nếu có endpoint mới, tạm giữ nguyên
             fetch(`http://localhost:5000/CourseQuiz?course_id=${courseId}`)
                 .then(res => res.json())
                 .then(data => {
