@@ -1,5 +1,5 @@
-# Created by https://www.toptal.com/developers/gitignore/api/maven,visualstudiocode,intellij,netbeans
-# Edit at https://www.toptal.com/developers/gitignore?templates=maven,visualstudiocode,intellij,netbeans
+# Created by https://www.toptal.com/developers/gitignore/api/react,intellij,netbeans,visualstudiocode,maven
+# Edit at https://www.toptal.com/developers/gitignore?templates=react,intellij,netbeans,visualstudiocode,maven
 
 ### Intellij ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
@@ -143,6 +143,22 @@ dist/
 nbdist/
 .nb-gradle/
 
+### react ###
+.DS_*
+*.log
+logs
+**/*.backup.*
+**/*.back.*
+
+node_modules
+bower_components
+
+*.sublime*
+
+psd
+thumb
+sketch
+
 ### VisualStudioCode ###
 .vscode/*
 !.vscode/settings.json
@@ -162,4 +178,4 @@ nbdist/
 .history
 .ionide
 
-# End of https://www.toptal.com/developers/gitignore/api/maven,visualstudiocode,intellij,netbeans
+# End of https://www.toptal.com/developers/gitignore/api/react,intellij,netbeans,visualstudiocode,maven

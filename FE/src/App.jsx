@@ -8,6 +8,7 @@ import LoginPage from './pages/login';
 import RegisterPage from './pages/register';
 import UserProfilePage from './member/page/UserProfilePage';
 import AdminLayout from './admin/AdminLayout';
+import Dashboard from './admin/page/Dashboard'; // Import Dashboard
 import AdminProfilePage from './admin/page/AdminProfilePage'; 
 import UserManage from './admin/page/UserManage';
 import CourseManage from './admin/page/CourseManage';
@@ -46,6 +47,8 @@ const router = createBrowserRouter([
       </RequireAdmin>
     ),
     children: [
+      { index: true, element: <Dashboard /> }, // Thêm Dashboard là component mặc định
+      { path: "dashboard", element: <Dashboard /> }, // Thêm route rõ ràng cho Dashboard
       { path: "profile", element: <AdminProfilePage /> },
       { path: "users", element: <UserManage /> },
       { path: "courses", element: <CourseManage /> },
