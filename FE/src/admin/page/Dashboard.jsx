@@ -25,7 +25,7 @@ export default function Dashboard() {
           // Cố gắng lấy thông tin profile để kiểm tra tồn tại profile
           await api.get("profile");
           userCount = 10; // Mock data nếu không có API đếm số người dùng
-        } catch (err) {
+        } catch (error) {
           console.warn("Could not fetch user data, using mock data");
           userCount = 5; // Mặc định
         }
@@ -36,10 +36,10 @@ export default function Dashboard() {
           { label: "Tài khoản", value: userCount, icon: "👤" },
           { label: "Khóa học", value: courseCount, icon: "📚" },
         ]);
-      } catch (err) {
-        console.error("Failed to fetch dashboard data:", err);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
         setError("Không thể tải dữ liệu dashboard");
-        toast.error("Không thể tải dữ liệu: " + (err.response?.data?.message || err.message));
+        toast.error("Không thể tải dữ liệu: " + (error.response?.data?.message || error.message));
       } finally {
         setLoading(false);
       }
