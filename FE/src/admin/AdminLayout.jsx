@@ -1,23 +1,12 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { logout } from "../redux/features/userSlice"; // Điều chỉnh đường dẫn
-import { persistor } from "../redux/store";
+import Footer from "./components/Footer";
 
 export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef();
-
-  // Kiểm tra role admin, nếu không phải thì chuyển về trang login
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "ADMIN") {
-      window.location.href = "/login";
-    }
-  }, []);
 
   const menu = [
     { label: "Dashboard", path: "/admin" },
@@ -25,7 +14,7 @@ export default function AdminLayout() {
     { label: "Course Management", path: "/admin/courses" },
   ];
 
-  useEffect(() => {
+  React.useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenu(false);
@@ -36,17 +25,6 @@ export default function AdminLayout() {
   }, []);
 
   const fullName = localStorage.getItem('full_name') || "User";
-
-  const handleLogout = () => {
-    // Dispatch logout action để xóa user từ Redux store
-    dispatch(logout());
-    // Xóa persisted state để không ghi nhớ user
-    persistor.purge();
-    // Xóa localStorage tokens và các data khác
-    localStorage.clear();
-    // Chuyển hướng về trang login
-    window.location.href = "/login";
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -69,6 +47,7 @@ export default function AdminLayout() {
               </li>
             ))}
           </ul>
+        
         </aside>
 
         {/* Main content */}
@@ -98,7 +77,10 @@ export default function AdminLayout() {
                   </button>
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
-                    onClick={handleLogout}
+                    onClick={() => {
+                      localStorage.removeItem("user");
+                      window.location.href = "/login";
+                    }}
                   >
                     Logout
                   </button>
@@ -111,6 +93,7 @@ export default function AdminLayout() {
           </main>
         </div>
       </div>
+      
     </div>
   );
 }

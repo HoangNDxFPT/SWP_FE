@@ -183,7 +183,7 @@
     {
       "id": "1",
       "name": "The Truth About Drugs",
-      "description": "The Truth About Drugs",
+      "description": "Learn the real facts about drugs, their effects, and how to make informed choices.",
       "start_date": "2024-06-01",
       "end_date": "2024-07-01",
       "target_age_group": "All Ages",
@@ -313,5 +313,40 @@
       "is_available": true,
       "max_appointments": 1
     }
+  ],
+  "Blogs": [
+  {
+    "id": 1,
+    "title": "Tác hại của việc sử dụng chất kích thích ở tuổi vị thành niên",
+    "content": "Việc sử dụng chất kích thích ở tuổi vị thành niên có thể gây ảnh hưởng nghiêm trọng đến sự phát triển thể chất và tinh thần...",
+    "author_id": 1001,
+    "created_at": "2025-06-01T08:30:00",
+    "updated_at": "2025-06-01T08:30:00",
+    "status": "PUBLISHED",
+    "category_id": 1,
+    "thumbnail_url": "https://example.com/images/blog1.jpg"
+  },
+  {
+    "id": 2,
+    "title": "Cách phòng tránh nghiện ma túy cho thanh thiếu niên",
+    "content": "Phòng tránh nghiện ma túy cho thanh thiếu niên là một nhiệm vụ quan trọng...",
+    "author_id": 1002,
+    "created_at": "2025-06-02T09:00:00",
+    "updated_at": "2025-06-02T09:00:00",
+    "status": "PUBLISHED",
+    "category_id": 2,
+    "thumbnail_url": "https://rakkiu.com/wp-content/uploads/2025/06/Rkk4-62600-scaled.webp"
+  },{
+    "id": 3,
+    "title": "Cách phòng tránh nghiện ma túy cho thanh thiếu niên",
+    "content": "Phòng tránh nghiện ma túy cho thanh thiếu niên là một nhiệm vụ quan trọng...",
+    "author_id": 1002,
+    "created_at": "2025-06-02T09:00:00",
+    "updated_at": "2025-06-02T09:00:00",
+    "status": "PUBLISHED",
+    "category_id": 2,
+    "thumbnail_url": "https://example.com/images/blog2.jpg"
+  }
+  
   ]
 }
