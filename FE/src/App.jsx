@@ -12,6 +12,8 @@ import CouresListPage from './member/page/CouresListPage';
 import ConsultantList from './member/page/ConsultantList';
 import ForgotPassword from './member/page/ForgotPassword';
 import EnterNewPassword from './member/page/EnterNewPassword';
+import CourseVideo from './member/page/CourseVideo';
+import BlogFeed from './member/page/Blog';
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (!user || user.role_id !== 1) return <LoginPage />;
@@ -56,7 +58,14 @@ const router = createBrowserRouter([
     path: "/reset-password",
     element: <EnterNewPassword />,
   },
-
+{
+    path: "/course/:id",
+    element: <CourseVideo />,
+},
+{
+    path: "/blogs",
+    element: <BlogFeed />,
+},
 ]);
 
 function App() {

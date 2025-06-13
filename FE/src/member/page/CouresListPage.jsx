@@ -1,22 +1,91 @@
 import React, { useEffect, useState } from 'react'
+import api from '../../config/axios'
 import { Link } from 'react-router-dom'
 import Header from '../components/Header'
 
 function CouresListPage() {
     const [courses, setCourses] = useState([]);
     const [search, setSearch] = useState('');
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
 
+    const COURSES_PER_PAGE = 5;
+
+    // Lấy thông tin user
     useEffect(() => {
-        fetch('http://localhost:5000/Courses')
-            .then(res => res.json())
-            .then(data => setCourses(data))
-            .catch(() => setCourses([]));
+        const fetchUser = async () => {
+            try {
+                const res = await api.get('profile');
+                if (res.status === 200 && res.data) {
+                    setUser(res.data);
+                }
+            } catch (err) {
+                setUser(null);
+                console.error('Failed to fetch user profile:', err);
+            }
+        };
+        fetchUser();
     }, []);
 
-    // Lọc courses theo tên
+    // Tính nhóm tuổi
+    let userAgeGroup = '';
+    if (user && user.dateOfBirth) {
+        const birth = new Date(user.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        userAgeGroup = age < 18 ? 'Teenagers' : 'Adults';
+    }
+
+    // Lấy danh sách khóa học theo search (debounce 400ms)
+    useEffect(() => {
+        const delayDebounce = setTimeout(() => {
+            const fetchCourses = async () => {
+                setLoading(true);
+                try {
+                    let url = 'http://localhost:8080/api/courses/list';
+                    if (search.trim() !== '') {
+                        url = `http://localhost:8080/api/courses/search?name=${encodeURIComponent(search.trim())}`;
+                    }
+                    const res = await api.get(url);
+                    if (res.status === 200 && Array.isArray(res.data)) {
+                        setCourses(res.data);
+                        setCurrentPage(1); // Reset về trang 1 khi search
+                    } else {
+                        setCourses([]);
+                    }
+                } catch {
+                    setCourses([]);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchCourses();
+        }, 400);
+        return () => clearTimeout(delayDebounce);
+    }, [search]);
+
+    // Lọc theo nhóm tuổi
     const filteredCourses = courses.filter(course =>
-        course.name.toLowerCase().includes(search.toLowerCase())
+        userAgeGroup ? course.targetAgeGroup === userAgeGroup : true
     );
+
+    // Phân trang
+    const totalPages = Math.ceil(filteredCourses.length / COURSES_PER_PAGE);
+    const paginatedCourses = filteredCourses.slice(
+        (currentPage - 1) * COURSES_PER_PAGE,
+        currentPage * COURSES_PER_PAGE
+    );
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
 
     return (
         <>
@@ -54,31 +123,62 @@ function CouresListPage() {
                             className="w-full p-3 border border-gray-300 rounded shadow focus:outline-none focus:border-blue-500"
                         />
                     </div>
-                    {filteredCourses.length === 0 && (
+                    {loading ? (
+                        <div className="text-center text-gray-500">Loading...</div>
+                    ) : paginatedCourses.length === 0 ? (
                         <div className="text-gray-500 text-center">No courses found.</div>
-                    )}
-                    {filteredCourses.map(course => (
-                        <div key={course.id} className="bg-white rounded shadow-md flex flex-col md:flex-row">
-                            <div className="flex-1 p-6 flex flex-col">
-                                <h2 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h2>
-                                <p className="text-gray-700 mb-4">{course.description}</p>
-                                <div className="flex flex-wrap gap-4 mb-4 text-gray-500 text-sm">
-                                    <span><b>Type:</b> {course.type}</span>
-                                    <span><b>Target Age:</b> {course.target_age_group}</span>
-                                    <span><b>Start:</b> {course.start_date}</span>
-                                    <span><b>End:</b> {course.end_date}</span>
+                    ) : (
+                        paginatedCourses.map(course => (
+                            <div key={course.id} className="bg-white rounded shadow-md flex flex-col md:flex-row">
+                                <div className="flex-1 p-6 flex flex-col">
+                                    <h2 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h2>
+                                    <p className="text-gray-700 mb-4">{course.description}</p>
+                                    <div className="flex flex-wrap gap-4 mb-4 text-gray-500 text-sm">
+                                        <span><b>Type:</b> {course.type}</span>
+                                        <span><b>Target Age:</b> {course.targetAgeGroup}</span>
+                                        <span><b>Start:</b> {course.startDate}</span>
+                                        <span><b>End:</b> {course.endDate}</span>
+                                    </div>
+                                    <Link
+                                        to={`/course/${course.id}`}
+                                        className="w-fit"
+                                    >
+                                        <button className="border border-blue-700 text-blue-700 px-6 py-2 rounded font-semibold hover:bg-blue-50 transition w-fit">
+                                            Start This Free Course
+                                        </button>
+                                    </Link>
                                 </div>
-                                <Link
-                                    to={`/course/${course.id}`}
-                                    className="w-fit"
-                                >
-                                    <button className="border border-blue-700 text-blue-700 px-6 py-2 rounded font-semibold hover:bg-blue-50 transition w-fit">
-                                        Start This Free Course
-                                    </button>
-                                </Link>
                             </div>
+                        ))
+                    )}
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center mt-4 gap-2">
+                            <button
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1 border rounded disabled:opacity-50"
+                            >
+                                Prev
+                            </button>
+                            {[...Array(totalPages)].map((_, idx) => (
+                                <button
+                                    key={idx + 1}
+                                    onClick={() => handlePageChange(idx + 1)}
+                                    className={`px-3 py-1 border rounded ${currentPage === idx + 1 ? 'bg-blue-700 text-white' : ''}`}
+                                >
+                                    {idx + 1}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1 border rounded disabled:opacity-50"
+                            >
+                                Next
+                            </button>
                         </div>
-                    ))}
+                    )}
                 </div>
                 {/* Sidebar */}
                 <div className="md:w-1/3 flex flex-col gap-6">

@@ -82,7 +82,7 @@ function Header() {
     { label: 'Survey', path: '/servey' },
     { label: 'Online Consultant', path: '/consultantList' },
     { label: 'News', path: '#' },
-    { label: 'Blogs', path: '#' },
+    { label: 'Blogs', path: '/blogs' },
     { label: 'Contact', path: '#' },
   ];
 

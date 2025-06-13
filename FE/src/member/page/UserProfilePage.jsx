@@ -64,6 +64,7 @@ function UserProfilePage() {
         } catch (err) {
 
             setProfileMsg('Cập nhật hồ sơ thất bại!');
+            console.error('Error updating profile:', err);
         }
     };
 
