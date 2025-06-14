@@ -1,5 +1,6 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import Footer from "./components/Footer";
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -7,21 +8,13 @@ export default function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef();
 
-  // Kiểm tra role admin, nếu không phải thì chuyển về trang login
-  useEffect(() => {
-    const role = localStorage.getItem("role");
-    if (role !== "ADMIN") {
-      window.location.href = "/login";
-    }
-  }, []);
-
   const menu = [
     { label: "Dashboard", path: "/admin" },
     { label: "Account Management", path: "/admin/users" },
     { label: "Course Management", path: "/admin/courses" },
   ];
 
-  useEffect(() => {
+  React.useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setOpenMenu(false);
@@ -54,6 +47,7 @@ export default function AdminLayout() {
               </li>
             ))}
           </ul>
+        
         </aside>
 
         {/* Main content */}
@@ -84,7 +78,7 @@ export default function AdminLayout() {
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600"
                     onClick={() => {
-                      localStorage.clear();
+                      localStorage.removeItem("user");
                       window.location.href = "/login";
                     }}
                   >
@@ -99,6 +93,7 @@ export default function AdminLayout() {
           </main>
         </div>
       </div>
+      
     </div>
   );
 }

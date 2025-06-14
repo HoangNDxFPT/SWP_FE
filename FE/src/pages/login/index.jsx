@@ -82,7 +82,7 @@ function LoginPage() {
           className="space-y-4"
         >
           <Form.Item
-            label={
+label={
               <span className="font-semibold text-gray-700">Tên đăng nhập</span>
             }
             name="userName"

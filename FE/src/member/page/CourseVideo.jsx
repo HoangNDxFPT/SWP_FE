@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import api from '../../config/axios'
 
 function CourseVideo() {
     const [course, setCourse] = useState(null);
@@ -12,21 +13,14 @@ function CourseVideo() {
         // Ưu tiên lấy id từ URL, fallback sang localStorage
         const courseId = id || localStorage.getItem('course_id');
         if (courseId) {
-            fetch(`http://localhost:5000/Courses/${courseId}`)
-                .then(res => res.json())
-                .then(data => setCourse(data));
-            // Lưu lại id vào localStorage để các trang sau dùng
-            localStorage.setItem('course_id', courseId);
-        } else {
-            // Nếu không có course_id thì lấy khóa học đầu tiên
-            fetch('http://localhost:5000/Courses')
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.length > 0) {
-                        setCourse(data[0]);
-                        localStorage.setItem('course_id', data[0].id);
+            api.get(`courses/${courseId}`)
+                .then(res => {
+                    if (res.status === 200 && res.data) {
+                        setCourse(res.data);
                     }
                 });
+            // Lưu lại id vào localStorage để các trang sau dùng
+            localStorage.setItem('course_id', courseId);
         }
     }, [id]);
 
@@ -52,9 +46,7 @@ function CourseVideo() {
                     </div>
                     {/* Step Title */}
                     <div className="text-center mt-6 mb-2">
-                        <div className="text-2xl text-gray-700 font-normal mb-2">
-                            1. Watch the documentary chapter
-                        </div>
+                        
                         <div className="text-cyan-700 italic text-3xl font-semibold mb-4">
                             {course ? course.name : ''}
                         </div>
@@ -63,11 +55,11 @@ function CourseVideo() {
                     {/* Video */}
                     <div className="flex justify-center mb-8">
                         <div className="w-full max-w-2xl aspect-video bg-gray-200 flex items-center justify-center relative">
-                            {course && course.video_link && course.video_link.includes('youtube.com') ? (
+                            {course && course.url && course.url.includes('youtube.com') ? (
                                 <iframe
                                     width="100%"
                                     height="100%"
-                                    src={course.video_link.replace('watch?v=', 'embed/')}
+                                    src={course.url.replace('watch?v=', 'embed/')}
                                     title={course.name}
                                     frameBorder="0"
                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -80,7 +72,7 @@ function CourseVideo() {
                                     poster="https://www.drugfreeworld.org/dfw_assets/images/dfw/2019-redesign/courses/drugs-course.jpg"
                                     className="w-full h-full object-cover"
                                 >
-                                    <source src={course ? course.video_link : ''} type="video/mp4" />
+                                    <source src={course ? course.url : ''} type="video/mp4" />
                                     Your browser does not support the video tag.
                                 </video>
                             )}
