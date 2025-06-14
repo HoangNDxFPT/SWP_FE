@@ -1,23 +1,24 @@
-import React from 'react';
-import { Provider } from 'react-redux';
-import { PersistGate } from 'redux-persist/integration/react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { store, persistor } from './redux/store';
-import HomePage from './member/page/HomePage';
-import LoginPage from './pages/login';
-import RegisterPage from './pages/register';
-import UserProfilePage from './member/page/UserProfilePage';
-import AdminLayout from './admin/AdminLayout';
-import AdminProfilePage from './admin/page/AdminProfilePage'; 
-import UserManage from './admin/page/UserManage';
-import CourseManage from './admin/page/CourseManage';
+import React from "react";
+import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { store, persistor } from "./redux/store";
+import HomePage from "./member/page/HomePage";
+import LoginPage from "./pages/login";
+import RegisterPage from "./pages/register";
+import UserProfilePage from "./member/page/UserProfilePage";
+import AdminLayout from "./admin/AdminLayout";
+import AdminProfilePage from "./admin/page/AdminProfilePage";
+import UserManage from "./admin/page/UserManage";
+import CourseManage from "./admin/page/CourseManage";
 
-import ConsultantLayout from './consultant/ConsultantLayout';
-import ConsultantDashboard from './consultant/page/Dashboard';
-import AppointmentList from './consultant/page/AppointmentList';
-import AppointmentDetail from './consultant/page/AppointmentDetail';
-import UserCaseList from './consultant/page/UserCaseList';
-import UserCaseDetail from './consultant/page/UserCaseDetail';
+import ConsultantLayout from "./consultant/ConsultantLayout";
+import ConsultantDashboard from "./consultant/page/Dashboard";
+import AppointmentList from "./consultant/page/AppointmentList";
+import AppointmentDetail from "./consultant/page/AppointmentDetail";
+import UserCaseList from "./consultant/page/UserCaseList";
+import UserCaseDetail from "./consultant/page/UserCaseDetail";
+import ConsultantProfilePage from "./consultant/page/ConsultantProfilePage";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -34,7 +35,6 @@ function RequireConsultant({ children }) {
   }
   return children;
 }
-
 
 const router = createBrowserRouter([
   {
@@ -70,7 +70,7 @@ const router = createBrowserRouter([
     path: "/consultant",
     element: (
       <RequireConsultant>
-      <ConsultantLayout />
+        <ConsultantLayout />
       </RequireConsultant>
     ),
     children: [
@@ -79,6 +79,10 @@ const router = createBrowserRouter([
       { path: "appointments/:id", element: <AppointmentDetail /> },
       { path: "cases", element: <UserCaseList /> },
       { path: "cases/:id", element: <UserCaseDetail /> },
+      {
+        path: "profile",
+        element: <ConsultantProfilePage />,
+      },
     ],
   },
 ]);

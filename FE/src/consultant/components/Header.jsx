@@ -44,10 +44,11 @@ function ConsultantHeader() {
 
   // MENU CHUYÊN VIÊN TƯ VẤN
   const menuItems = [
-    { label: 'Dashboard', path: '/consultant/dashboard' },
+    { label: 'Home', path: '/consultant/dashboard' },
     { label: 'Lịch hẹn', path: '/consultant/appointments' },
     { label: 'Hồ sơ tư vấn', path: '/consultant/cases' },
     { label: 'Ghi chú', path: '/consultant/notes' },
+    { label: 'Profile', path: '/consultant/profile' },
     // Thêm các mục khác nếu cần
   ];
 
