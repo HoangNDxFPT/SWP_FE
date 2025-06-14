@@ -13,22 +13,22 @@ function EnterNewPassword() {
   const token = searchParams.get('token');
 
   const onFinish = async (values) => {
-    if (values.password !== values.confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp!");
-      return;
-    }
-    try {
-      await api.post('http://localhost:8080/api/reset-password', {
-        token,
-        newPassword: values.password,
-      });
-      toast.success("Đặt lại mật khẩu thành công!");
-      navigate("/login");
-    } catch (e) {
-      const errorMessage = e.response?.data?.message || e.message || "Đặt lại mật khẩu thất bại!";
-      toast.error(errorMessage);
-    }
-  };
+  if (values.password !== values.confirmPassword) {
+    toast.error("Mật khẩu xác nhận không khớp!");
+    return;
+  }
+  try {
+    await api.post('reset-password', {
+      token,
+      newPassword: values.password,
+    });
+    toast.success("Đặt lại mật khẩu thành công!");
+    navigate("/login");
+  } catch (e) {
+    const errorMessage = e.response?.data?.message || e.message || "Đặt lại mật khẩu thất bại!";
+    toast.error(errorMessage);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">

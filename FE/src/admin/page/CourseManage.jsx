@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
+import api from "../../config/axios";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function CourseManage() {
@@ -9,23 +10,19 @@ export default function CourseManage() {
   const [newCourse, setNewCourse] = useState({
     name: "",
     description: "",
-    start_date: "",
-    end_date: "",
+    startDate: "",
+    endDate: "",
     type: "",
-    target_age_group: "",
-    video_link: "",
-    status: "pending"
+    targetAgeGroup: "",
+    url: ""
   });
-
-  // Giả lập role hiện tại
-  const currentRole = "admin"; // hoặc "manager", "teacher"
 
   // Các lựa chọn cố định
   const typeOptions = ["Online", "Workshop", "Seminar", "Community"];
   const ageGroupOptions = [
-    "Teenagers",      // Thiếu niên
-    "Adults",         // Người lớn
-    "All Ages"        // Mọi lứa tuổi
+    { value: "Teenagers", label: "Teenagers" },
+    { value: "Adults", label: "Adults" },
+    { value: "AllAges", label: "All Ages" }
   ];
 
   // Filter states
@@ -33,110 +30,68 @@ export default function CourseManage() {
   const [filterAge, setFilterAge] = useState("");
   const [filterDate, setFilterDate] = useState("");
 
-  useEffect(() => {
-    fetch("/src/data/data.json")
-      .then((res) => res.json())
-      .then((data) => {
-        setCourses(data.Courses || []);
-      });
-  }, []);
-
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this course?")) {
-      setCourses(courses.filter((course) => course.id !== id));
-      toast.success("Delete course successfully!");
+  // Lấy danh sách khóa học từ API
+  const fetchCourses = async () => {
+    try {
+      const res = await api.get("/courses");
+      setCourses(res.data || []);
+    } catch {
+      toast.error("Không thể tải danh sách khóa học!");
     }
   };
 
-  const handleSave = () => {
-    fetch(`http://localhost:5000/Courses/${selectedCourse.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(selectedCourse)
-    })
-      .then(res => {
-        if (res.ok) {
-          setCourses(courses.map(c => c.id === selectedCourse.id ? selectedCourse : c));
-          setSelectedCourse(null);
-          toast.success("Edit course successfully!");
-        } else {
-          toast.error("Edit failed!");
-        }
-      });
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // Xóa khóa học
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this course?")) {
+      try {
+        await api.delete(`/courses/${id}`);
+        toast.success("Delete course successfully!");
+        fetchCourses();
+      } catch {
+        toast.error("Delete failed!");
+      }
+    }
+  };
+
+  // Lưu chỉnh sửa khóa học
+  const handleSave = async () => {
+    try {
+      await api.put(`/courses/${selectedCourse.id}`, selectedCourse);
+      toast.success("Edit course successfully!");
+      setSelectedCourse(null);
+      fetchCourses();
+    } catch {
+      toast.error("Edit failed!");
+    }
   };
 
   // Tạo mới khóa học
-  const handleCreate = () => {
-    if (!newCourse.name || !newCourse.type || !newCourse.target_age_group) {
+  const handleCreate = async () => {
+    if (!newCourse.name || !newCourse.type || !newCourse.targetAgeGroup) {
       toast.error("Course name, type and target age group are required!");
       return;
     }
-    const newCourseData = {
-      ...newCourse,
-      id: (Math.max(0, ...courses.map(c => +c.id || 0)) + 1).toString(),
-      status: "pending"
-    };
-    fetch("http://localhost:5000/Courses", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newCourseData)
-    })
-      .then(res => res.json())
-      .then(data => {
-        setCourses([...courses, data]);
-        setShowCreate(false);
-        setNewCourse({
-          name: "",
-          description: "",
-          start_date: "",
-          end_date: "",
-          type: "",
-          target_age_group: "",
-          video_link: "",
-          status: "pending"
-        });
-        toast.success("Course created and waiting for approval!");
+    try {
+      await api.post("/courses", newCourse);
+      toast.success("Course created!");
+      setShowCreate(false);
+      setNewCourse({
+        name: "",
+        description: "",
+        startDate: "",
+        endDate: "",
+        type: "",
+        targetAgeGroup: "",
+        url: ""
       });
-  };
-
-  // Duyệt hoặc từ chối khóa học
-  const handleApproveCourse = (id) => {
-    const course = courses.find(c => c.id === id);
-    if (!course) return;
-    const updated = { ...course, status: "approved" };
-    fetch(`http://localhost:5000/Courses/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated)
-    })
-      .then(res => {
-        if (res.ok) {
-          setCourses(courses.map(c => c.id === id ? updated : c));
-          toast.success("Course approved!");
-        } else {
-          toast.error("Approve failed!");
-        }
-      });
-  };
-
-  // TỪ CHỐI KHÓA HỌC
-  const handleRejectCourse = (id) => {
-    const course = courses.find(c => c.id === id);
-    if (!course) return;
-    const updated = { ...course, status: "rejected" };
-    fetch(`http://localhost:5000/Courses/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updated)
-    })
-      .then(res => {
-        if (res.ok) {
-          setCourses(courses.map(c => c.id === id ? updated : c));
-          toast.success("Course rejected!");
-        } else {
-          toast.error("Reject failed!");
-        }
-      });
+      fetchCourses();
+    } catch {
+      toast.error("Create failed!");
+    }
   };
 
   // Reset filter function
@@ -149,8 +104,8 @@ export default function CourseManage() {
   // Filtered courses
   const filteredCourses = courses.filter(course =>
     course.name.toLowerCase().includes(filterName.toLowerCase()) &&
-    (filterAge ? course.target_age_group === filterAge : true) &&
-    (filterDate ? course.start_date === filterDate : true)
+    (filterAge ? course.targetAgeGroup === filterAge : true) &&
+    (filterDate ? course.startDate === filterDate : true)
   );
 
   return (
@@ -178,7 +133,7 @@ export default function CourseManage() {
         >
           <option value="">All age groups</option>
           {ageGroupOptions.map(age => (
-            <option key={age} value={age}>{age}</option>
+            <option key={age.value} value={age.value}>{age.label}</option>
           ))}
         </select>
         <input
@@ -202,14 +157,15 @@ export default function CourseManage() {
               <th className="px-4 py-2 text-left text-xs font-semibold text-white">Course Name</th>
               <th className="px-4 py-2 text-left text-xs font-semibold text-white">Type</th>
               <th className="px-4 py-2 text-left text-xs font-semibold text-white">Target Age Group</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Status</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Start Date</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">End Date</th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-white">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filteredCourses.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center py-4 text-gray-500">
+                <td colSpan={7} className="text-center py-4 text-gray-500">
                   No courses available
                 </td>
               </tr>
@@ -219,8 +175,9 @@ export default function CourseManage() {
                   <td className="px-4 py-2">{index + 1}</td>
                   <td className="px-4 py-2">{course.name}</td>
                   <td className="px-4 py-2">{course.type}</td>
-                  <td className="px-4 py-2">{course.target_age_group}</td>
-                  <td className="px-4 py-2 capitalize">{course.status || "approved"}</td>
+                  <td className="px-4 py-2">{course.targetAgeGroup}</td>
+                  <td className="px-4 py-2">{course.startDate}</td>
+                  <td className="px-4 py-2">{course.endDate}</td>
                   <td className="px-4 py-2 flex gap-2 justify-center">
                     <button
                       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
@@ -234,22 +191,6 @@ export default function CourseManage() {
                     >
                       Delete
                     </button>
-                    {(currentRole === "admin" || currentRole === "manager") && course.status === "pending" && (
-                      <>
-                        <button
-                          className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
-                          onClick={() => handleApproveCourse(course.id)}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
-                          onClick={() => handleRejectCourse(course.id)}
-                        >
-                          Reject
-                        </button>
-                      </>
-                    )}
                   </td>
                 </tr>
               ))
@@ -289,9 +230,9 @@ export default function CourseManage() {
                 <input
                   type="date"
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.start_date}
+                  value={selectedCourse.startDate || ""}
                   onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, start_date: e.target.value })
+                    setSelectedCourse({ ...selectedCourse, startDate: e.target.value })
                   }
                 />
               </div>
@@ -300,9 +241,9 @@ export default function CourseManage() {
                 <input
                   type="date"
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.end_date}
+                  value={selectedCourse.endDate || ""}
                   onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, end_date: e.target.value })
+                    setSelectedCourse({ ...selectedCourse, endDate: e.target.value })
                   }
                 />
               </div>
@@ -325,14 +266,14 @@ export default function CourseManage() {
                 <b>Target Age Group:</b>
                 <select
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.target_age_group}
+                  value={selectedCourse?.targetAgeGroup || ""}
                   onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, target_age_group: e.target.value })
+                    setSelectedCourse({ ...selectedCourse, targetAgeGroup: e.target.value })
                   }
                 >
                   <option value="">Select age group</option>
-                  {ageGroupOptions.map(age => (
-                    <option key={age} value={age}>{age}</option>
+                  {ageGroupOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </div>
@@ -340,20 +281,20 @@ export default function CourseManage() {
                 <b>URL:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.video_link || ""}
+                  value={selectedCourse.url || ""}
                   onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, video_link: e.target.value })
+                    setSelectedCourse({ ...selectedCourse, url: e.target.value })
                   }
                   placeholder="Enter video link"
                 />
-                {selectedCourse.video_link && (
+                {selectedCourse.url && (
                   <a
-                    href={selectedCourse.video_link}
+                    href={selectedCourse.url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-600 underline break-all block mt-1"
                   >
-
+                    
                   </a>
                 )}
               </div>
@@ -407,9 +348,9 @@ export default function CourseManage() {
                 <input
                   type="date"
                   className="border rounded px-2 py-1 w-full"
-                  value={newCourse.start_date}
+                  value={newCourse.startDate}
                   onChange={e =>
-                    setNewCourse({ ...newCourse, start_date: e.target.value })
+                    setNewCourse({ ...newCourse, startDate: e.target.value })
                   }
                 />
               </div>
@@ -418,9 +359,9 @@ export default function CourseManage() {
                 <input
                   type="date"
                   className="border rounded px-2 py-1 w-full"
-                  value={newCourse.end_date}
+                  value={newCourse.endDate}
                   onChange={e =>
-                    setNewCourse({ ...newCourse, end_date: e.target.value })
+                    setNewCourse({ ...newCourse, endDate: e.target.value })
                   }
                 />
               </div>
@@ -443,14 +384,14 @@ export default function CourseManage() {
                 <b>Target Age Group:</b>
                 <select
                   className="border rounded px-2 py-1 w-full"
-                  value={newCourse.target_age_group}
+                  value={newCourse.targetAgeGroup}
                   onChange={e =>
-                    setNewCourse({ ...newCourse, target_age_group: e.target.value })
+                    setNewCourse({ ...newCourse, targetAgeGroup: e.target.value })
                   }
                 >
                   <option value="">Select age group</option>
-                  {ageGroupOptions.map(age => (
-                    <option key={age} value={age}>{age}</option>
+                  {ageGroupOptions.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
               </div>
@@ -458,9 +399,9 @@ export default function CourseManage() {
                 <b>URL:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={newCourse.video_link}
+                  value={newCourse.url}
                   onChange={e =>
-                    setNewCourse({ ...newCourse, video_link: e.target.value })
+                    setNewCourse({ ...newCourse, url: e.target.value })
                   }
                   placeholder="Enter video link"
                 />
