@@ -13,16 +13,24 @@ function LoginPage() {
   const onFinish = async (values) => {
     try {
       const response = await api.post("login", values);
-      dispatch(login(response.data));
+      const userData = response.data;
+      dispatch(login(userData));
 
-      if (response.data?.token) {
-        const newToken = response.data.token;
+      if (userData?.token) {
+        const newToken = userData.token;
         localStorage.setItem("token", newToken);
+        localStorage.setItem("user", JSON.stringify(userData));
         api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
       }
 
       toast.success("Đăng nhập thành công!", { autoClose: 2000 });
-      navigate("/");
+      
+      // Điều hướng dựa vào role
+      if (userData.role === "ADMIN" || userData.role_id === 1) {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (e) {
       const errorMessage = e.response?.data?.message || e.message || "Đăng nhập thất bại!";
       const statusCode = e.response?.status;

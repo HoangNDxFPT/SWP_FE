@@ -13,6 +13,16 @@ function AdminProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [originalAdmin, setOriginalAdmin] = useState(null);
 
+  // State cho modal đổi mật khẩu
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
   useEffect(() => {
     const fetchAdminProfile = async () => {
       setLoading(true);
@@ -36,18 +46,18 @@ function AdminProfilePage() {
             gender: response.data.gender || ""
           };
           setAdmin(profileData);
-          setOriginalAdmin(profileData); // Lưu trạng thái ban đầu
+          setOriginalAdmin(profileData);
         }
       } catch (err) {
         console.error("API Error:", err);
-        
+
         if (err.response && err.response.status === 401) {
           toast.error("Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại.");
           localStorage.removeItem("token");
           navigate("/login");
           return;
         }
-        
+
         setError(err);
         if (err.response) {
           toast.error(`Lỗi tải hồ sơ: ${err.response.data?.message || err.response.statusText}`);
@@ -58,7 +68,7 @@ function AdminProfilePage() {
         setLoading(false);
       }
     };
-    
+
     fetchAdminProfile();
   }, [navigate]);
 
@@ -69,12 +79,11 @@ function AdminProfilePage() {
     } else if (admin.fullName.length < 2) {
       errors.fullName = "Họ tên phải có ít nhất 2 ký tự";
     }
-    
+
     if (admin.address && admin.address.length > 200) {
       errors.address = "Địa chỉ không được quá 200 ký tự";
     }
-    
-    // Thêm validation cho ngày sinh (không được là ngày trong tương lai)
+
     if (admin.dateOfBirth) {
       const selectedDate = new Date(admin.dateOfBirth);
       const today = new Date();
@@ -82,44 +91,41 @@ function AdminProfilePage() {
         errors.dateOfBirth = "Ngày sinh không thể là ngày trong tương lai";
       }
     }
-    
+
     return errors;
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setAdmin({ ...admin, [name]: value });
-    // Xóa lỗi của trường đang nhập khi người dùng sửa
     if (formErrors[name]) {
       setFormErrors({ ...formErrors, [name]: null });
     }
   };
 
   const handleSave = async () => {
-    // Validate form trước khi gửi
     const errors = validateForm();
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       toast.error("Vui lòng sửa các lỗi trong biểu mẫu");
       return;
     }
-    
+
     setIsSaving(true);
     try {
       const response = await api.put("profile", admin);
-      
+
       if (response.status === 200) {
         toast.success("Cập nhật thông tin thành công!");
         setEditMode(false);
-        // Cập nhật lại thông tin ở localStorage nếu cần
         if (admin.fullName) {
           localStorage.setItem("full_name", admin.fullName);
         }
-        setOriginalAdmin({...admin}); // Cập nhật dữ liệu gốc
+        setOriginalAdmin({ ...admin });
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      toast.error("Cập nhật thông tin thất bại: " + 
+      toast.error("Cập nhật thông tin thất bại: " +
         (error.response?.data?.message || error.message));
     } finally {
       setIsSaving(false);
@@ -127,12 +133,11 @@ function AdminProfilePage() {
   };
 
   const handleCancelEdit = () => {
-    // Kiểm tra xem có thay đổi không
     const hasChanges = JSON.stringify(admin) !== JSON.stringify(originalAdmin);
-    
+
     if (hasChanges) {
       if (window.confirm("Bạn có chắc muốn hủy các thay đổi?")) {
-        setAdmin({...originalAdmin}); // Khôi phục dữ liệu gốc
+        setAdmin({ ...originalAdmin });
         setEditMode(false);
         setFormErrors({});
       }
@@ -140,6 +145,77 @@ function AdminProfilePage() {
       setEditMode(false);
     }
   };
+
+  // Xử lý đổi mật khẩu
+ const handlePasswordChange = async () => {
+  const errors = {};
+
+  // 1. Không để trống
+  if (!passwordForm.oldPassword) {
+    errors.oldPassword = "Vui lòng nhập mật khẩu hiện tại";
+  }
+  if (!passwordForm.newPassword) {
+    errors.newPassword = "Vui lòng nhập mật khẩu mới";
+  }
+  if (!passwordForm.confirmPassword) {
+    errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
+  }
+
+  // 2. Mật khẩu mới tối thiểu 6 ký tự
+  if (passwordForm.newPassword && passwordForm.newPassword.length < 6) {
+    errors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
+  }
+
+  // 3. Mật khẩu mới không được trùng mật khẩu cũ
+  if (
+    passwordForm.oldPassword &&
+    passwordForm.newPassword &&
+    passwordForm.oldPassword === passwordForm.newPassword
+  ) {
+    errors.newPassword = "Mật khẩu mới không được trùng với mật khẩu hiện tại";
+  }
+
+  // 4. Xác nhận mật khẩu phải trùng mật khẩu mới
+  if (
+    passwordForm.newPassword &&
+    passwordForm.confirmPassword &&
+    passwordForm.newPassword !== passwordForm.confirmPassword
+  ) {
+    errors.confirmPassword = "Mật khẩu xác nhận không khớp";
+  }
+
+  setPasswordErrors(errors);
+  if (Object.keys(errors).length > 0) return;
+
+  setIsChangingPassword(true);
+  try {
+    await api.post("change-password", {
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword,
+    });
+    toast.success("Đổi mật khẩu thành công!");
+    setShowPasswordModal(false);
+    setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    setPasswordErrors({});
+  } catch (error) {
+    const msg = error.response?.data?.message || "";
+    // Nếu backend trả về lỗi mật khẩu cũ sai
+    if (
+      msg.toLowerCase().includes("mật khẩu") ||
+      msg.toLowerCase().includes("old password") ||
+      msg.toLowerCase().includes("current password")
+    ) {
+      setPasswordErrors({
+        ...passwordErrors,
+        oldPassword: msg || "Mật khẩu hiện tại không đúng",
+      });
+    } else {
+      toast.error(msg || "Đổi mật khẩu thất bại. Vui lòng thử lại.");
+    }
+  } finally {
+    setIsChangingPassword(false);
+  }
+};
 
   if (loading) {
     return (
@@ -265,6 +341,13 @@ function AdminProfilePage() {
               >
                 Cancel
               </button>
+              <button
+                onClick={() => setShowPasswordModal(true)}
+                disabled={isSaving}
+                className="bg-green-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-green-700 transition-colors duration-200"
+              >
+                Change Password
+              </button>
             </>
           ) : (
             <button
@@ -276,6 +359,92 @@ function AdminProfilePage() {
           )}
         </div>
       </div>
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Change Password</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block font-semibold mb-1">Current Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.oldPassword}
+                  onChange={(e) => setPasswordForm({
+                    ...passwordForm,
+                    oldPassword: e.target.value
+                  })}
+                  className={`p-2 border rounded w-full ${
+                    passwordErrors.oldPassword ? 'border-red-500' : ''
+                  }`}
+                />
+                {passwordErrors.oldPassword && (
+                  <p className="text-red-500 text-sm mt-1">{passwordErrors.oldPassword}</p>
+                )}
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({
+                    ...passwordForm,
+                    newPassword: e.target.value
+                  })}
+                  className={`p-2 border rounded w-full ${
+                    passwordErrors.newPassword ? 'border-red-500' : ''
+                  }`}
+                />
+                {passwordErrors.newPassword && (
+                  <p className="text-red-500 text-sm mt-1">{passwordErrors.newPassword}</p>
+                )}
+              </div>
+              <div>
+                <label className="block font-semibold mb-1">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({
+                    ...passwordForm,
+                    confirmPassword: e.target.value
+                  })}
+                  className={`p-2 border rounded w-full ${
+                    passwordErrors.confirmPassword ? 'border-red-500' : ''
+                  }`}
+                />
+                {passwordErrors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-1">{passwordErrors.confirmPassword}</p>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                  setPasswordErrors({});
+                }}
+                className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
+                disabled={isChangingPassword}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordChange}
+                disabled={isChangingPassword}
+                className={`px-4 py-2 text-white rounded ${
+                  isChangingPassword
+                    ? 'bg-blue-400 cursor-not-allowed'
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isChangingPassword ? "Changing..." : "Change Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
