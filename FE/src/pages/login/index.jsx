@@ -1,11 +1,14 @@
-import React from 'react';
-import { Button, Checkbox, Form, Input } from 'antd';
-import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { login } from '../../redux/features/userSlice';
-import api from '../../config/axios';
+import React from "react";
+import { Button, Checkbox, Form, Input } from "antd";
+import { toast } from "react-toastify";
+import api from "../../config/axios";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../../redux/features/userSlice";
 
+/**
+ * Component LoginPage hoàn chỉnh, xử lý logic và giao diện người dùng cho trang đăng nhập.
+ */
 function LoginPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -13,48 +16,65 @@ function LoginPage() {
   const onFinish = async (values) => {
     try {
       const response = await api.post("login", values);
-      const userData = response.data;
-      dispatch(login(userData));
 
-      if (userData?.token) {
-        const newToken = userData.token;
+      dispatch(login(response.data));
+
+      // Lưu thông tin user vào localStorage với key "user"
+      if (response.data) {
+        if (response.data.user) {
+          localStorage.setItem("user", JSON.stringify(response.data.user));
+        } else {
+          localStorage.setItem("user", JSON.stringify(response.data));
+        }
+      }
+
+      // Lưu token và các thông tin khác
+      if (response.data && response.data.token) {
+        const newToken = response.data.token;
         localStorage.setItem("token", newToken);
-        localStorage.setItem("user", JSON.stringify(userData));
-        api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+      }
+      if (response.data.role) {
+        localStorage.setItem("role", response.data.role);
+      }
+      if (response.data.fullName) {
+        localStorage.setItem("full_name", response.data.fullName);
       }
 
       toast.success("Đăng nhập thành công!", { autoClose: 2000 });
-      
-      // Điều hướng dựa vào role
-      if (userData.role === "ADMIN" || userData.role_id === 1) {
+
+      // Điều hướng theo role (ưu tiên role là chuỗi "ADMIN", fallback role_id === 1)
+      const user = response.data.user || response.data;
+      if (user.role === "ADMIN" || user.role_id === 1) {
         navigate("/admin");
+      } else if (user.role === "CONSULTANT") {
+        navigate("/consultant/dashboard");
       } else {
         navigate("/");
       }
     } catch (e) {
-      const errorMessage = e.response?.data?.message || e.message || "Đăng nhập thất bại!";
+      console.error("Lỗi đăng nhập:", e.response ? e.response.data : e.message);
+      const errorMessage =
+        e.response?.data?.message || e.message || "Đăng nhập thất bại!";
       const statusCode = e.response?.status;
-      toast.error(`Lỗi ${statusCode ? statusCode + ': ' : ''}${errorMessage}`);
+      toast.error(`Lỗi ${statusCode ? statusCode + ": " : ""}${errorMessage}`);
     }
   };
 
-  const onFinishFailed = () => {
+  const onFinishFailed = (errorInfo) => {
     toast.error("Vui lòng kiểm tra lại thông tin nhập liệu!");
-  };
-
-  const handleGoogleRegister = () => {
-    // URL backend xử lý OAuth Google, chỉnh theo backend của bạn
-    const googleRegisterURL = `${api.defaults.baseURL}register/google`;
-    window.location.href = googleRegisterURL;
+    console.log(errorInfo);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">Đăng nhập</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
+          Đăng nhập
+        </h1>
         <Form
           name="loginForm"
-          layout='vertical'
+          layout="vertical"
           initialValues={{ remember: true }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
@@ -62,30 +82,35 @@ function LoginPage() {
           className="space-y-4"
         >
           <Form.Item
-            label={<span className="font-semibold text-gray-700">Tên đăng nhập</span>}
+            label={
+              <span className="font-semibold text-gray-700">Tên đăng nhập</span>
+            }
             name="userName"
-            rules={[{ required: true, message: 'Vui lòng nhập tên người dùng!' }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập tên người dùng!" },
+            ]}
           >
-            <Input className="py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Nhập tên người dùng của bạn" />
+            <Input
+              className="py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Nhập tên người dùng của bạn"
+            />
           </Form.Item>
 
           <Form.Item
-            label={<span className="font-semibold text-gray-700">Mật khẩu</span>}
+            label={
+              <span className="font-semibold text-gray-700">Mật khẩu</span>
+            }
             name="password"
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+            rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
           >
-            <Input.Password className="py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Nhập mật khẩu của bạn" />
+            <Input.Password
+              className="py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Nhập mật khẩu của bạn"
+            />
           </Form.Item>
 
           <Form.Item name="remember" valuePropName="checked" className="mb-4">
             <Checkbox className="text-gray-700">Ghi nhớ tôi</Checkbox>
-            <a
-              href="/forgot-password"
-              className="float-right text-blue-500 hover:underline text-sm"
-              style={{ lineHeight: "32px" }}
-            >
-              Quên mật khẩu?
-            </a>
           </Form.Item>
 
           <Form.Item>
@@ -93,38 +118,27 @@ function LoginPage() {
               type="primary"
               htmlType="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg h-10 transition duration-200 ease-in-out"
-              style={{ boxShadow: 'none', border: 'none' }}
+              style={{ boxShadow: "none", border: "none" }}
             >
               Đăng nhập
-            </Button>
-          </Form.Item>
-
-          <Form.Item className="text-center">
-            <p className="text-sm text-gray-600">
-              Bạn chưa có tài khoản?{' '}
-              <a href="/register" className="text-blue-500 hover:underline">
-                Đăng ký
-              </a>
-            </p>
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 hover:bg-gray-100"
-              onClick={handleGoogleRegister}
-            >
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png"
-                alt="Google"
-                className="w-5 h-5"
-              />
-              <span>Đăng ký nhanh với Google</span>
             </Button>
           </Form.Item>
         </Form>
       </div>
     </div>
   );
+}
+
+/**
+ * Component RequireAdmin để bảo vệ các route chỉ cho phép admin truy cập.
+ * Nếu người dùng không phải là admin, họ sẽ bị chuyển hướng đến trang đăng nhập.
+ */
+export function RequireAdmin({ children }) {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
+    return <LoginPage />;
+  }
+  return children;
 }
 
 export default LoginPage;
