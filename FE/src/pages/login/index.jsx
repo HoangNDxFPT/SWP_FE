@@ -1,10 +1,10 @@
-import React from 'react';
-import { Button, Checkbox, Form, Input } from 'antd';
-import { toast } from 'react-toastify';
-import api from '../../config/axios';
-import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
-import { login } from '../../redux/features/userSlice';
+import React from "react";
+import { Button, Checkbox, Form, Input } from "antd";
+import { toast } from "react-toastify";
+import api from "../../config/axios";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../../redux/features/userSlice";
 
 /**
  * Component LoginPage hoàn chỉnh, xử lý logic và giao diện người dùng cho trang đăng nhập.
@@ -32,7 +32,7 @@ function LoginPage() {
       if (response.data && response.data.token) {
         const newToken = response.data.token;
         localStorage.setItem("token", newToken);
-        api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
       }
       if (response.data.role) {
         localStorage.setItem("role", response.data.role);
@@ -47,15 +47,17 @@ function LoginPage() {
       const user = response.data.user || response.data;
       if (user.role === "ADMIN" || user.role_id === 1) {
         navigate("/admin");
+      } else if (user.role === "CONSULTANT") {
+        navigate("/consultant/dashboard");
       } else {
         navigate("/");
       }
-
     } catch (e) {
       console.error("Lỗi đăng nhập:", e.response ? e.response.data : e.message);
-      const errorMessage = e.response?.data?.message || e.message || "Đăng nhập thất bại!";
+      const errorMessage =
+        e.response?.data?.message || e.message || "Đăng nhập thất bại!";
       const statusCode = e.response?.status;
-      toast.error(`Lỗi ${statusCode ? statusCode + ': ' : ''}${errorMessage}`);
+      toast.error(`Lỗi ${statusCode ? statusCode + ": " : ""}${errorMessage}`);
     }
   };
 
@@ -67,10 +69,12 @@ function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">Đăng nhập</h1>
+        <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">
+          Đăng nhập
+        </h1>
         <Form
           name="loginForm"
-          layout='vertical'
+          layout="vertical"
           initialValues={{ remember: true }}
           onFinish={onFinish}
           onFinishFailed={onFinishFailed}
@@ -78,9 +82,13 @@ function LoginPage() {
           className="space-y-4"
         >
           <Form.Item
-            label={<span className="font-semibold text-gray-700">Tên đăng nhập</span>}
+            label={
+              <span className="font-semibold text-gray-700">Tên đăng nhập</span>
+            }
             name="userName"
-            rules={[{ required: true, message: 'Vui lòng nhập tên người dùng!' }]}
+            rules={[
+              { required: true, message: "Vui lòng nhập tên người dùng!" },
+            ]}
           >
             <Input
               className="py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -89,9 +97,11 @@ function LoginPage() {
           </Form.Item>
 
           <Form.Item
-            label={<span className="font-semibold text-gray-700">Mật khẩu</span>}
+            label={
+              <span className="font-semibold text-gray-700">Mật khẩu</span>
+            }
             name="password"
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+            rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}
           >
             <Input.Password
               className="py-2 px-4 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -108,7 +118,7 @@ function LoginPage() {
               type="primary"
               htmlType="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg h-10 transition duration-200 ease-in-out"
-              style={{ boxShadow: 'none', border: 'none' }}
+              style={{ boxShadow: "none", border: "none" }}
             >
               Đăng nhập
             </Button>
