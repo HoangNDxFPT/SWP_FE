@@ -1,46 +1,59 @@
 import React from "react";
-import { Form, Input, Button, Checkbox } from "antd";
+import { Button, Checkbox, Form, Input } from "antd";
 import { toast } from "react-toastify";
 import api from "../../config/axios";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { login } from "../../redux/features/userSlice";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
 
 function LoginPage() {
   const navigate = useNavigate();
-  const clientId = "YOUR_GOOGLE_CLIENT_ID"; // Replace with your actual Client ID
+  const dispatch = useDispatch();
+  const clientId = "YOUR_GOOGLE_CLIENT_ID"; // Replace with actual Client ID
 
   const onFinish = async (values) => {
     try {
-      const response = await api.post("/api/login", values);
-      const user = response.data;
-      localStorage.setItem("user", JSON.stringify(user));
-      toast.success("Đăng nhập thành công!");
-      navigate("/");
-    } catch (error) {
-      toast.error("Đăng nhập thất bại!", error);
+      const response = await api.post("login", values);
+      dispatch(login(response.data));
+
+      localStorage.setItem("user", JSON.stringify(response.data.user || response.data));
+      localStorage.setItem("token", response.data.token);
+      api.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
+
+      toast.success("Đăng nhập thành công!", { autoClose: 2000 });
+
+      navigate(response.data.role === "ADMIN" ? "/admin" : "/");
+    } catch (e) {
+      toast.error(`Lỗi đăng nhập: ${e.response?.data?.message || e.message}`);
     }
   };
 
   const onGoogleLoginSuccess = async (response) => {
     try {
       const res = await api.post("/api/google-login", { token: response.credential });
+
+      dispatch(login(res.data));
       localStorage.setItem("user", JSON.stringify(res.data.user));
       localStorage.setItem("token", res.data.token);
-      toast.success("Đăng nhập bằng Google thành công!");
-      navigate("/");
-    } catch (error) {
-      toast.error("Đăng nhập bằng Google thất bại!", error);
+      api.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+
+      toast.success("Đăng nhập bằng Google thành công!", { autoClose: 2000 });
+
+      navigate("/dashboard");
+    } catch (e) {
+      toast.error("Đăng nhập bằng Google thất bại!", e);
     }
   };
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <div className="flex justify-center items-center h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md w-96">
-          <h2 className="text-2xl font-bold mb-6 text-center">Đăng nhập</h2>
-          <Form name="login" initialValues={{ remember: true }} onFinish={onFinish}>
-            <Form.Item name="email" rules={[{ required: true, message: "Vui lòng nhập email!" }]}>
-              <Input placeholder="Email" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+          <h1 className="text-3xl font-bold mb-8 text-gray-800 text-center">Đăng nhập</h1>
+          <Form name="loginForm" layout="vertical" onFinish={onFinish} autoComplete="off">
+            <Form.Item name="userName" rules={[{ required: true, message: "Vui lòng nhập tên!" }]}>
+              <Input placeholder="Tên đăng nhập" />
             </Form.Item>
             <Form.Item name="password" rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}>
               <Input.Password placeholder="Mật khẩu" />
@@ -53,12 +66,7 @@ function LoginPage() {
             </Form.Item>
           </Form>
           <div className="text-center my-4 text-gray-500">Hoặc</div>
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={onGoogleLoginSuccess}
-              onError={() => toast.error("Lỗi đăng nhập Google!")}
-            />
-          </div>
+          <GoogleLogin onSuccess={onGoogleLoginSuccess} onError={() => toast.error("Lỗi đăng nhập Google!")} />
         </div>
       </div>
     </GoogleOAuthProvider>
@@ -66,4 +74,3 @@ function LoginPage() {
 }
 
 export default LoginPage;
-
