@@ -1,100 +1,110 @@
 import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
-import api from "../../config/axios";
 
 export default function UserManage() {
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState({});
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedRole, setSelectedRole] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [newUser, setNewUser] = useState({
-    userName: "",
-    password: "",
+    full_name: "",
+    username: "",
     email: "",
-    fullName: "",
-    phoneNumber: "",
+    phonenumber: "",
     address: "",
-    dateOfBirth: "",
-    gender: "MALE",
-    role: ""
+    date_of_birth: "",
+    gender: "M",
+    role_id: "",
+    password: ""
   });
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Helper để lấy id đúng trường
-  const getUserId = (user) => user.id || user.userId || user._id;
-
-  // Fetch users from API
-  const fetchUsers = async () => {
-    try {
-      const res = await api.get("profile/all");
-      setUsers(res.data || []);
-    } catch {
-      toast.error("Không thể tải danh sách user!");
-    }
-  };
-
   useEffect(() => {
-    fetchUsers();
+    fetch("/src/data/data.json")
+      .then(res => res.json())
+      .then(data => {
+        setUsers(data.Users || []);
+        const roleMap = {};
+        (data.Roles || []).forEach(r => {
+          roleMap[r.id] = r.name;
+        });
+        setRoles(roleMap);
+      });
   }, []);
 
   // Filter users by role và search term
   const filteredUsers = users
-    .filter(u => !selectedRole || String(u.role) === selectedRole)
+    .filter(u => !selectedRole || String(u.role_id) === selectedRole)
     .filter(u =>
-      (u.fullName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (u.userName || "").toLowerCase().includes(searchTerm.toLowerCase())
+      u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-  // Save edited user
-  const handleSave = async () => {
-    try {
-      await api.put("profile", selectedUser);
-      toast.success("Edit user successfully!");
-      setSelectedUser(null);
-      fetchUsers();
-    } catch {
-      toast.error("Edit failed!");
-    }
+  const handleSave = () => {
+    fetch(`http://localhost:5000/Users/${selectedUser.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(selectedUser)
+    })
+      .then(res => {
+        if (res.ok) {
+          setUsers(users.map(u => u.id === selectedUser.id ? selectedUser : u));
+          setSelectedUser(null);
+          toast.success("Edit user successfully!");
+        } else {
+          toast.error("Edit failed!");
+        }
+      });
   };
 
-  // Delete user
-  const handleDelete = async (id) => {
+  const handleDelete = (id) => {
     if (window.confirm("Are you sure you want to delete this account?")) {
-      try {
-        await api.delete(`profile/${id}`);
-        toast.success("Delete user successfully!");
-        fetchUsers();
-      } catch {
-        toast.error("Delete failed!");
-      }
+      fetch(`http://localhost:5000/Users/${id}`, {
+        method: "DELETE"
+      })
+        .then(res => {
+          if (res.ok) {
+            setUsers(users.filter(u => u.id !== id));
+            toast.success("Delete user successfully!");
+          } else {
+            toast.error("Delete failed!");
+          }
+        });
     }
   };
 
-  // Create user
-  const handleCreate = async () => {
-    if (!newUser.fullName || !newUser.userName || !newUser.role || !newUser.password) {
+  // Tạo user mới
+  const handleCreate = () => {
+    if (!newUser.full_name || !newUser.username || !newUser.role_id || !newUser.password) {
       toast.error("Full name, username, password and role are required!");
       return;
     }
-    try {
-      await api.post("profile/create-user", newUser);
-      toast.success("User created successfully!");
-      setShowCreate(false);
-      setNewUser({
-        userName: "",
-        password: "",
-        email: "",
-        fullName: "",
-        phoneNumber: "",
-        address: "",
-        dateOfBirth: "",
-        gender: "MALE",
-        role: ""
+    fetch("http://localhost:5000/Users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...newUser,
+        id: (Math.max(0, ...users.map(u => +u.id || 0)) + 1).toString(),
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        setUsers([...users, data]);
+        setShowCreate(false);
+        setNewUser({
+          full_name: "",
+          username: "",
+          email: "",
+          phonenumber: "",
+          address: "",
+          date_of_birth: "",
+          gender: "M",
+          role_id: "",
+          password: ""
+        });
+        toast.success("User created successfully!");
       });
-      fetchUsers();
-    } catch (e) {
-      toast.error(e.response?.data?.message || "Create failed!");
-    }
   };
 
   return (
@@ -116,10 +126,9 @@ export default function UserManage() {
             onChange={e => setSelectedRole(e.target.value)}
           >
             <option value="">All</option>
-            <option value="ADMIN">Admin</option>
-            <option value="CONSULTANT">Consultant</option>
-            <option value="MEMBER">Member</option>
-            <option value="OTHER">Other</option>
+            {Object.entries(roles).map(([id, name]) => (
+              <option key={id} value={id}>{name}</option>
+            ))}
           </select>
         </div>
         <div className="flex items-center gap-2">
@@ -161,11 +170,11 @@ export default function UserManage() {
               </tr>
             ) : (
               filteredUsers.map((user, index) => (
-                <tr key={getUserId(user)} className="hover:bg-blue-50">
+                <tr key={user.id} className="hover:bg-blue-50">
                   <td className="px-4 py-2">{index + 1}</td>
-                  <td className="px-4 py-2">{user.fullName}</td>
-                  <td className="px-4 py-2">{user.userName}</td>
-                  <td className="px-4 py-2">{user.role}</td>
+                  <td className="px-4 py-2">{user.full_name}</td>
+                  <td className="px-4 py-2">{user.username}</td>
+                  <td className="px-4 py-2">{roles[user.role_id] || "No role assigned"}</td>
                   <td className="px-4 py-2 flex gap-2 justify-center">
                     <button
                       className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
@@ -175,7 +184,7 @@ export default function UserManage() {
                     </button>
                     <button
                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
-                      onClick={() => handleDelete(getUserId(user))}
+                      onClick={() => handleDelete(user.id)}
                     >
                       Delete
                     </button>
@@ -197,9 +206,9 @@ export default function UserManage() {
                 <b>Full Name:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedUser.fullName}
+                  value={selectedUser.full_name}
                   onChange={e =>
-                    setSelectedUser({ ...selectedUser, fullName: e.target.value })
+                    setSelectedUser({ ...selectedUser, full_name: e.target.value })
                   }
                 />
               </div>
@@ -207,9 +216,9 @@ export default function UserManage() {
                 <b>Username:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedUser.userName}
+                  value={selectedUser.username}
                   onChange={e =>
-                    setSelectedUser({ ...selectedUser, userName: e.target.value })
+                    setSelectedUser({ ...selectedUser, username: e.target.value })
                   }
                 />
               </div>
@@ -227,9 +236,9 @@ export default function UserManage() {
                 <b>Phone:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedUser.phoneNumber}
+                  value={selectedUser.phonenumber}
                   onChange={e =>
-                    setSelectedUser({ ...selectedUser, phoneNumber: e.target.value })
+                    setSelectedUser({ ...selectedUser, phonenumber: e.target.value })
                   }
                 />
               </div>
@@ -248,9 +257,9 @@ export default function UserManage() {
                 <input
                   type="date"
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedUser.dateOfBirth || ""}
+                  value={selectedUser.date_of_birth}
                   onChange={e =>
-                    setSelectedUser({ ...selectedUser, dateOfBirth: e.target.value })
+                    setSelectedUser({ ...selectedUser, date_of_birth: e.target.value })
                   }
                 />
               </div>
@@ -263,24 +272,23 @@ export default function UserManage() {
                     setSelectedUser({ ...selectedUser, gender: e.target.value })
                   }
                 >
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="O">Other</option>
                 </select>
               </div>
               <div>
                 <b>Role:</b>
                 <select
                   className="border rounded px-2 py-1 w-full"
-                  value={selectedUser.role}
+                  value={selectedUser.role_id}
                   onChange={e =>
-                    setSelectedUser({ ...selectedUser, role: e.target.value })
+                    setSelectedUser({ ...selectedUser, role_id: e.target.value })
                   }
                 >
-                  <option value="ADMIN">Admin</option>
-                  <option value="CONSULTANT">Consultant</option>
-                  <option value="MEMBER">Member</option>
-                  <option value="OTHER">Other</option>
+                  {Object.entries(roles).map(([id, name]) => (
+                    <option key={id} value={id}>{name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -312,9 +320,9 @@ export default function UserManage() {
                 <b>Full Name:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={newUser.fullName}
+                  value={newUser.full_name}
                   onChange={e =>
-                    setNewUser({ ...newUser, fullName: e.target.value })
+                    setNewUser({ ...newUser, full_name: e.target.value })
                   }
                 />
               </div>
@@ -322,20 +330,9 @@ export default function UserManage() {
                 <b>Username:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={newUser.userName}
+                  value={newUser.username}
                   onChange={e =>
-                    setNewUser({ ...newUser, userName: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Password:</b>
-                <input
-                  type="password"
-                  className="border rounded px-2 py-1 w-full"
-                  value={newUser.password}
-                  onChange={e =>
-                    setNewUser({ ...newUser, password: e.target.value })
+                    setNewUser({ ...newUser, username: e.target.value })
                   }
                 />
               </div>
@@ -353,9 +350,9 @@ export default function UserManage() {
                 <b>Phone:</b>
                 <input
                   className="border rounded px-2 py-1 w-full"
-                  value={newUser.phoneNumber}
+                  value={newUser.phonenumber}
                   onChange={e =>
-                    setNewUser({ ...newUser, phoneNumber: e.target.value })
+                    setNewUser({ ...newUser, phonenumber: e.target.value })
                   }
                 />
               </div>
@@ -374,9 +371,9 @@ export default function UserManage() {
                 <input
                   type="date"
                   className="border rounded px-2 py-1 w-full"
-                  value={newUser.dateOfBirth}
+                  value={newUser.date_of_birth}
                   onChange={e =>
-                    setNewUser({ ...newUser, dateOfBirth: e.target.value })
+                    setNewUser({ ...newUser, date_of_birth: e.target.value })
                   }
                 />
               </div>
@@ -386,27 +383,39 @@ export default function UserManage() {
                   className="border rounded px-2 py-1 w-full"
                   value={newUser.gender}
                   onChange={e =>
-                    setNewUser({ ...newUser, gender: e.target.value })}
+                    setNewUser({ ...newUser, gender: e.target.value })
+                  }
                 >
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
+                  <option value="M">Male</option>
+                  <option value="F">Female</option>
+                  <option value="O">Other</option>
                 </select>
               </div>
               <div>
                 <b>Role:</b>
                 <select
                   className="border rounded px-2 py-1 w-full"
-                  value={newUser.role}
+                  value={newUser.role_id}
                   onChange={e =>
-                    setNewUser({ ...newUser, role: e.target.value })}
+                    setNewUser({ ...newUser, role_id: e.target.value })
+                  }
                 >
                   <option value="">Select role</option>
-                  <option value="ADMIN">Admin</option>
-                  <option value="CONSULTANT">Consultant</option>
-                  <option value="MEMBER">Member</option>
-                  <option value="OTHER">Other</option>
+                  {Object.entries(roles).map(([id, name]) => (
+                    <option key={id} value={id}>{name}</option>
+                  ))}
                 </select>
+              </div>
+              <div>
+                <b>Password:</b>
+                <input
+                  type="password"
+                  className="border rounded px-2 py-1 w-full"
+                  value={newUser.password}
+                  onChange={e =>
+                    setNewUser({ ...newUser, password: e.target.value })
+                  }
+                />
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-6">
