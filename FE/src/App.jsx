@@ -15,7 +15,8 @@ import AdminLayout from "./admin/AdminLayout";
 import AdminProfilePage from "./admin/page/AdminProfilePage";
 import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
-
+import SurveyResult from "./admin/page/SurveyResult";
+import Dashboard from "./admin/page/Dashboard";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
@@ -66,9 +67,11 @@ const router = createBrowserRouter([
       </RequireAdmin>
     ),
     children: [
+      { path: "dashboard", element: <Dashboard /> },
       { path: "profile", element: <AdminProfilePage /> },
       { path: "users", element: <UserManage /> },
       { path: "courses", element: <CourseManage /> },
+      { path: "survey-results", element: <SurveyResult /> },
     ],
   },
   {

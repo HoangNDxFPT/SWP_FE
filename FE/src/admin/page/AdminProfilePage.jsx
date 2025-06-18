@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../../config/axios";
 import { toast } from "react-toastify";
@@ -7,6 +7,7 @@ function AdminProfilePage() {
   const navigate = useNavigate();
   const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("info");
   const [error, setError] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [formErrors, setFormErrors] = useState({});
@@ -146,76 +147,60 @@ function AdminProfilePage() {
     }
   };
 
-  // Xử lý đổi mật khẩu
- const handlePasswordChange = async () => {
-  const errors = {};
-
-  // 1. Không để trống
-  if (!passwordForm.oldPassword) {
-    errors.oldPassword = "Vui lòng nhập mật khẩu hiện tại";
-  }
-  if (!passwordForm.newPassword) {
-    errors.newPassword = "Vui lòng nhập mật khẩu mới";
-  }
-  if (!passwordForm.confirmPassword) {
-    errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
-  }
-
-  // 2. Mật khẩu mới tối thiểu 6 ký tự
-  if (passwordForm.newPassword && passwordForm.newPassword.length < 6) {
-    errors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
-  }
-
-  // 3. Mật khẩu mới không được trùng mật khẩu cũ
-  if (
-    passwordForm.oldPassword &&
-    passwordForm.newPassword &&
-    passwordForm.oldPassword === passwordForm.newPassword
-  ) {
-    errors.newPassword = "Mật khẩu mới không được trùng với mật khẩu hiện tại";
-  }
-
-  // 4. Xác nhận mật khẩu phải trùng mật khẩu mới
-  if (
-    passwordForm.newPassword &&
-    passwordForm.confirmPassword &&
-    passwordForm.newPassword !== passwordForm.confirmPassword
-  ) {
-    errors.confirmPassword = "Mật khẩu xác nhận không khớp";
-  }
-
-  setPasswordErrors(errors);
-  if (Object.keys(errors).length > 0) return;
-
-  setIsChangingPassword(true);
-  try {
-    await api.post("change-password", {
-      oldPassword: passwordForm.oldPassword,
-      newPassword: passwordForm.newPassword,
-    });
-    toast.success("Đổi mật khẩu thành công!");
-    setShowPasswordModal(false);
-    setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
-    setPasswordErrors({});
-  } catch (error) {
-    const msg = error.response?.data?.message || "";
-    // Nếu backend trả về lỗi mật khẩu cũ sai
-    if (
-      msg.toLowerCase().includes("mật khẩu") ||
-      msg.toLowerCase().includes("old password") ||
-      msg.toLowerCase().includes("current password")
-    ) {
-      setPasswordErrors({
-        ...passwordErrors,
-        oldPassword: msg || "Mật khẩu hiện tại không đúng",
-      });
-    } else {
-      toast.error(msg || "Đổi mật khẩu thất bại. Vui lòng thử lại.");
+  const validatePasswordForm = () => {
+    const errors = {};
+    if (!passwordForm.oldPassword) {
+      errors.oldPassword = "Vui lòng nhập mật khẩu hiện tại";
     }
-  } finally {
-    setIsChangingPassword(false);
-  }
-};
+    if (!passwordForm.newPassword) {
+      errors.newPassword = "Vui lòng nhập mật khẩu mới";
+    } else if (passwordForm.newPassword.length < 6) {
+      errors.newPassword = "Mật khẩu mới phải có ít nhất 6 ký tự";
+    } else if (passwordForm.oldPassword && passwordForm.oldPassword === passwordForm.newPassword) {
+      errors.newPassword = "Mật khẩu mới không được trùng với mật khẩu hiện tại";
+    }
+    if (!passwordForm.confirmPassword) {
+      errors.confirmPassword = "Vui lòng xác nhận mật khẩu mới";
+    } else if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      errors.confirmPassword = "Mật khẩu xác nhận không khớp";
+    }
+    return errors;
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault(); // Ngăn submit reload trang
+    const errors = validatePasswordForm();
+    setPasswordErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setIsChangingPassword(true);
+    try {
+      await api.post("change-password", {
+        oldPassword: passwordForm.oldPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      toast.success("Đổi mật khẩu thành công!");
+      setShowPasswordModal(false);
+      setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordErrors({});
+    } catch (error) {
+      const msg = error.response?.data?.message || "";
+      if (
+        msg.toLowerCase().includes("mật khẩu") ||
+        msg.toLowerCase().includes("old password") ||
+        msg.toLowerCase().includes("current password")
+      ) {
+        setPasswordErrors({
+          ...passwordErrors,
+          oldPassword: msg || "Mật khẩu hiện tại không đúng",
+        });
+      } else {
+        toast.error(msg || "Đổi mật khẩu thất bại. Vui lòng thử lại.");
+      }
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -234,140 +219,246 @@ function AdminProfilePage() {
   }
 
   return (
-    <div className="max-w-xl mx-auto bg-white rounded shadow p-8 mt-10 mb-10">
-      <button
-        onClick={() => navigate(-1)}
-        className="mb-6 text-blue-600 font-semibold hover:underline"
-      >
-        &lt; Back
-      </button>
-      <h2 className="text-2xl font-bold mb-6 text-blue-700 text-center">Admin Profile</h2>
-      <div className="flex flex-col gap-4">
-        <div>
-          <label className="font-semibold">Full Name <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="fullName"
-            value={admin.fullName}
-            onChange={handleChange}
-            disabled={!editMode}
-            className={`p-2 border rounded w-full ${
-              formErrors.fullName ? 'border-red-500' : 'bg-gray-100'
-            } focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-          />
-          {formErrors.fullName && (
-            <p className="text-red-500 text-sm mt-1">{formErrors.fullName}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="font-semibold">Phone Number</label>
-          <input
-            type="text"
-            name="phoneNumber"
-            value={admin.phoneNumber}
-            onChange={handleChange}
-            disabled
-            className="p-2 border rounded w-full bg-gray-200 cursor-not-allowed"
-          />
-        </div>
-
-        <div>
-          <label className="font-semibold">Address</label>
-          <input
-            type="text"
-            name="address"
-            value={admin.address}
-            onChange={handleChange}
-            disabled={!editMode}
-            className={`p-2 border rounded w-full ${
-              formErrors.address ? 'border-red-500' : 'bg-gray-100'
-            } focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-          />
-          {formErrors.address && (
-            <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="font-semibold">Date of Birth</label>
-          <input
-            type="date"
-            name="dateOfBirth"
-            value={admin.dateOfBirth}
-            onChange={handleChange}
-            disabled={!editMode}
-            className={`p-2 border rounded w-full ${
-              formErrors.dateOfBirth ? 'border-red-500' : 'bg-gray-100'
-            } focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-          />
-          {formErrors.dateOfBirth && (
-            <p className="text-red-500 text-sm mt-1">{formErrors.dateOfBirth}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="font-semibold">Gender</label>
-          <select
-            name="gender"
-            value={admin.gender}
-            onChange={handleChange}
-            disabled={!editMode}
-            className="p-2 border rounded w-full bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-          >
-            <option value="">Select</option>
-            <option value="MALE">Male</option>
-            <option value="FEMALE">Female</option>
-            <option value="OTHER">Other</option>
-          </select>
-        </div>
-
-        <div className="flex gap-4 mt-6 justify-center">
-          {editMode ? (
-            <>
-              <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className={`${
-                  isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-                } text-white px-6 py-2 rounded-md font-semibold transition-colors duration-200`}
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                disabled={isSaving}
-                className="border border-gray-400 text-gray-700 px-6 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowPasswordModal(true)}
-                disabled={isSaving}
-                className="bg-green-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-green-700 transition-colors duration-200"
-              >
-                Change Password
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditMode(true)}
-              className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
-            >
-              Edit Profile
-            </button>
-          )}
-        </div>
+    <div className="max-w-xl mx-auto mt-8 border border-dotted border-blue-300 p-6 rounded-lg bg-white">
+      {/* Tab chọn */}
+      <div className="flex items-center gap-2 mb-4">
+        <button
+          className={`font-semibold border-none bg-transparent px-1 ${
+            activeTab === "info"
+              ? "text-blue-700 underline cursor-default"
+              : "text-gray-500 hover:text-blue-700 cursor-pointer"
+          }`}
+          disabled={activeTab === "info"}
+          onClick={() => setActiveTab("info")}
+          style={{ outline: "none" }}
+        >
+          Thông tin cá nhân
+        </button>
+        <span className="text-gray-400">-</span>
+        <button
+          className={`font-semibold border-none bg-transparent px-1 ${
+            activeTab === "password"
+              ? "text-blue-700 underline cursor-default"
+              : "text-gray-500 hover:text-blue-700 cursor-pointer"
+          }`}
+          disabled={activeTab === "password"}
+          onClick={() => setActiveTab("password")}
+          style={{ outline: "none" }}
+        >
+          Đổi mật khẩu
+        </button>
       </div>
+
+      {/* Nội dung từng tab */}
+      {activeTab === "info" && (
+        <form>
+          {/* Thông tin cá nhân */}
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="font-semibold">Họ và tên <span className="text-red-500">*</span></label>
+              <input
+                type="text"
+                name="fullName"
+                value={admin.fullName}
+                onChange={handleChange}
+                disabled={!editMode}
+                className={`p-2 border rounded w-full ${
+                  formErrors.fullName ? 'border-red-500' : 'bg-gray-100'
+                } focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+              />
+              {formErrors.fullName && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.fullName}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="font-semibold">Số điện thoại</label>
+              <input
+                type="text"
+                name="phoneNumber"
+                value={admin.phoneNumber}
+                onChange={handleChange}
+                disabled
+                className="p-2 border rounded w-full bg-gray-200 cursor-not-allowed"
+              />
+            </div>
+
+            <div>
+              <label className="font-semibold">Địa chỉ</label>
+              <input
+                type="text"
+                name="address"
+                value={admin.address}
+                onChange={handleChange}
+                disabled={!editMode}
+                className={`p-2 border rounded w-full ${
+                  formErrors.address ? 'border-red-500' : 'bg-gray-100'
+                } focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+              />
+              {formErrors.address && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="font-semibold">Ngày sinh</label>
+              <input
+                type="date"
+                name="dateOfBirth"
+                value={admin.dateOfBirth}
+                onChange={handleChange}
+                disabled={!editMode}
+                className={`p-2 border rounded w-full ${
+                  formErrors.dateOfBirth ? 'border-red-500' : 'bg-gray-100'
+                } focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
+              />
+              {formErrors.dateOfBirth && (
+                <p className="text-red-500 text-sm mt-1">{formErrors.dateOfBirth}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="font-semibold">Giới tính</label>
+              <select
+                name="gender"
+                value={admin.gender}
+                onChange={handleChange}
+                disabled={!editMode}
+                className="p-2 border rounded w-full bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="MALE">Nam</option>
+                <option value="FEMALE">Nữ</option>
+                <option value="OTHER">Khác</option>
+              </select>
+            </div>
+
+            <div className="flex gap-4 mt-6 justify-center">
+              {editMode ? (
+                <>
+                  <button
+                    type="button" // Thêm dòng này
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className={`${
+                      isSaving ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white px-6 py-2 rounded-md font-semibold transition-colors duration-200`}
+                  >
+                    {isSaving ? "Đang lưu..." : "Lưu lại"}
+                  </button>
+                  <button
+                    type="button" // Thêm dòng này
+                    onClick={handleCancelEdit}
+                    disabled={isSaving}
+                    className="border border-gray-400 text-gray-700 px-6 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors duration-200"
+                  >
+                    Hủy bỏ
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button" // Thêm dòng này
+                  onClick={() => setEditMode(true)}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
+                >
+                  Chỉnh sửa thông tin
+                </button>
+              )}
+            </div>
+          </div>
+        </form>
+      )}
+      {activeTab === "password" && (
+        <form>
+          {/* Đổi mật khẩu */}
+          <div className="space-y-4">
+            <div>
+              <label className="block font-semibold mb-1">Mật khẩu hiện tại</label>
+              <input
+                type="password"
+                value={passwordForm.oldPassword}
+                onChange={(e) => setPasswordForm({
+                  ...passwordForm,
+                  oldPassword: e.target.value
+                })}
+                className={`p-2 border rounded w-full ${
+                  passwordErrors.oldPassword ? 'border-red-500' : ''
+                }`}
+              />
+              {passwordErrors.oldPassword && (
+                <p className="text-red-500 text-sm mt-1">{passwordErrors.oldPassword}</p>
+              )}
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Mật khẩu mới</label>
+              <input
+                type="password"
+                value={passwordForm.newPassword}
+                onChange={(e) => setPasswordForm({
+                  ...passwordForm,
+                  newPassword: e.target.value
+                })}
+                className={`p-2 border rounded w-full ${
+                  passwordErrors.newPassword ? 'border-red-500' : ''
+                }`}
+              />
+              {passwordErrors.newPassword && (
+                <p className="text-red-500 text-sm mt-1">{passwordErrors.newPassword}</p>
+              )}
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Xác nhận mật khẩu mới</label>
+              <input
+                type="password"
+                value={passwordForm.confirmPassword}
+                onChange={(e) => setPasswordForm({
+                  ...passwordForm,
+                  confirmPassword: e.target.value
+                })}
+                className={`p-2 border rounded w-full ${
+                  passwordErrors.confirmPassword ? 'border-red-500' : ''
+                }`}
+              />
+              {passwordErrors.confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">{passwordErrors.confirmPassword}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              onClick={() => {
+                setShowPasswordModal(false);
+                setPasswordForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+                setPasswordErrors({});
+              }}
+              className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
+              disabled={isChangingPassword}
+            >
+              Hủy bỏ
+            </button>
+            <button
+              onClick={handlePasswordChange}
+              disabled={isChangingPassword}
+              className={`px-4 py-2 text-white rounded ${
+                isChangingPassword
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              }`}
+            >
+              {isChangingPassword ? "Đang đổi..." : "Đổi mật khẩu"}
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Password Change Modal */}
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold mb-4">Change Password</h3>
+            <h3 className="text-xl font-bold mb-4">Đổi mật khẩu</h3>
             <div className="space-y-4">
               <div>
-                <label className="block font-semibold mb-1">Current Password</label>
+                <label className="block font-semibold mb-1">Mật khẩu hiện tại</label>
                 <input
                   type="password"
                   value={passwordForm.oldPassword}
@@ -384,7 +475,7 @@ function AdminProfilePage() {
                 )}
               </div>
               <div>
-                <label className="block font-semibold mb-1">New Password</label>
+                <label className="block font-semibold mb-1">Mật khẩu mới</label>
                 <input
                   type="password"
                   value={passwordForm.newPassword}
@@ -401,7 +492,7 @@ function AdminProfilePage() {
                 )}
               </div>
               <div>
-                <label className="block font-semibold mb-1">Confirm New Password</label>
+                <label className="block font-semibold mb-1">Xác nhận mật khẩu mới</label>
                 <input
                   type="password"
                   value={passwordForm.confirmPassword}
@@ -428,7 +519,7 @@ function AdminProfilePage() {
                 className="px-4 py-2 text-gray-600 border rounded hover:bg-gray-100"
                 disabled={isChangingPassword}
               >
-                Cancel
+                Hủy bỏ
               </button>
               <button
                 onClick={handlePasswordChange}
@@ -439,7 +530,7 @@ function AdminProfilePage() {
                     : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                {isChangingPassword ? "Changing..." : "Change Password"}
+                {isChangingPassword ? "Đang đổi..." : "Đổi mật khẩu"}
               </button>
             </div>
           </div>
