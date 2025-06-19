@@ -58,8 +58,21 @@ function LoginPage() {
             <Form.Item name="password" rules={[{ required: true, message: "Vui lòng nhập mật khẩu!" }]}>
               <Input.Password placeholder="Mật khẩu" />
             </Form.Item>
-            <Form.Item name="remember" valuePropName="checked">
-              <Checkbox>Ghi nhớ tôi</Checkbox>
+            <Form.Item>
+              <div className="flex items-center justify-between">
+                <Form.Item name="remember" valuePropName="checked" noStyle>
+                  <Checkbox>Ghi nhớ tôi</Checkbox>
+                </Form.Item>
+                <Button type="link" onClick={() => navigate("/forgot-password")}>
+                  Quên mật khẩu?
+                </Button>
+              </div>
+              <div className="mt-2 text-sm">
+                Bạn chưa có tài khoản?{" "}
+                <Button type="link" onClick={() => navigate("/register")} className="p-0 h-auto align-baseline">
+                  Đăng ký
+                </Button>
+              </div>
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" block>Đăng nhập</Button>
