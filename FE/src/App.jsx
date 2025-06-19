@@ -24,7 +24,11 @@ import AppointmentDetail from "./consultant/page/AppointmentDetail";
 import UserCaseList from "./consultant/page/UserCaseList";
 import UserCaseDetail from "./consultant/page/UserCaseDetail";
 import ConsultantProfilePage from "./consultant/page/ConsultantProfilePage";
-
+import ForgotPassword from "./member/page/ForgotPassword";
+import EnterNewPassword from "./member/page/EnterNewPassword";
+import CouresListPage from "./member/page/CouresListPage";
+import CourseVideo from "./member/page/CourseVideo";
+import ConsultantList from "./member/page/ConsultantList";
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
@@ -57,6 +61,26 @@ const router = createBrowserRouter([
   {
     path: "/profile",
     element: <UserProfilePage />,
+  },
+    {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
+  },
+      {
+    path: "/reset-password",
+    element: <EnterNewPassword/>,
+  },
+       {
+    path: "/courseList",
+    element: <CouresListPage/>,
+  },
+         {
+    path: "/course/:id",
+    element: <CourseVideo/>,
+  },
+           {
+    path: "/consultantList",
+    element: <ConsultantList/>,
   },
   {
     path: "/admin",

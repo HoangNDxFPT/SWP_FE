@@ -1,7 +1,7 @@
-// src/pages/UserProfilePage.jsx
 import React, { useState, useEffect } from 'react';
 import api from '../../config/axios';
 import Header from '../components/Header';
+import { toast } from 'react-toastify';
 
 function UserProfilePage() {
     const [user, setUser] = useState(null);
@@ -15,9 +15,6 @@ function UserProfilePage() {
         newPassword: '',
         confirmPassword: ''
     });
-    const [profileMsg, setProfileMsg] = useState('');
-    const [pwMsg, setPwMsg] = useState('');
-    const [pwMsgType, setPwMsgType] = useState(''); // 'success' | 'error'
 
     useEffect(() => {
         const fetchUserProfile = async () => {
@@ -47,70 +44,58 @@ function UserProfilePage() {
 
     const handleChange = e => {
         setUser({ ...user, [e.target.name]: e.target.value });
-        setProfileMsg('');
     };
 
     const handleSave = async () => {
-        setProfileMsg('');
         try {
             const response = await api.patch('profile', user);
             if (response.status === 200) {
                 setEditMode(false);
-                setProfileMsg('Hồ sơ đã được cập nhật thành công!');
                 setUser(response.data);
+                toast.success('Hồ sơ đã được cập nhật thành công!');
             } else {
-                setProfileMsg('Cập nhật hồ sơ thất bại!');
+                toast.error('Cập nhật hồ sơ thất bại!');
             }
         } catch (err) {
-
-            setProfileMsg('Cập nhật hồ sơ thất bại!');
             console.error('Error updating profile:', err);
+            toast.error('Cập nhật hồ sơ thất bại!');
         }
     };
 
-    // Xử lý đổi mật khẩu
     const handlePwInput = e => {
         setPwForm({ ...pwForm, [e.target.name]: e.target.value });
-        setPwMsg('');
-        setPwMsgType('');
     };
 
     const handleChangePassword = async (e) => {
         e.preventDefault();
-        setPwMsg('');
-        setPwMsgType('');
         if (!pwForm.oldPassword || !pwForm.newPassword || !pwForm.confirmPassword) {
-            setPwMsg('Vui lòng nhập đầy đủ thông tin!');
-            setPwMsgType('error');
+            toast.error('Vui lòng nhập đầy đủ thông tin!');
             return;
         }
         if (pwForm.newPassword.length < 6) {
-            setPwMsg('Mật khẩu mới phải có ít nhất 6 ký tự!');
-            setPwMsgType('error');
+            toast.error('Mật khẩu mới phải có ít nhất 6 ký tự!');
             return;
         }
         if (pwForm.newPassword !== pwForm.confirmPassword) {
-            setPwMsg('Mật khẩu xác nhận không khớp!');
-            setPwMsgType('error');
+            toast.error('Mật khẩu xác nhận không khớp!');
             return;
         }
+
         setChangePwLoading(true);
         try {
             await api.post('http://localhost:8080/api/change-password', {
                 oldPassword: pwForm.oldPassword,
                 newPassword: pwForm.newPassword
             });
-            setPwMsg('Đổi mật khẩu thành công!');
-            setPwMsgType('success');
+            toast.success('Đổi mật khẩu thành công!');
             setPwForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
         } catch (err) {
             if (err.response?.status === 401) {
-                setPwMsg('Mật khẩu cũ không đúng!');
+                toast.error('Mật khẩu cũ không đúng!');
             } else {
                 const msg = err.response?.data?.message || err.message || 'Đổi mật khẩu thất bại!';
-                setPwMsg(msg);
+                toast.error(msg);
             }
-            setPwMsgType('error');
         }
         setChangePwLoading(false);
     };
@@ -198,12 +183,6 @@ function UserProfilePage() {
                             <option value="OTHER">Other</option>
                         </select>
 
-                        {profileMsg && (
-                            <div className={`text-center mt-2 ${profileMsg.includes('thành công') ? 'text-green-600' : 'text-red-600'}`}>
-                                {profileMsg}
-                            </div>
-                        )}
-
                         <div className="flex gap-4 mt-6 justify-center">
                             {editMode ? (
                                 <>
@@ -243,10 +222,6 @@ function UserProfilePage() {
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             required
                         />
-                        {/* Hiển thị lỗi ngay dưới ô mật khẩu cũ nếu có lỗi 401 */}
-                        {pwMsg === 'Mật khẩu cũ không đúng!' && (
-                            <div className="text-red-600 text-sm -mt-2 mb-2">{pwMsg}</div>
-                        )}
 
                         <label className="font-semibold">Mật khẩu mới</label>
                         <input
@@ -268,14 +243,9 @@ function UserProfilePage() {
                             required
                         />
 
-                        {/* Hiển thị các lỗi khác hoặc thành công */}
-                        {pwMsg && pwMsg !== 'Mật khẩu cũ không đúng!' && (
-                            <div className={`text-center mt-2 ${pwMsgType === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-                                {pwMsg}
-                            </div>
-                        )}
-                        <a href="/forgot-password"
-                            className="text-blue-600 hover:underline font-semibold">Quên mật khẩu?</a>
+                        <a href="/forgot-password" className="text-blue-600 hover:underline font-semibold">
+                            Quên mật khẩu?
+                        </a>
                         <button
                             type="submit"
                             disabled={changePwLoading}
@@ -283,8 +253,6 @@ function UserProfilePage() {
                         >
                             {changePwLoading ? 'Đang đổi mật khẩu...' : 'Đổi mật khẩu'}
                         </button>
-
-
                     </form>
                 )}
             </div>

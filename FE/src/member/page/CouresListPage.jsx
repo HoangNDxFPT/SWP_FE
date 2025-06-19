@@ -41,33 +41,45 @@ function CouresListPage() {
         userAgeGroup = age < 18 ? 'Teenagers' : 'Adults';
     }
 
-    // Lấy danh sách khóa học theo search (debounce 400ms)
     useEffect(() => {
-        const delayDebounce = setTimeout(() => {
-            const fetchCourses = async () => {
-                setLoading(true);
-                try {
-                    let url = 'http://localhost:8080/api/courses/list';
-                    if (search.trim() !== '') {
-                        url = `http://localhost:8080/api/courses/search?name=${encodeURIComponent(search.trim())}`;
-                    }
-                    const res = await api.get(url);
-                    if (res.status === 200 && Array.isArray(res.data)) {
-                        setCourses(res.data);
-                        setCurrentPage(1); // Reset về trang 1 khi search
-                    } else {
-                        setCourses([]);
-                    }
-                } catch {
-                    setCourses([]);
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchCourses();
-        }, 400);
-        return () => clearTimeout(delayDebounce);
-    }, [search]);
+  const delayDebounce = setTimeout(() => {
+    const fetchCourses = async () => {
+      setLoading(true);
+      try {
+        let url = 'http://localhost:8080/api/courses/list';
+        if (search.trim() !== '') {
+          url = `http://localhost:8080/api/courses/search?name=${encodeURIComponent(search.trim())}`;
+        }
+
+        const token = localStorage.getItem('token'); // or wherever you're storing it
+
+        const res = await api.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: '*/*',
+          },
+        });
+
+        if (res.status === 200 && Array.isArray(res.data)) {
+          setCourses(res.data);
+          setCurrentPage(1);
+        } else {
+          setCourses([]);
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        setCourses([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCourses();
+  }, 400);
+
+  return () => clearTimeout(delayDebounce);
+}, [search]);
+
 
     // Lọc theo nhóm tuổi
     const filteredCourses = courses.filter(course =>
@@ -102,7 +114,7 @@ function CouresListPage() {
                         </p>
                     </div>
                     <img
-                        src="https://cdn.discordapp.com/attachments/1203731339766141021/1377606127147159683/kids_en.png?ex=6839932f&is=683841af&hm=77ea418268c5cdcb59d0173c30a8602b34c1036984df0534cc761d5e3d85ba3c&"
+                        src=""
                         alt="Group"
                         className="w-[500px] h-auto object-contain"
                     />
