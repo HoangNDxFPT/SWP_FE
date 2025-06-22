@@ -1,48 +1,84 @@
 import React, { useEffect, useState } from "react";
-import { toast, ToastContainer } from "react-toastify";
 import api from "../../config/axios";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function CourseManage() {
   const [courses, setCourses] = useState([]);
-  const [selectedCourse, setSelectedCourse] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [newCourse, setNewCourse] = useState({
     name: "",
     description: "",
     startDate: "",
     endDate: "",
-    type: "",
     targetAgeGroup: "",
+    type: "",
     url: ""
   });
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editMode, setEditMode] = useState(false);
+  const [editCourse, setEditCourse] = useState(null);
+  const [loading, setLoading] = useState(false); // Thêm loading state
 
-  // Các lựa chọn cố định
-  const typeOptions = ["Online", "Workshop", "Seminar", "Community"];
-  const ageGroupOptions = [
-    { value: "Teenagers", label: "Teenagers" },
-    { value: "Adults", label: "Adults" },
-    { value: "AllAges", label: "All Ages" }
-  ];
-
-  // Filter states
-  const [filterName, setFilterName] = useState("");
-  const [filterAge, setFilterAge] = useState("");
-  const [filterDate, setFilterDate] = useState("");
-
-  // Lấy danh sách khóa học từ API
+  // Lấy danh sách khóa học, backend đã lọc những khóa học đã xóa
   const fetchCourses = async () => {
+    setLoading(true); // Bắt đầu loading
     try {
-      const res = await api.get("/courses");
-      setCourses(res.data || []);
-    } catch {
-      toast.error("Không thể tải danh sách khóa học!");
+      const res = await api.get("/courses/list"); // Dùng API chuyên biệt đã filter
+      setCourses(res.data || []); // Không cần filter lại
+    } catch (err) {
+      toast.error("Failed to load courses!");
+      if (err.response) {
+        console.error("Backend error:", err.response.data);
+      }
+    } finally {
+      setLoading(false); // Kết thúc loading
     }
   };
 
   useEffect(() => {
     fetchCourses();
   }, []);
+
+  // Kiểm tra định dạng ngày tháng
+  const isValidDateFormat = (dateString) => {
+    // Kiểm tra định dạng yyyy-MM-dd
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+  };
+
+  // Tạo khóa học mới
+  const handleCreate = async () => {
+    if (!newCourse.name || !newCourse.startDate || !newCourse.endDate) {
+      toast.error("Please fill in all required fields!");
+      return;
+    }
+    if (!isValidDateFormat(newCourse.startDate) || !isValidDateFormat(newCourse.endDate)) {
+      toast.error("Invalid date format");
+      return;
+    }
+    // Chỉ cần gửi dữ liệu khóa học, backend tự set isDeleted=false
+    const payload = { ...newCourse };
+    try {
+      await api.post("/courses", payload);
+      toast.success("Course created successfully!");
+      setShowCreate(false);
+      setNewCourse({
+        name: "",
+        description: "",
+        startDate: "",
+        endDate: "",
+        targetAgeGroup: "",
+        type: "",
+        url: ""
+      });
+      fetchCourses();
+    } catch (err) {
+      toast.error("Failed to create course!");
+      if (err.response) {
+        console.error("Backend error:", err.response.data);
+      }
+    }
+  };
 
   // Xóa khóa học
   const handleDelete = async (id) => {
@@ -51,139 +87,133 @@ export default function CourseManage() {
         await api.delete(`/courses/${id}`);
         toast.success("Delete course successfully!");
         fetchCourses();
-      } catch {
+      } catch (err) {
         toast.error("Delete failed!");
+        if (err.response) {
+          console.error("Delete error:", err.response.data);
+        }
       }
     }
   };
 
   // Lưu chỉnh sửa khóa học
   const handleSave = async () => {
-    try {
-      await api.put(`/courses/${selectedCourse.id}`, selectedCourse);
-      toast.success("Edit course successfully!");
-      setSelectedCourse(null);
-      fetchCourses();
-    } catch {
-      toast.error("Edit failed!");
-    }
-  };
-
-  // Tạo mới khóa học
-  const handleCreate = async () => {
-    if (!newCourse.name || !newCourse.type || !newCourse.targetAgeGroup) {
-      toast.error("Course name, type and target age group are required!");
+    if (!editCourse.name || !editCourse.startDate || !editCourse.endDate) {
+      toast.error("Please fill in all required fields!");
       return;
     }
+    if (!isValidDateFormat(editCourse.startDate) || !isValidDateFormat(editCourse.endDate)) {
+      toast.error("Invalid date format");
+      return;
+    }
+    // Không cần gửi trường isDeleted khi cập nhật
+    const payload = { ...editCourse };
     try {
-      await api.post("/courses", newCourse);
-      toast.success("Course created!");
-      setShowCreate(false);
-      setNewCourse({
-        name: "",
-        description: "",
-        startDate: "",
-        endDate: "",
-        type: "",
-        targetAgeGroup: "",
-        url: ""
-      });
+      await api.put(`/courses/${editCourse.id}`, payload);
+      toast.success("Course updated successfully!");
+      setEditMode(false);
+      setEditCourse(null);
       fetchCourses();
-    } catch {
-      toast.error("Create failed!");
+    } catch (err) {
+      toast.error("Failed to update course!");
+      if (err.response) {
+        console.error("Update error:", err.response.data);
+      }
     }
   };
 
-  // Reset filter function
-  const handleReset = () => {
-    setFilterName("");
-    setFilterAge("");
-    setFilterDate("");
-  };
-
-  // Filtered courses
-  const filteredCourses = courses.filter(course =>
-    course.name.toLowerCase().includes(filterName.toLowerCase()) &&
-    (filterAge ? course.targetAgeGroup === filterAge : true) &&
-    (filterDate ? course.startDate === filterDate : true)
+  // Lọc khóa học theo tìm kiếm
+  const filteredCourses = courses.filter(
+    (c) =>
+      !searchTerm ||
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.description && c.description.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  // Enum đúng cho các trường select
+  const AGE_GROUPS = [
+    { value: "", label: "Select Age Group" },
+    { value: "Teenagers", label: "Teenagers" },
+    { value: "Adults", label: "Adults" }
+  ];
+
+  const COURSE_TYPES = [
+    { value: "", label: "Select Type" },
+    { value: "WORKSHOP", label: "Workshop" },
+    { value: "ONLINE", label: "Online" },
+    { value: "SEMINAR", label: "Seminar" },
+    { value: "COMMUNITY", label: "Community" }
+  ];
 
   return (
     <div>
+      <ToastContainer position="top-right" autoClose={2000} />
       <h1 className="text-2xl font-bold mb-6 text-blue-900">Course Management</h1>
-      <button
-        className="mb-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-        onClick={() => setShowCreate(true)}
-      >
-        Create Course
-      </button>
-      {/* Filter bar */}
       <div className="flex flex-wrap gap-4 mb-4 items-center">
         <input
           type="text"
-          placeholder="Filter by course name"
+          placeholder="Search by name or description"
           className="border rounded px-2 py-1"
-          value={filterName}
-          onChange={e => setFilterName(e.target.value)}
-        />
-        <select
-          className="border rounded px-2 py-1"
-          value={filterAge}
-          onChange={e => setFilterAge(e.target.value)}
-        >
-          <option value="">All age groups</option>
-          {ageGroupOptions.map(age => (
-            <option key={age.value} value={age.value}>{age.label}</option>
-          ))}
-        </select>
-        <input
-          type="date"
-          className="border rounded px-2 py-1"
-          value={filterDate}
-          onChange={e => setFilterDate(e.target.value)}
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
         />
         <button
-          className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded"
-          onClick={handleReset}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          onClick={() => setShowCreate(true)}
         >
-          Reset
+          Add Course
         </button>
       </div>
       <div className="overflow-x-auto bg-white rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-blue-900">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-white">No.</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Course Name</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Type</th>
-              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Target Age Group</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">ID</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Name</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Description</th>
               <th className="px-4 py-2 text-left text-xs font-semibold text-white">Start Date</th>
               <th className="px-4 py-2 text-left text-xs font-semibold text-white">End Date</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Target Age</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">Type</th>
+              <th className="px-4 py-2 text-left text-xs font-semibold text-white">URL</th>
               <th className="px-4 py-2 text-center text-xs font-semibold text-white">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {filteredCourses.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-4 text-gray-500">
-                  No courses available
+                <td colSpan={9} className="text-center py-4 text-gray-500">
+                  No courses found
                 </td>
               </tr>
             ) : (
-              filteredCourses.map((course, index) => (
+              filteredCourses.map((course) => (
                 <tr key={course.id} className="hover:bg-blue-50">
-                  <td className="px-4 py-2">{index + 1}</td>
+                  <td className="px-4 py-2">{course.id}</td>
                   <td className="px-4 py-2">{course.name}</td>
-                  <td className="px-4 py-2">{course.type}</td>
-                  <td className="px-4 py-2">{course.targetAgeGroup}</td>
+                  <td className="px-4 py-2">{course.description}</td>
                   <td className="px-4 py-2">{course.startDate}</td>
                   <td className="px-4 py-2">{course.endDate}</td>
+                  <td className="px-4 py-2">{course.targetAgeGroup}</td>
+                  <td className="px-4 py-2">{course.type}</td>
+                  <td className="px-4 py-2">
+                    {course.url ? (
+                      <a href={course.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                        Link
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                   <td className="px-4 py-2 flex gap-2 justify-center">
                     <button
-                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
-                      onClick={() => setSelectedCourse(course)}
+                      className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                      onClick={() => {
+                        setEditMode(true);
+                        setEditCourse({ ...course });
+                      }}
                     >
-                      View / Edit
+                      Edit
                     </button>
                     <button
                       className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
@@ -199,223 +229,77 @@ export default function CourseManage() {
         </table>
       </div>
 
-      {/* Modal for course details and edit */}
-      {selectedCourse && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px]">
-            <h2 className="text-xl font-bold mb-4">Course Details & Edit</h2>
-            <div className="space-y-2">
-              <div>
-                <b>Course Name:</b>
-                <input
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.name}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Description:</b>
-                <textarea
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.description}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, description: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Start Date:</b>
-                <input
-                  type="date"
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.startDate || ""}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, startDate: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>End Date:</b>
-                <input
-                  type="date"
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.endDate || ""}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, endDate: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Type:</b>
-                <select
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.type}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, type: e.target.value })
-                  }
-                >
-                  <option value="">Select type</option>
-                  {typeOptions.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <b>Target Age Group:</b>
-                <select
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse?.targetAgeGroup || ""}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, targetAgeGroup: e.target.value })
-                  }
-                >
-                  <option value="">Select age group</option>
-                  {ageGroupOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <b>URL:</b>
-                <input
-                  className="border rounded px-2 py-1 w-full"
-                  value={selectedCourse.url || ""}
-                  onChange={e =>
-                    setSelectedCourse({ ...selectedCourse, url: e.target.value })
-                  }
-                  placeholder="Enter video link"
-                />
-                {selectedCourse.url && (
-                  <a
-                    href={selectedCourse.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline break-all block mt-1"
-                  >
-                    
-                  </a>
-                )}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
-                onClick={handleSave}
-              >
-                Save
-              </button>
-              <button
-                className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
-                onClick={() => setSelectedCourse(null)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal for create course */}
+      {/* Create course modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px]">
-            <h2 className="text-xl font-bold mb-4">Create New Course</h2>
-            <div className="space-y-2">
-              <div>
-                <b>Course Name:</b>
-                <input
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.name}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, name: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Description:</b>
-                <textarea
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.description}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, description: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Start Date:</b>
-                <input
-                  type="date"
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.startDate}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, startDate: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>End Date:</b>
-                <input
-                  type="date"
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.endDate}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, endDate: e.target.value })
-                  }
-                />
-              </div>
-              <div>
-                <b>Type:</b>
-                <select
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.type}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, type: e.target.value })
-                  }
-                >
-                  <option value="">Select type</option>
-                  {typeOptions.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <b>Target Age Group:</b>
-                <select
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.targetAgeGroup}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, targetAgeGroup: e.target.value })
-                  }
-                >
-                  <option value="">Select age group</option>
-                  {ageGroupOptions.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <b>URL:</b>
-                <input
-                  className="border rounded px-2 py-1 w-full"
-                  value={newCourse.url}
-                  onChange={e =>
-                    setNewCourse({ ...newCourse, url: e.target.value })
-                  }
-                  placeholder="Enter video link"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <button
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
-                onClick={handleCreate}
+          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-lg">
+            <h2 className="text-xl font-bold mb-4">Add New Course</h2>
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Name"
+                className="border rounded px-2 py-1"
+                value={newCourse.name}
+                onChange={e => setNewCourse({ ...newCourse, name: e.target.value })}
+              />
+              <textarea
+                placeholder="Description"
+                className="border rounded px-2 py-1"
+                value={newCourse.description}
+                onChange={e => setNewCourse({ ...newCourse, description: e.target.value })}
+              />
+              <input
+                type="date"
+                placeholder="Start Date"
+                className="border rounded px-2 py-1"
+                value={newCourse.startDate}
+                onChange={e => setNewCourse({ ...newCourse, startDate: e.target.value })}
+              />
+              <input
+                type="date"
+                placeholder="End Date"
+                className="border rounded px-2 py-1"
+                value={newCourse.endDate}
+                onChange={e => setNewCourse({ ...newCourse, endDate: e.target.value })}
+              />
+              {/* Select cho targetAgeGroup */}
+              <select
+                className="border rounded px-2 py-1"
+                value={newCourse.targetAgeGroup}
+                onChange={e => setNewCourse({ ...newCourse, targetAgeGroup: e.target.value })}
               >
-                Create
+                {AGE_GROUPS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {/* Select cho type */}
+              <select
+                className="border rounded px-2 py-1"
+                value={newCourse.type}
+                onChange={e => setNewCourse({ ...newCourse, type: e.target.value })}
+              >
+                {COURSE_TYPES.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="URL"
+                className="border rounded px-2 py-1"
+                value={newCourse.url}
+                onChange={e => setNewCourse({ ...newCourse, url: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={handleCreate}
+                disabled={loading} // Thêm disabled khi đang xử lý
+              >
+                {loading ? "Creating..." : "Create"} {/* Hiển thị trạng thái loading */}
               </button>
               <button
-                className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
+                className="bg-gray-400 text-white px-4 py-2 rounded"
                 onClick={() => setShowCreate(false)}
               >
                 Cancel
@@ -425,7 +309,88 @@ export default function CourseManage() {
         </div>
       )}
 
-      <ToastContainer position="top-right" autoClose={2000} />
+      {/* Edit course modal */}
+      {editMode && editCourse && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-lg">
+            <h2 className="text-xl font-bold mb-4">Edit Course</h2>
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Name"
+                className="border rounded px-2 py-1"
+                value={editCourse.name}
+                onChange={e => setEditCourse({ ...editCourse, name: e.target.value })}
+              />
+              <textarea
+                placeholder="Description"
+                className="border rounded px-2 py-1"
+                value={editCourse.description}
+                onChange={e => setEditCourse({ ...editCourse, description: e.target.value })}
+              />
+              <input
+                type="date"
+                placeholder="Start Date"
+                className="border rounded px-2 py-1"
+                value={editCourse.startDate}
+                onChange={e => setEditCourse({ ...editCourse, startDate: e.target.value })}
+              />
+              <input
+                type="date"
+                placeholder="End Date"
+                className="border rounded px-2 py-1"
+                value={editCourse.endDate}
+                onChange={e => setEditCourse({ ...editCourse, endDate: e.target.value })}
+              />
+              {/* Select cho targetAgeGroup */}
+              <select
+                className="border rounded px-2 py-1"
+                value={editCourse.targetAgeGroup}
+                onChange={e => setEditCourse({ ...editCourse, targetAgeGroup: e.target.value })}
+              >
+                {AGE_GROUPS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {/* Select cho type */}
+              <select
+                className="border rounded px-2 py-1"
+                value={editCourse.type}
+                onChange={e => setEditCourse({ ...editCourse, type: e.target.value })}
+              >
+                {COURSE_TYPES.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="URL"
+                className="border rounded px-2 py-1"
+                value={editCourse.url}
+                onChange={e => setEditCourse({ ...editCourse, url: e.target.value })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+                onClick={handleSave}
+                disabled={loading} // Thêm disabled khi đang xử lý
+              >
+                {loading ? "Saving..." : "Save"} {/* Hiển thị trạng thái loading */}
+              </button>
+              <button
+                className="bg-gray-400 text-white px-4 py-2 rounded"
+                onClick={() => {
+                  setEditMode(false);
+                  setEditCourse(null);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
