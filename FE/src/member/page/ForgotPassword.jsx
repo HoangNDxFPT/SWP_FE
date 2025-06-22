@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Form, Input } from 'antd';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
 import api from '../../config/axios';
 
 function ForgotPassword() {
@@ -10,7 +9,7 @@ function ForgotPassword() {
 
   const onFinish = async (values) => {
     try {
-      await api.post("forgot-password", { email: values.email });
+      await api.post("http://localhost:8080/api/forgot-password", { email: values.email });
       setSuccess(true);
       toast.success("Hãy kiểm tra email của bạn!");
       // Không chuyển hướng về login nữa
