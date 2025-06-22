@@ -17,6 +17,7 @@ import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
 import SurveyResult from "./admin/page/SurveyResult";
 import Dashboard from "./admin/page/Dashboard";
+import ScheduleManage from "./admin/page/ScheduleManage";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
@@ -25,6 +26,7 @@ import AppointmentDetail from "./consultant/page/AppointmentDetail";
 import UserCaseList from "./consultant/page/UserCaseList";
 import UserCaseDetail from "./consultant/page/UserCaseDetail";
 import ConsultantProfilePage from "./consultant/page/ConsultantProfilePage";
+
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -72,6 +74,7 @@ const router = createBrowserRouter([
       { path: "users", element: <UserManage /> },
       { path: "courses", element: <CourseManage /> },
       { path: "survey-results", element: <SurveyResult /> },
+      { path: "schedule", element: <ScheduleManage /> },
     ],
   },
   {

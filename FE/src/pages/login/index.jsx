@@ -18,7 +18,7 @@ function LoginPage() {
       dispatch(login(response.data));
 
       localStorage.setItem("user", JSON.stringify(response.data.user || response.data));
-      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("token", response.data.token || response.data.accessToken);
       api.defaults.headers.common["Authorization"] = `Bearer ${response.data.token}`;
 
       toast.success("Đăng nhập thành công!", { autoClose: 2000 });
