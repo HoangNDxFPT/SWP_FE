@@ -21,13 +21,15 @@ function AdminProfilePage() {
             setLoading(true);
             setError(null);
             try {
-                const response = await api.get('profile');
+                const response = await api.get('profile');  // Endpoint đúng
                 if (response.status === 200 && response.data) {
                     setUser({
+                        id: response.data.userId,  // Lưu userId để sử dụng khi cập nhật
                         fullName: response.data.fullName || '',
                         phoneNumber: response.data.phoneNumber || '',
                         address: response.data.address || '',
-                        dateOfBirth: response.data.dateOfBirth ? new Date(response.data.dateOfBirth).toISOString().split('T')[0] : '',
+                        dateOfBirth: response.data.dateOfBirth ? 
+                          new Date(response.data.dateOfBirth).toISOString().split('T')[0] : '',
                         gender: response.data.gender || ''
                     });
                 } else {
@@ -35,6 +37,7 @@ function AdminProfilePage() {
                 }
             } catch (err) {
                 setError(err);
+                console.error('Error fetching profile:', err);
             } finally {
                 setLoading(false);
             }
@@ -48,16 +51,27 @@ function AdminProfilePage() {
 
     const handleSave = async () => {
         try {
-            const response = await api.put('profile', user);
+            // Tạo payload phù hợp với ProfileDTO
+            const profilePayload = {
+                userId: user.id || response.data.userId,  // Đảm bảo có userId
+                fullName: user.fullName,
+                phoneNumber: user.phoneNumber,
+                address: user.address,
+                dateOfBirth: user.dateOfBirth,
+                gender: user.gender
+            };
+            
+            // Sử dụng PATCH thay vì PUT và đúng endpoint
+            const response = await api.patch('profile/update-self', profilePayload);
+            
             if (response.status === 200) {
                 setEditMode(false);
-                setUser(response.data);
                 toast.success('Profile updated successfully!');
             } else {
                 toast.error('Failed to update profile!');
             }
         } catch (err) {
-            toast.error('Failed to update profile!');
+            toast.error('Failed to update profile: ' + (err.response?.data?.message || err.message));
             console.error('Error updating profile:', err);
         }
     };
@@ -83,7 +97,8 @@ function AdminProfilePage() {
         }
         setChangePwLoading(true);
         try {
-            await api.post('/change-password', {
+            // Cập nhật endpoint thành /api/change-password
+            await api.post('change-password', {
                 oldPassword: pwForm.oldPassword,
                 newPassword: pwForm.newPassword
             });
@@ -180,7 +195,7 @@ function AdminProfilePage() {
                             <option value="">Select</option>
                             <option value="MALE">Male</option>
                             <option value="FEMALE">Female</option>
-                            <option value="OTHER">Other</option>
+                            {/* Xóa option value="OTHER" để phù hợp với enum Gender của backend */}
                         </select>
 
                         <div className="flex gap-4 mt-6 justify-center">
