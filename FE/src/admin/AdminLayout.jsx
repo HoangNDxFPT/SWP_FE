@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import Footer from "./components/Footer";
+import api from "../config/axios";
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -8,11 +8,27 @@ export default function AdminLayout() {
   const [openMenu, setOpenMenu] = useState(false);
   const menuRef = useRef();
 
+  const [fullName, setFullName] = useState("User");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api.get("/profile")  // Bỏ /api
+      .then(res => {
+        setFullName(res.data?.fullName || "User");
+      })
+      .catch((err) => {
+        console.error("Error fetching profile:", err);
+        setFullName("User");
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
   const menu = [
     { label: "Dashboard", path: "/admin" },
     { label: "Account Management", path: "/admin/users" },
     { label: "Course Management", path: "/admin/courses" },
-    { label: "Survey Results", path: "/admin/survey-results" }, 
+    { label: "Survey Results", path: "/admin/survey-results" },
+    { label: "Schedule Manage", path: "/admin/schedule" },
   ];
 
   React.useEffect(() => {
@@ -24,8 +40,6 @@ export default function AdminLayout() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  const fullName = localStorage.getItem('full_name') || "User";
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -48,7 +62,6 @@ export default function AdminLayout() {
               </li>
             ))}
           </ul>
-        
         </aside>
 
         {/* Main content */}
@@ -59,8 +72,11 @@ export default function AdminLayout() {
               <button
                 className="flex items-center gap-2 text-gray-700 font-semibold focus:outline-none"
                 onClick={() => setOpenMenu((v) => !v)}
+                disabled={loading}
               >
-                <span>Hello, {fullName}!</span>
+                <span>
+                  Hello, {loading ? "..." : fullName}!
+                </span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
@@ -94,7 +110,6 @@ export default function AdminLayout() {
           </main>
         </div>
       </div>
-      
     </div>
   );
 }
