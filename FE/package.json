@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.8.2",
+    "analysis": "^0.4.2",
     "antd": "^5.25.4",
     "axios": "^1.9.0",
+    "dayjs": "^1.11.13",
+    "framer-motion": "^12.18.1",
     "react": "^19.1.0",
     "react-calendar": "^6.0.0",
     "react-dom": "^19.1.0",

@@ -16,8 +16,14 @@ function LoginPage() {
   const onFinish = async (values) => {
     try {
       const response = await api.post("login", values);
-
-      dispatch(login(response.data));
+      let userData = response.data.user || response.data;
+      console.log("Login userData:", userData);
+      // Nếu không có id, cố gắng lấy từ trường khác
+      if (!userData.id && userData.userId) {
+        userData.id = userData.userId;
+      }
+      dispatch(login(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
 
       // Lưu thông tin user vào localStorage với key "user"
       if (response.data) {
@@ -136,6 +142,13 @@ function LoginPage() {
 export function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
+    return <LoginPage />;
+  }
+  return children;
+}
+export function RequireConsultant({ children }) {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!user || user.role !== "CONSULTANT") {
     return <LoginPage />;
   }
   return children;

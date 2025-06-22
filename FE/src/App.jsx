@@ -80,7 +80,10 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "dashboard", element: <ConsultantDashboard /> },
-      { path: "appointments", element: <AppointmentList /> },
+      { path: "appointments", 
+        element: <AppointmentList />, 
+        
+      },
       { path: "appointments/:id", element: <AppointmentDetail /> },
       { path: "cases", element: <UserCaseList /> },
       { path: "cases/:id", element: <UserCaseDetail /> },
