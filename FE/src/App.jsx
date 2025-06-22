@@ -32,6 +32,8 @@ import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
 import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
+import CourseQuiz from "./member/page/CourseQuiz";
+import CourseResultPage from "./member/page/CourseResultPage";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -85,7 +87,15 @@ const router = createBrowserRouter([
            {
     path: "/consultantList",
     element: <ConsultantList/>,
+  },           {
+    path: "/quiz/:courseId",
+    element: <CourseQuiz/>,
   },
+   {
+    path: "/quiz-result/:id",
+    element: <CourseResultPage/>,
+  },
+  
   {
     path: "/admin",
     element: (
