@@ -2,7 +2,7 @@ import React from "react";
 import { Button, Checkbox, Form, Input } from "antd";
 import { toast } from "react-toastify";
 import api from "../../config/axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../../redux/features/userSlice";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
@@ -59,12 +59,26 @@ function LoginPage() {
               <Input.Password placeholder="Mật khẩu" />
             </Form.Item>
             <Form.Item name="remember" valuePropName="checked">
-              <Checkbox>Ghi nhớ tôi</Checkbox>
+              <div className="flex justify-between items-center">
+                <Checkbox>Ghi nhớ tôi</Checkbox>
+                <Link to="/forgot-password" className="text-blue-600 hover:underline text-sm">
+                  Quên mật khẩu?
+                </Link>
+              </div>
             </Form.Item>
             <Form.Item>
               <Button type="primary" htmlType="submit" block>Đăng nhập</Button>
             </Form.Item>
           </Form>
+
+          {/* Thêm phần đăng ký mới */}
+          <div className="text-center mt-4 mb-6">
+            <span className="text-gray-600">Chưa có tài khoản? </span>
+            <Link to="/register" className="text-blue-600 font-medium hover:underline">
+              Đăng ký ngay
+            </Link>
+          </div>
+
           <div className="text-center my-4 text-gray-500">Hoặc</div>
           <GoogleLogin onSuccess={onGoogleLoginSuccess} onError={() => toast.error("Lỗi đăng nhập Google!")} />
         </div>

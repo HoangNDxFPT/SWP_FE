@@ -18,14 +18,21 @@ export default function CourseManage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [editCourse, setEditCourse] = useState(null);
+  const [loading, setLoading] = useState(false); // Thêm loading state
 
-  // Lấy danh sách khóa học, chỉ lấy những khóa học chưa bị xóa mềm
+  // Lấy danh sách khóa học, backend đã lọc những khóa học đã xóa
   const fetchCourses = async () => {
+    setLoading(true); // Bắt đầu loading
     try {
-      const res = await api.get("/courses");
-      setCourses((res.data || []).filter(c => !c.isDeleted));
-    } catch {
+      const res = await api.get("/courses/list"); // Dùng API chuyên biệt đã filter
+      setCourses(res.data || []); // Không cần filter lại
+    } catch (err) {
       toast.error("Failed to load courses!");
+      if (err.response) {
+        console.error("Backend error:", err.response.data);
+      }
+    } finally {
+      setLoading(false); // Kết thúc loading
     }
   };
 
@@ -33,17 +40,24 @@ export default function CourseManage() {
     fetchCourses();
   }, []);
 
+  // Kiểm tra định dạng ngày tháng
+  const isValidDateFormat = (dateString) => {
+    // Kiểm tra định dạng yyyy-MM-dd
+    return /^\d{4}-\d{2}-\d{2}$/.test(dateString);
+  };
+
   // Tạo khóa học mới
   const handleCreate = async () => {
     if (!newCourse.name || !newCourse.startDate || !newCourse.endDate) {
       toast.error("Please fill in all required fields!");
       return;
     }
-    const payload = {
-      ...newCourse,
-      deleted: false,
-      isDeleted: false
-    };
+    if (!isValidDateFormat(newCourse.startDate) || !isValidDateFormat(newCourse.endDate)) {
+      toast.error("Invalid date format");
+      return;
+    }
+    // Chỉ cần gửi dữ liệu khóa học, backend tự set isDeleted=false
+    const payload = { ...newCourse };
     try {
       await api.post("/courses", payload);
       toast.success("Course created successfully!");
@@ -73,27 +87,38 @@ export default function CourseManage() {
         await api.delete(`/courses/${id}`);
         toast.success("Delete course successfully!");
         fetchCourses();
-      } catch {
+      } catch (err) {
         toast.error("Delete failed!");
+        if (err.response) {
+          console.error("Delete error:", err.response.data);
+        }
       }
     }
   };
 
   // Lưu chỉnh sửa khóa học
   const handleSave = async () => {
-    const payload = {
-      ...editCourse,
-      deleted: false,
-      isDeleted: false
-    };
+    if (!editCourse.name || !editCourse.startDate || !editCourse.endDate) {
+      toast.error("Please fill in all required fields!");
+      return;
+    }
+    if (!isValidDateFormat(editCourse.startDate) || !isValidDateFormat(editCourse.endDate)) {
+      toast.error("Invalid date format");
+      return;
+    }
+    // Không cần gửi trường isDeleted khi cập nhật
+    const payload = { ...editCourse };
     try {
       await api.put(`/courses/${editCourse.id}`, payload);
       toast.success("Course updated successfully!");
       setEditMode(false);
       setEditCourse(null);
       fetchCourses();
-    } catch {
+    } catch (err) {
       toast.error("Failed to update course!");
+      if (err.response) {
+        console.error("Update error:", err.response.data);
+      }
     }
   };
 
@@ -269,8 +294,9 @@ export default function CourseManage() {
               <button
                 className="bg-blue-600 text-white px-4 py-2 rounded"
                 onClick={handleCreate}
+                disabled={loading} // Thêm disabled khi đang xử lý
               >
-                Create
+                {loading ? "Creating..." : "Create"} {/* Hiển thị trạng thái loading */}
               </button>
               <button
                 className="bg-gray-400 text-white px-4 py-2 rounded"
@@ -348,8 +374,9 @@ export default function CourseManage() {
               <button
                 className="bg-blue-600 text-white px-4 py-2 rounded"
                 onClick={handleSave}
+                disabled={loading} // Thêm disabled khi đang xử lý
               >
-                Save
+                {loading ? "Saving..." : "Save"} {/* Hiển thị trạng thái loading */}
               </button>
               <button
                 className="bg-gray-400 text-white px-4 py-2 rounded"
