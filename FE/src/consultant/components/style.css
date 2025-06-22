@@ -1,0 +1,66 @@
+.large-pretty-calendar {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 1.2rem !important;
+  width: 420px;
+  border: none !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2) !important;
+  border-radius: 24px !important;
+  padding: 12px;
+}
+
+.react-calendar__tile--active,
+.react-calendar__tile--hasActive {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+}
+
+.calendar-pending {
+  background: #fde047 !important;
+  color: #92400e !important;
+  border-radius: 50% !important;
+  border: 2px solid #facc15;
+}
+.calendar-confirmed {
+  background: #bbf7d0 !important;
+  color: #166534 !important;
+  border-radius: 50% !important;
+  border: 2px solid #22c55e;
+}
+.calendar-rejected {
+  background: #fecaca !important;
+  color: #b91c1c !important;
+  border-radius: 50% !important;
+  border: 2px solid #ef4444;
+}
+.calendar-completed {
+  background: #dbeafe !important;
+  color: #1e40af !important;
+  border-radius: 50% !important;
+  border: 2px solid #3b82f6;
+}
+
+.react-calendar__navigation {
+  margin-bottom: 12px;
+}
+.large-pretty-calendar {
+  font-size: 1.25rem !important;
+  width: 100% !important;
+  min-height: 400px;
+  border-radius: 24px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13) !important;
+}
+.react-calendar__tile {
+  padding: 1rem 0 !important;
+  font-size: 1.15rem !important;
+  border-radius: 12px !important;
+  transition: background 0.2s, color 0.2s;
+}
+.react-calendar__tile:enabled:hover {
+  background: #e0e7ff !important;
+  color: #1e40af !important;
+}
+.react-calendar__navigation {
+  font-size: 1.1rem !important;
+  font-weight: 600 !important;
+}

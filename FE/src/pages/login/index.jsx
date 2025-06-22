@@ -25,6 +25,14 @@ function LoginPage() {
       dispatch(login(userData));
       localStorage.setItem("user", JSON.stringify(userData));
 
+
+      // dispatch(login(response.data));
+
+      localStorage.setItem(
+        "user",
+        JSON.stringify(response.data.user || response.data)
+      );
+
       localStorage.setItem("token", response.data.token);
       api.defaults.headers.common[
         "Authorization"
@@ -148,4 +156,6 @@ export function RequireConsultant({ children }) {
   return children;
 }
 
+
 export default LoginPage;
+
