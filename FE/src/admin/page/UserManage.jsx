@@ -50,11 +50,12 @@ export default function UserManage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/profile/all");
+      // Sửa endpoint từ "/consultant/all-profiles" thành "/api/profile/all"
+      const res = await api.get("consultant/all-profiles");
       setUsers(res.data || []);
     } catch (err) {
       toast.error("Failed to load user list!");
-      console.error(err);
+      console.error("Error fetching users:", err.response?.data || err.message);
     } finally {
       setLoading(false);
     }
@@ -73,14 +74,15 @@ export default function UserManage() {
     }
 
     try {
-      // Проверяем наличие токена
+      // Kiểm tra token
       const token = localStorage.getItem("token");
       if (!token) {
         toast.error("You need to be logged in to create users!");
         return;
       }
 
-      const res = await api.post("/profile", newUser);
+      // Sửa endpoint từ "/profile" thành "/api/profile/create-user"
+      const res = await api.post("/profile/create-user", newUser);
       setUsers([...users, res.data]);
       setShowCreateModal(false);
       setNewUser({ ...EMPTY_USER });
@@ -88,26 +90,38 @@ export default function UserManage() {
     } catch (err) {
       if (err.response?.status === 401) {
         toast.error("Unauthorized! Please log in again.");
-        // Можно добавить редирект на страницу логина
       } else {
         toast.error("Failed to create user: " + (err.response?.data?.message || "Unknown error"));
       }
-      console.error(err);
+      console.error("Error creating user:", err.response?.data || err.message);
     }
   };
 
   // Save edited user
   const handleSave = async () => {
     try {
-      const res = await api.put(`/profile/${selectedUser.id}`, selectedUser);
-      setUsers(users.map(u => u.id === selectedUser.id ? res.data : u));
+      if (!selectedUser.fullName || !selectedUser.userName || !selectedUser.role) {
+        toast.error("Please fill in all required fields!");
+        return;
+      }
+      
+      // Sửa từ PUT "/profile/{id}" thành PATCH "/api/profile"
+      // Backend cần nhận userID trong body thay vì URL
+      const updatePayload = {
+        ...selectedUser
+      };
+      
+      const res = await api.patch(`/api/profile`, updatePayload);
+      
+      // Cập nhật state và hiển thị
+      fetchUsers(); // Lấy lại toàn bộ danh sách thay vì cập nhật thủ công
       setShowViewEditModal(false);
       setSelectedUser(null);
       setEditMode(false);
       toast.success("User updated successfully!");
     } catch (err) {
-      toast.error("Failed to update user!");
-      console.error(err);
+      toast.error("Failed to update user: " + (err.response?.data?.message || "Unknown error"));
+      console.error("Error updating user:", err.response?.data || err.message);
     }
   };
 
@@ -117,16 +131,16 @@ export default function UserManage() {
       toast.error("User ID không hợp lệ!");
       return;
     }
+    
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        await api.delete(`/profile/${id}`);
+        // Endpoint đã đúng: DELETE /api/profile/{id}
+        await api.delete(`/api/profile/${id}`);
         toast.success("Delete user successfully!");
         fetchUsers();
       } catch (err) {
-        toast.error("Delete failed!");
-        if (err.response) {
-          console.error("Backend error:", err.response.data);
-        }
+        toast.error("Delete failed: " + (err.response?.data?.message || "Unknown error"));
+        console.error("Error deleting user:", err.response?.data || err.message);
       }
     }
   };
@@ -153,18 +167,31 @@ export default function UserManage() {
       <h1 className="text-2xl font-bold mb-6 text-blue-900">User Management</h1>
 
       {/* Search and Add Bar */}
-      <div className="flex flex-wrap gap-4 mb-6 items-center">
-        <input
-          type="text"
-          placeholder="Search by name, username, or email"
-          className="border rounded px-3 py-2 w-64"
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
+      <div className="flex flex-wrap justify-between gap-4 mb-6 items-center">
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="Search by name, username, or email"
+            className="border rounded-l px-3 py-2 w-64 focus:outline-none"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button 
+              className="bg-blue-100 p-2 rounded-r border-t border-r border-b border-gray-300"
+              onClick={() => setSearchTerm("")}
+            >
+              ✕
+            </button>
+          )}
+        </div>
         <button
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
           onClick={() => setShowCreateModal(true)}
         >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+          </svg>
           Add User
         </button>
       </div>
@@ -177,6 +204,7 @@ export default function UserManage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Full Name</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Username</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Role</th>
               <th className="px-6 py-3 text-center text-xs font-medium text-white uppercase tracking-wider">Actions</th>
             </tr>
@@ -184,11 +212,18 @@ export default function UserManage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={5} className="text-center py-4 text-gray-500">Loading users...</td>
+                <td colSpan={6} className="text-center py-4">
+                  <div className="flex justify-center items-center">
+                    <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                </td>
               </tr>
             ) : filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center py-4 text-gray-500">No users found</td>
+                <td colSpan={6} className="text-center py-4 text-gray-500">No users found</td>
               </tr>
             ) : (
               filteredUsers.map((user) => (
@@ -196,23 +231,35 @@ export default function UserManage() {
                   <td className="px-6 py-4 whitespace-nowrap">{user.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.fullName}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.userName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{user.email || "-"}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === "ADMIN" ? "bg-red-100 text-red-800" :
-                        user.role === "MANAGER" ? "bg-blue-100 text-blue-800" :
-                          user.role === "CONSULTANT" ? "bg-green-100 text-green-800" :
-                            user.role === "STAFF" ? "bg-yellow-100 text-yellow-800" :
-                              "bg-gray-100 text-gray-800"
-                      }`}>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      user.role === "ADMIN" ? "bg-red-100 text-red-800" :
+                      user.role === "MANAGER" ? "bg-blue-100 text-blue-800" :
+                      user.role === "CONSULTANT" ? "bg-green-100 text-green-800" :
+                      user.role === "STAFF" ? "bg-yellow-100 text-yellow-800" :
+                      "bg-gray-100 text-gray-800"
+                    }`}>
                       {user.role}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-center">
                     <div className="flex justify-center space-x-2">
                       <button
-                        className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs"
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
                         onClick={() => handleViewEdit(user)}
                       >
-                        View / Edit
+                        View
+                      </button>
+                      <button
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+                        onClick={() => {
+                          setSelectedUser({...user});
+                          setEditMode(true);
+                          setShowViewEditModal(true);
+                        }}
+                      >
+                        Edit
                       </button>
                       <button
                         className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
@@ -233,104 +280,136 @@ export default function UserManage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Add New User</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Add New User</h2>
+              <button 
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setShowCreateModal(false)}
+              >
+                ✕
+              </button>
+            </div>
+            
             <form className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Full Name <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.fullName}
+                    onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Username <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.userName}
+                    onChange={e => setNewUser({ ...newUser, userName: e.target.value })}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.email}
+                    onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.phoneNumber}
+                    onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                  <input
+                    type="date"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.dateOfBirth}
+                    onChange={e => setNewUser({ ...newUser, dateOfBirth: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Address</label>
                 <input
                   type="text"
-                  placeholder="Full Name *"
-                  className="border rounded px-3 py-2"
-                  value={newUser.fullName}
-                  onChange={e => setNewUser({ ...newUser, fullName: e.target.value })}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Username *"
-                  className="border rounded px-3 py-2"
-                  value={newUser.userName}
-                  onChange={e => setNewUser({ ...newUser, userName: e.target.value })}
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="border rounded px-3 py-2"
-                  value={newUser.email}
-                  onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                  className="mt-1 block w-full border rounded px-3 py-2"
+                  value={newUser.address}
+                  onChange={e => setNewUser({ ...newUser, address: e.target.value })}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Phone"
-                  className="border rounded px-3 py-2"
-                  value={newUser.phoneNumber}
-                  onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })}
-                />
-                <input
-                  type="date"
-                  placeholder="Date of Birth"
-                  className="border rounded px-3 py-2"
-                  value={newUser.dateOfBirth}
-                  onChange={e => setNewUser({ ...newUser, dateOfBirth: e.target.value })}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gender</label>
+                  <select
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.gender}
+                    onChange={e => setNewUser({ ...newUser, gender: e.target.value })}
+                  >
+                    {GENDER_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Role <span className="text-red-500">*</span></label>
+                  <select
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newUser.role}
+                    onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+                    required
+                  >
+                    {ROLE_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <input
-                type="text"
-                placeholder="Address"
-                className="border rounded px-3 py-2"
-                value={newUser.address}
-                onChange={e => setNewUser({ ...newUser, address: e.target.value })}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <select
-                  className="border rounded px-3 py-2"
-                  value={newUser.gender}
-                  onChange={e => setNewUser({ ...newUser, gender: e.target.value })}
-                >
-                  {GENDER_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-
-                <select
-                  className="border rounded px-3 py-2"
-                  value={newUser.role}
-                  onChange={e => setNewUser({ ...newUser, role: e.target.value })}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
+                <input
+                  type="password"
+                  className="mt-1 block w-full border rounded px-3 py-2"
+                  value={newUser.password}
+                  onChange={e => setNewUser({ ...newUser, password: e.target.value })}
                   required
-                >
-                  {ROLE_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
+                />
               </div>
-
-              <input
-                type="password"
-                placeholder="Password *"
-                className="border rounded px-3 py-2"
-                value={newUser.password}
-                onChange={e => setNewUser({ ...newUser, password: e.target.value })}
-                required
-              />
             </form>
 
             <div className="flex justify-end gap-2 mt-6">
-              <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                onClick={handleCreate}
-              >
-                Create
-              </button>
               <button
                 className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
                 onClick={() => setShowCreateModal(false)}
               >
                 Cancel
+              </button>
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                onClick={handleCreate}
+              >
+                Create
               </button>
             </div>
           </div>
@@ -341,119 +420,164 @@ export default function UserManage() {
       {showViewEditModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {editMode ? "Edit User" : "User Details"}
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">
+                {editMode ? "Edit User" : "User Details"}
+              </h2>
+              <button 
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setShowViewEditModal(false);
+                  setEditMode(false);
+                }}
+              >
+                ✕
+              </button>
+            </div>
+            
             <form className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Full Name {editMode && <span className="text-red-500">*</span>}</label>
+                  <input
+                    type="text"
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.fullName || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
+                    disabled={!editMode}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Username {editMode && <span className="text-red-500">*</span>}</label>
+                  <input
+                    type="text"
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.userName || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, userName: e.target.value })}
+                    disabled={!editMode}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <input
+                    type="email"
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.email || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                    disabled={!editMode}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <input
+                    type="text"
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.phoneNumber || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, phoneNumber: e.target.value })}
+                    disabled={!editMode}
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
+                  <input
+                    type="date"
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.dateOfBirth || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, dateOfBirth: e.target.value })}
+                    disabled={!editMode}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Address</label>
                 <input
                   type="text"
-                  placeholder="Full Name"
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.fullName || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
-                  disabled={!editMode}
-                />
-                <input
-                  type="text"
-                  placeholder="Username"
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.userName || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, userName: e.target.value })}
-                  disabled={!editMode}
-                />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.email || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                  className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                  value={selectedUser.address || ""}
+                  onChange={e => setSelectedUser({ ...selectedUser, address: e.target.value })}
                   disabled={!editMode}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Phone"
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.phoneNumber || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, phoneNumber: e.target.value })}
-                  disabled={!editMode}
-                />
-                <input
-                  type="date"
-                  placeholder="Date of Birth"
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.dateOfBirth || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, dateOfBirth: e.target.value })}
-                  disabled={!editMode}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gender</label>
+                  <select
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.gender || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, gender: e.target.value })}
+                    disabled={!editMode}
+                  >
+                    {GENDER_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Role {editMode && <span className="text-red-500">*</span>}</label>
+                  <select
+                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    value={selectedUser.role || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
+                    disabled={!editMode}
+                  >
+                    {ROLE_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <input
-                type="text"
-                placeholder="Address"
-                className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                value={selectedUser.address || ""}
-                onChange={e => setSelectedUser({ ...selectedUser, address: e.target.value })}
-                disabled={!editMode}
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <select
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.gender || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, gender: e.target.value })}
-                  disabled={!editMode}
-                >
-                  {GENDER_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-
-                <select
-                  className={`border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
-                  value={selectedUser.role || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                  disabled={!editMode}
-                >
-                  {ROLE_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
+              {editMode && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">New Password (leave blank to keep current)</label>
+                  <input
+                    type="password"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={selectedUser.password || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, password: e.target.value })}
+                  />
+                </div>
+              )}
             </form>
 
             <div className="flex justify-end gap-2 mt-6">
               {editMode ? (
                 <>
                   <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                  <button
                     className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
                     onClick={() => setEditMode(false)}
                   >
                     Cancel
                   </button>
+                  <button
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                    onClick={handleSave}
+                  >
+                    Save
+                  </button>
                 </>
               ) : (
                 <>
-                  <button
-                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
-                    onClick={() => setEditMode(true)}
-                  >
-                    Edit
-                  </button>
                   <button
                     className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
                     onClick={() => setShowViewEditModal(false)}
                   >
                     Close
+                  </button>
+                  <button
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded"
+                    onClick={() => setEditMode(true)}
+                  >
+                    Edit
                   </button>
                 </>
               )}
