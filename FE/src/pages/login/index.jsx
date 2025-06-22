@@ -15,7 +15,18 @@ function LoginPage() {
   const onFinish = async (values) => {
     try {
       const response = await api.post("login", values);
+
+      let userData = response.data.user || response.data;
+      console.log("Login userData:", userData);
+      // Nếu không có id, cố gắng lấy từ trường khác
+      if (!userData.id && userData.userId) {
+        userData.id = userData.userId;
+      }
+      dispatch(login(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
+
       dispatch(login(response.data));
+
 
       localStorage.setItem("user", JSON.stringify(response.data.user || response.data));
       localStorage.setItem("token", response.data.token);
@@ -84,6 +95,25 @@ function LoginPage() {
       </div>
     </GoogleOAuthProvider>
   );
+}
+
+/**
+ * Component RequireAdmin để bảo vệ các route chỉ cho phép admin truy cập.
+ * Nếu người dùng không phải là admin, họ sẽ bị chuyển hướng đến trang đăng nhập.
+ */
+export function RequireAdmin({ children }) {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
+    return <LoginPage />;
+  }
+  return children;
+}
+export function RequireConsultant({ children }) {
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  if (!user || user.role !== "CONSULTANT") {
+    return <LoginPage />;
+  }
+  return children;
 }
 
 export default LoginPage;
