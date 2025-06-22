@@ -50,9 +50,25 @@ export default function UserManage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Sửa endpoint từ "/consultant/all-profiles" thành "/api/profile/all"
-      const res = await api.get("consultant/all-profiles");
-      setUsers(res.data || []);
+      // Thêm tiền tố /api
+      const res = await api.get("/profile/all");
+      console.log("Response data:", res.data);
+      
+      // Biến đổi dữ liệu để phù hợp với cấu trúc hiển thị
+      const transformedUsers = res.data.map(user => ({
+        id: user.userId,
+        fullName: user.fullName,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        dateOfBirth: user.dateOfBirth,
+        gender: user.gender,
+        // Các trường từ AdminProfileDTO
+        userName: user.userName || "N/A",
+        email: user.email || "N/A",
+        role: user.role || "MEMBER"
+      }));
+      
+      setUsers(transformedUsers || []);
     } catch (err) {
       toast.error("Failed to load user list!");
       console.error("Error fetching users:", err.response?.data || err.message);
@@ -74,19 +90,12 @@ export default function UserManage() {
     }
 
     try {
-      // Kiểm tra token
-      const token = localStorage.getItem("token");
-      if (!token) {
-        toast.error("You need to be logged in to create users!");
-        return;
-      }
-
-      // Sửa endpoint từ "/profile" thành "/api/profile/create-user"
+      // Thêm tiền tố /api
       const res = await api.post("/profile/create-user", newUser);
-      setUsers([...users, res.data]);
+      toast.success("User created successfully!");
+      fetchUsers(); // Refresh lại danh sách
       setShowCreateModal(false);
       setNewUser({ ...EMPTY_USER });
-      toast.success("User created successfully!");
     } catch (err) {
       if (err.response?.status === 401) {
         toast.error("Unauthorized! Please log in again.");
@@ -100,21 +109,43 @@ export default function UserManage() {
   // Save edited user
   const handleSave = async () => {
     try {
-      if (!selectedUser.fullName || !selectedUser.userName || !selectedUser.role) {
-        toast.error("Please fill in all required fields!");
+      if (!selectedUser.fullName) {
+        toast.error("Full name is required!");
         return;
       }
       
-      // Sửa từ PUT "/profile/{id}" thành PATCH "/api/profile"
-      // Backend cần nhận userID trong body thay vì URL
+      // Tạo AdminProfileDTO với đầy đủ thông tin
       const updatePayload = {
-        ...selectedUser
+        userId: selectedUser.id,
+        fullName: selectedUser.fullName,
+        phoneNumber: selectedUser.phoneNumber || "",
+        address: selectedUser.address || "",
+        dateOfBirth: selectedUser.dateOfBirth || null,
+        gender: selectedUser.gender || "",
+        userName: selectedUser.userName || "",  // Thêm trường của AdminProfileDTO
+        email: selectedUser.email || "",        // Thêm trường của AdminProfileDTO
+        role: selectedUser.role,               // Thêm trường của AdminProfileDTO
       };
       
-      const res = await api.patch(`/api/profile`, updatePayload);
+      console.log("Sending update payload:", updatePayload);
       
-      // Cập nhật state và hiển thị
-      fetchUsers(); // Lấy lại toàn bộ danh sách thay vì cập nhật thủ công
+      // Sử dụng endpoint riêng cho admin
+      const res = await api.patch(`/profile/admin-update`, updatePayload);
+      
+      // Xử lý cập nhật mật khẩu nếu có
+      if (selectedUser.password) {
+        try {
+          await api.patch(`/profile/${selectedUser.id}/password`, { 
+            newPassword: selectedUser.password 
+          });
+          console.log("Password updated successfully");
+        } catch (passErr) {
+          console.error("Error updating password:", passErr);
+          toast.warning("Profile updated but password could not be changed");
+        }
+      }
+      
+      fetchUsers(); // Refresh lại danh sách
       setShowViewEditModal(false);
       setSelectedUser(null);
       setEditMode(false);
@@ -134,8 +165,8 @@ export default function UserManage() {
     
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        // Endpoint đã đúng: DELETE /api/profile/{id}
-        await api.delete(`/api/profile/${id}`);
+        // Thêm tiền tố /api
+        await api.delete(`/profile/${id}`);
         toast.success("Delete user successfully!");
         fetchUsers();
       } catch (err) {
@@ -148,7 +179,7 @@ export default function UserManage() {
   // View/Edit user
   const handleViewEdit = (user) => {
     setSelectedUser({ ...user });
-    setEditMode(false);
+    setEditMode(false); // Mở modal ở chế độ xem trước
     setShowViewEditModal(true);
   };
 
@@ -249,17 +280,7 @@ export default function UserManage() {
                         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-xs"
                         onClick={() => handleViewEdit(user)}
                       >
-                        View
-                      </button>
-                      <button
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-xs"
-                        onClick={() => {
-                          setSelectedUser({...user});
-                          setEditMode(true);
-                          setShowViewEditModal(true);
-                        }}
-                      >
-                        Edit
+                        View/Edit
                       </button>
                       <button
                         className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
@@ -449,14 +470,18 @@ export default function UserManage() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Username {editMode && <span className="text-red-500">*</span>}</label>
+                  <label className="block text-sm font-medium text-gray-700">Username</label>
                   <input
                     type="text"
-                    className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
+                    className="mt-1 block w-full border rounded px-3 py-2 bg-gray-100"
                     value={selectedUser.userName || ""}
-                    onChange={e => setSelectedUser({ ...selectedUser, userName: e.target.value })}
-                    disabled={!editMode}
+                    disabled={true} // Luôn khóa không cho phép chỉnh sửa
                   />
+                  {editMode && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Username không thể thay đổi sau khi tạo tài khoản
+                    </p>
+                  )}
                 </div>
                 
                 <div>
@@ -466,7 +491,7 @@ export default function UserManage() {
                     className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
                     value={selectedUser.email || ""}
                     onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
-                    disabled={!editMode}
+                    disabled={!editMode || selectedUser.email === "N/A"} // Khóa nếu là giá trị mặc định
                   />
                 </div>
               </div>
@@ -527,12 +552,17 @@ export default function UserManage() {
                     className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
                     value={selectedUser.role || ""}
                     onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                    disabled={!editMode}
+                    disabled={!editMode || selectedUser.role === "ADMIN"} // Khóa nếu là Admin
                   >
                     {ROLE_OPTIONS.map(option => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  {editMode && selectedUser.role === "ADMIN" && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Không thể thay đổi quyền của Admin
+                    </p>
+                  )}
                 </div>
               </div>
 
