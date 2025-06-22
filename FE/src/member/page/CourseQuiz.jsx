@@ -1,88 +1,119 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../../config/axios';
 
 function CourseQuiz() {
-    const [selected, setSelected] = useState({});
-    const [course, setCourse] = useState(null);
-    const [quizList, setQuizList] = useState([]);
+  const [selected, setSelected] = useState({});
+  const [course, setCourse] = useState(null);
+  const [quizList, setQuizList] = useState([]);
+  const navigate = useNavigate();
 
-    useEffect(() => {
-        const courseId = localStorage.getItem('course_id');
-        if (courseId) {
-            // Đổi sang API mới
-            fetch(`http://localhost:8080/api/courses/${courseId}`)
-                .then(res => res.json())
-                .then(data => setCourse(data));
+  useEffect(() => {
+    const courseId = localStorage.getItem('course_id');
+    if (!courseId) return;
 
-            // TODO: Đổi API lấy quiz nếu có endpoint mới, tạm giữ nguyên
-            fetch(`http://localhost:5000/CourseQuiz?course_id=${courseId}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.length > 0) setQuizList(data);
-                });
-        }
-    }, []);
+    // 🔧 FIXED: Corrected endpoint to 'courses' (plural)
+    api.get(`courses/${courseId}`)
+      .then(res => setCourse(res.data))
+      .catch(err => console.error('Failed to fetch course:', err));
 
-    const handleSelect = (quizId, idx) => {
-        setSelected(prev => ({ ...prev, [quizId]: idx }));
+    api.get(`quiz/course/${courseId}`)
+      .then(res => {
+        const parsed = res.data.map(q => ({
+          ...q,
+          answer: Array.isArray(q.answer) ? q.answer : JSON.parse(q.answer || '[]'),
+        }));
+        setQuizList(parsed);
+      })
+      .catch(err => console.error('Failed to fetch quiz:', err));
+  }, []);
+
+  const handleSelect = (quizId, idx) => {
+    setSelected(prev => ({ ...prev, [quizId]: idx }));
+  };
+
+const handleSubmit = async () => {
+  const correctCount = quizList.reduce((acc, quiz) => {
+    return selected[quiz.id] === quiz.correct ? acc + 1 : acc;
+  }, 0);
+
+  const courseId = localStorage.getItem('course_id');
+  if (!courseId) {
+    alert("Course information is missing. Please try again.");
+    return;
+  }
+
+  try {
+    const userRes = await api.get('profile');
+    const userId = userRes.data?.userId;
+
+    if (!userId) {
+      alert("Failed to identify user.");
+      return;
+    }
+
+    const payload = {
+      score: correctCount,
+      totalQuestions: quizList.length,
+      user: { id: userId },
+      course: { id: Number(courseId) },
     };
 
-    return (
-        <>
-            <div className="bg-gradient-to-b from-cyan-100 to-white py-4 min-h-screen">
-                <div className="max-w-4xl mx-auto px-4">
-                    {/* Breadcrumb & Title */}
-                    <div className="flex items-center gap-2 text-gray-700 text-lg mb-2">
-                        <span className="text-2xl">&#9776;</span>
-                        <span className="uppercase tracking-widest text-sm">E-COURSES</span>
-                        <span className="mx-1 text-cyan-400">•</span>
-                        <span className="font-bold text-lg tracking-wide">{course ? course.name?.toUpperCase() : ''}</span>
-                    </div>
-                    {/* Step Title */}
-                    <div className="text-center mt-6 mb-2">
-                        <div className="text-cyan-700 italic text-3xl font-semibold mb-4">
-                            Check Your Vocabulary
-                        </div>
-                        <hr className="border-t border-gray-300 mb-6" />
-                    </div>
-                    {/* Quiz Content */}
-                    <div className="text-center mb-8">
-                        <p className="text-gray-700 text-lg mb-6">
-                            You will next be reading from <span className="italic">{course ? course.name : ''}</span> booklet. Before you begin, check your understanding of the following words that have to do with drugs:
-                        </p>
-                        {quizList.map((quiz) => (
-                            <div key={quiz.id} className="mb-10">
-                                <div className="font-bold text-2xl mb-6">
-                                    {quiz.question}
-                                </div>
-                                <form className="flex flex-col items-start gap-6 max-w-2xl mx-auto">
-                                    {Array.isArray(quiz.answer) && quiz.answer.map((ans, idx) => (
-                                        <label key={idx} className="flex items-center gap-3 cursor-pointer text-lg">
-                                            <input
-                                                type="radio"
-                                                name={`quiz_${quiz.id}`}
-                                                checked={selected[quiz.id] === idx}
-                                                onChange={() => handleSelect(quiz.id, idx)}
-                                                className="accent-cyan-600 w-5 h-5"
-                                            />
-                                            {ans}
-                                        </label>
-                                    ))}
-                                </form>
-                            </div>
-                        ))}
-                        <div className="flex justify-center mt-8 mb-12">
-                            <button
-                                className="border-2 border-cyan-400 text-cyan-600 text-xl font-semibold px-16 py-3 rounded transition hover:bg-cyan-50 tracking-widest"
-                                disabled={quizList.length === 0 || Object.keys(selected).length !== quizList.length}
-                            >
-                                CONTINUE
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </>
-    )
+    const resultRes = await api.post('quiz-result', payload);
+    const resultId = resultRes.data?.id;
+
+    if (resultId) {
+      navigate(`/quiz-result/${resultId}`);
+    } else {
+      alert("Quiz submitted, but no result ID returned.");
+    }
+  } catch (err) {
+    console.error('Error during quiz submission:', err);
+    alert("There was an error submitting your quiz.");
+  }
+};
+
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-cyan-100 to-white py-10 px-4">
+      <div className="max-w-4xl mx-auto text-center">
+        <h2 className="text-3xl font-semibold text-cyan-700 mb-6">
+          {course?.name?.toUpperCase() || "Loading course..."}
+        </h2>
+        <p className="mb-8 text-gray-700">
+          Check your understanding of vocabulary before starting this course.
+        </p>
+
+        {quizList.map(quiz => (
+          <div key={quiz.id} className="mb-10 text-left">
+            <h3 className="text-xl font-bold text-center mb-4">{quiz.question}</h3>
+            <form className="flex flex-col gap-4 items-start max-w-2xl mx-auto">
+              {quiz.answer.map((ans, idx) => (
+                <label key={idx} className="flex items-center gap-3 text-lg cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`quiz_${quiz.id}`}
+                    checked={selected[quiz.id] === idx}
+                    onChange={() => handleSelect(quiz.id, idx)}
+                    className="accent-cyan-600"
+                  />
+                  <span>{`${String.fromCharCode(65 + idx)}. ${ans}`}</span>
+                </label>
+              ))}
+            </form>
+          </div>
+        ))}
+
+        <button
+          onClick={handleSubmit}
+          disabled={quizList.length === 0 || Object.keys(selected).length !== quizList.length}
+          className="mt-10 px-10 py-3 text-xl font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded disabled:opacity-50"
+        >
+          SUBMIT
+        </button>
+      </div>
+    </div>
+  );
 }
 
-export default CourseQuiz
+export default CourseQuiz;
