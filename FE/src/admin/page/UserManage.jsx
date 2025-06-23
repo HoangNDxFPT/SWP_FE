@@ -36,6 +36,7 @@ export default function UserManage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState(""); // State cho role filter
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,10 +51,9 @@ export default function UserManage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      // Thêm tiền tố /api
       const res = await api.get("/profile/all");
       console.log("Response data:", res.data);
-      
+
       // Biến đổi dữ liệu để phù hợp với cấu trúc hiển thị
       const transformedUsers = res.data.map(user => ({
         id: user.userId,
@@ -63,11 +63,11 @@ export default function UserManage() {
         dateOfBirth: user.dateOfBirth,
         gender: user.gender,
         // Các trường từ AdminProfileDTO
-        userName: user.userName || "N/A",
-        email: user.email || "N/A",
-        role: user.role || "MEMBER"
+        userName: user.userName,
+        email: user.email,
+        role: user.role
       }));
-      
+
       setUsers(transformedUsers || []);
     } catch (err) {
       toast.error("Failed to load user list!");
@@ -90,7 +90,6 @@ export default function UserManage() {
     }
 
     try {
-      // Thêm tiền tố /api
       const res = await api.post("/profile/create-user", newUser);
       toast.success("User created successfully!");
       fetchUsers(); // Refresh lại danh sách
@@ -106,15 +105,29 @@ export default function UserManage() {
     }
   };
 
-  // Save edited user
+  // Sửa hàm handleSave để xử lý role đặc biệt
   const handleSave = async () => {
     try {
       if (!selectedUser.fullName) {
         toast.error("Full name is required!");
         return;
       }
-      
-      // Tạo AdminProfileDTO với đầy đủ thông tin
+
+      // Kiểm tra xem role có đúng định dạng không
+      if (!selectedUser.role || selectedUser.role === "") {
+        toast.error("Role is required!");
+        return;
+      }
+
+      // Log để debug - kiểm tra giá trị role trước khi gửi
+      console.log("Current role before update:", selectedUser.role);
+
+      const formatRole = (roleValue) => {
+        // Đảm bảo role luôn là viết hoa
+        return roleValue ? roleValue.toUpperCase() : "";
+      };
+
+      // Sửa updatePayload trong handleSave
       const updatePayload = {
         userId: selectedUser.id,
         fullName: selectedUser.fullName,
@@ -122,21 +135,24 @@ export default function UserManage() {
         address: selectedUser.address || "",
         dateOfBirth: selectedUser.dateOfBirth || null,
         gender: selectedUser.gender || "",
-        userName: selectedUser.userName || "",  // Thêm trường của AdminProfileDTO
-        email: selectedUser.email || "",        // Thêm trường của AdminProfileDTO
-        role: selectedUser.role,               // Thêm trường của AdminProfileDTO
+        userName: selectedUser.userName || "",
+        email: selectedUser.email || "",
+        role: formatRole(selectedUser.role) // Format role trước khi gửi
       };
-      
+
       console.log("Sending update payload:", updatePayload);
-      
+
       // Sử dụng endpoint riêng cho admin
       const res = await api.patch(`/profile/admin-update`, updatePayload);
-      
+
+      // Kiểm tra response status và data
+      console.log("Update response:", res);
+
       // Xử lý cập nhật mật khẩu nếu có
       if (selectedUser.password) {
         try {
-          await api.patch(`/profile/${selectedUser.id}/password`, { 
-            newPassword: selectedUser.password 
+          await api.patch(`/profile/${selectedUser.id}/password`, {
+            newPassword: selectedUser.password
           });
           console.log("Password updated successfully");
         } catch (passErr) {
@@ -144,15 +160,21 @@ export default function UserManage() {
           toast.warning("Profile updated but password could not be changed");
         }
       }
-      
-      fetchUsers(); // Refresh lại danh sách
+
+      // Đặt timeout để đảm bảo API cập nhật xong
+      setTimeout(() => {
+        fetchUsers(); // Refresh lại danh sách
+      }, 500);
+
       setShowViewEditModal(false);
       setSelectedUser(null);
       setEditMode(false);
       toast.success("User updated successfully!");
     } catch (err) {
+      console.error("Error updating user (full):", err);
+      console.error("Error response data:", err.response?.data);
+      console.error("Error status:", err.response?.status);
       toast.error("Failed to update user: " + (err.response?.data?.message || "Unknown error"));
-      console.error("Error updating user:", err.response?.data || err.message);
     }
   };
 
@@ -162,7 +184,7 @@ export default function UserManage() {
       toast.error("User ID không hợp lệ!");
       return;
     }
-    
+
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
         // Thêm tiền tố /api
@@ -186,10 +208,12 @@ export default function UserManage() {
   // Filter users
   const filteredUsers = users.filter(
     (u) =>
-      !searchTerm ||
-      (u.fullName && u.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (u.userName && u.userName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase()))
+      // Lọc theo searchTerm
+      (!searchTerm ||
+        (u.fullName && u.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (u.userName && u.userName.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+      // Thêm điều kiện lọc theo role
+      (!selectedRole || u.role === selectedRole)
   );
 
   return (
@@ -197,25 +221,55 @@ export default function UserManage() {
       <ToastContainer position="top-right" autoClose={2000} />
       <h1 className="text-2xl font-bold mb-6 text-blue-900">User Management</h1>
 
-      {/* Search and Add Bar */}
+      {/* Search, Filter and Add Bar */}
       <div className="flex flex-wrap justify-between gap-4 mb-6 items-center">
-        <div className="flex items-center">
-          <input
-            type="text"
-            placeholder="Search by name, username, or email"
-            className="border rounded-l px-3 py-2 w-64 focus:outline-none"
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button 
-              className="bg-blue-100 p-2 rounded-r border-t border-r border-b border-gray-300"
-              onClick={() => setSearchTerm("")}
+        <div className="flex items-center flex-wrap gap-2">
+          {/* Search input */}
+          <div className="flex items-center">
+            <input
+              type="text"
+              placeholder="Search by name or username"
+              className="border rounded-l px-3 py-2 w-64 focus:outline-none"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+
+          </div>
+
+          {/* Role filter dropdown */}
+          <div className="flex items-center">
+            <select
+              className="border rounded px-3 py-2 focus:outline-none text-gray-700"
+              value={selectedRole}
+              onChange={e => setSelectedRole(e.target.value)}
             >
-              ✕
+              <option value="">All Roles</option>
+              {ROLE_OPTIONS.filter(role => role.value).map(role => (
+                <option key={role.value} value={role.value}>
+                  {role.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Clear all filters button - Thêm text "Clear Filters" */}
+          {(searchTerm || selectedRole) && (
+            <button
+              className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded flex items-center"
+              onClick={() => {
+                setSearchTerm("");
+                setSelectedRole("");
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Clear Filters
             </button>
           )}
         </div>
+
+        {/* Add User button */}
         <button
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded flex items-center"
           onClick={() => setShowCreateModal(true)}
@@ -226,6 +280,13 @@ export default function UserManage() {
           Add User
         </button>
       </div>
+
+      {/* Có thể thêm thông tin về số lượng user hiển thị */}
+      <p className="text-sm text-gray-500 mb-2">
+        Showing {filteredUsers.length} of {users.length} users
+        {selectedRole && ` with role ${selectedRole}`}
+        {searchTerm && ` matching "${searchTerm}"`}
+      </p>
 
       {/* Users Table */}
       <div className="overflow-x-auto bg-white rounded-lg shadow">
@@ -264,13 +325,12 @@ export default function UserManage() {
                   <td className="px-6 py-4 whitespace-nowrap">{user.userName}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{user.email || "-"}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      user.role === "ADMIN" ? "bg-red-100 text-red-800" :
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === "ADMIN" ? "bg-red-100 text-red-800" :
                       user.role === "MANAGER" ? "bg-blue-100 text-blue-800" :
-                      user.role === "CONSULTANT" ? "bg-green-100 text-green-800" :
-                      user.role === "STAFF" ? "bg-yellow-100 text-yellow-800" :
-                      "bg-gray-100 text-gray-800"
-                    }`}>
+                        user.role === "CONSULTANT" ? "bg-green-100 text-green-800" :
+                          user.role === "STAFF" ? "bg-yellow-100 text-yellow-800" :
+                            "bg-gray-100 text-gray-800"
+                      }`}>
                       {user.role}
                     </span>
                   </td>
@@ -303,14 +363,14 @@ export default function UserManage() {
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Add New User</h2>
-              <button 
+              <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => setShowCreateModal(false)}
               >
                 ✕
               </button>
             </div>
-            
+
             <form className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -323,7 +383,7 @@ export default function UserManage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Username <span className="text-red-500">*</span></label>
                   <input
@@ -334,7 +394,7 @@ export default function UserManage() {
                     required
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Email</label>
                   <input
@@ -356,7 +416,7 @@ export default function UserManage() {
                     onChange={e => setNewUser({ ...newUser, phoneNumber: e.target.value })}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
                   <input
@@ -391,7 +451,7 @@ export default function UserManage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Role <span className="text-red-500">*</span></label>
                   <select
@@ -445,7 +505,7 @@ export default function UserManage() {
               <h2 className="text-xl font-bold">
                 {editMode ? "Edit User" : "User Details"}
               </h2>
-              <button 
+              <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => {
                   setShowViewEditModal(false);
@@ -455,7 +515,7 @@ export default function UserManage() {
                 ✕
               </button>
             </div>
-            
+
             <form className="flex flex-col gap-4">
               <div className="grid grid-cols-1 gap-4">
                 <div>
@@ -468,7 +528,7 @@ export default function UserManage() {
                     disabled={!editMode}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Username</label>
                   <input
@@ -483,7 +543,7 @@ export default function UserManage() {
                     </p>
                   )}
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Email</label>
                   <input
@@ -507,7 +567,7 @@ export default function UserManage() {
                     disabled={!editMode}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Date of Birth</label>
                   <input
@@ -545,22 +605,23 @@ export default function UserManage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Role {editMode && <span className="text-red-500">*</span>}</label>
                   <select
                     className={`mt-1 block w-full border rounded px-3 py-2 ${!editMode && "bg-gray-100"}`}
                     value={selectedUser.role || ""}
                     onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                    disabled={!editMode || selectedUser.role === "ADMIN"} // Khóa nếu là Admin
+                    disabled={!editMode} // Bỏ điều kiện selectedUser.role === "ADMIN"
                   >
                     {ROLE_OPTIONS.map(option => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  {/* Có thể giữ hoặc xóa thông báo cảnh báo dưới đây */}
                   {editMode && selectedUser.role === "ADMIN" && (
-                    <p className="text-xs text-red-500 mt-1">
-                      Không thể thay đổi quyền của Admin
+                    <p className="text-xs text-orange-500 mt-1">
+                      Cẩn thận khi thay đổi quyền của Admin
                     </p>
                   )}
                 </div>
