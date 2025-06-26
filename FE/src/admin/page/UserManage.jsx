@@ -13,7 +13,6 @@ const GENDER_OPTIONS = [
 const ROLE_OPTIONS = [
   { value: "", label: "Select Role" },
   { value: "ADMIN", label: "Admin" },
-  { value: "MANAGER", label: "Manager" },
   { value: "STAFF", label: "Staff" },
   { value: "CONSULTANT", label: "Consultant" },
   { value: "MEMBER", label: "Member" }

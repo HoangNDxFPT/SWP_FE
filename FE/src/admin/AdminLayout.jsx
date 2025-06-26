@@ -29,6 +29,7 @@ export default function AdminLayout() {
     { label: "Course Management", path: "/admin/courses" },
     { label: "Survey Results", path: "/admin/survey-results" },
     { label: "Schedule Manage", path: "/admin/schedule" },
+    { label: "AssessmentManage", path: "/admin/assessment" },
   ];
 
   React.useEffect(() => {
