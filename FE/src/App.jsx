@@ -35,6 +35,7 @@ import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
+import AssessmentManage from "./admin/page/AssessmentManage";
 import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
 
@@ -128,6 +129,7 @@ const router = createBrowserRouter([
       { path: "courses", element: <CourseManage /> },
       { path: "survey-results", element: <SurveyResult /> },
       { path: "schedule", element: <ScheduleManage /> },
+      { path: "assessment", element: <AssessmentManage /> },
 
     ],
   },
