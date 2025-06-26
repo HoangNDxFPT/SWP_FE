@@ -1,121 +1,267 @@
 import { useEffect, useState } from "react";
 import ConsultantHeader from "../components/Header";
 import Footer from "../components/Footer";
-import Calendar from "react-calendar";
+
 import "react-calendar/dist/Calendar.css";
+
+import api from "../../config/axios";
+import "../components/style.css"; // Import custom styles for calendar
+
+import { AnimatePresence } from "framer-motion";
+import PrettyCalendar from "../../components/PrettyCalendar";
 
 function Dashboard() {
   const [stats, setStats] = useState({
-    currentCases: 0,
-    upcomingAppointments: 0,
-    todayAppointments: 0,
+    totalAppointments: 0,
+    confirmed: 0,
+    pending: 0,
+    rejected: 0,
+    completed: 0,
   });
+  const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ĐÂY LÀ DANH SÁCH NGÀY CÓ LỊCH HẸN
-  // (Sau này bạn thay bằng API, giữ đúng format yyyy-mm-dd)
-  const [appointments, setAppointments] = useState([
-    { date: "2025-06-10", title: "Tư vấn cho Nguyễn Văn A" },
-    { date: "2025-06-13", title: "Tư vấn cho Trần Thị B" },
-    { date: "2025-06-24", title: "Tư vấn cho Lê Văn C" },
-  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState("");
 
   useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setStats({
-        currentCases: 3,
-        upcomingAppointments: 5,
-        todayAppointments: 1,
-      });
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const dashboardRes = await api.get("/consultant/dashboard");
+        setStats(dashboardRes.data);
+
+        const appointmentsRes = await api.get("/consultant/appointments");
+        const appts = appointmentsRes.data.map((item) => ({
+          date: item.appointmentTime.split("T")[0], // Chỉ lấy ngày (YYYY-MM-DD
+          title: `(${item.status}) Tư vấn cho ${item.userFullName}`, // Tiêu đề lịch hẹn
+          status: item.status, // Trạng thái lịch hẹn
+          fullName: item.userFullName, // Tên người dùng
+          userId: item.userId, // ID người dùng
+          email: item.userEmail, // Email người dùng
+          note: item.note, // Ghi chú (nếu có)
+          phone: item.userPhone, // Số điện thoại người dùng
+        }));
+        setAppointments(appts);
+      } catch (error) {
+        // Xử lý lỗi nếu cần
+        setStats({
+          totalAppointments: 0,
+          confirmed: 0,
+          pending: 0,
+          rejected: 0,
+          completed: 0,
+        });
+        setAppointments([]);
+        console.error("Error fetching dashboard data:", error);
+      }
       setLoading(false);
-    }, 500);
-    // Khi backend có API, thay bằng:
-    // api.get('/consultant/dashboard-summary').then(res => {
-    //   setStats(res.data);
-    //   setLoading(false);
-    // });
+    }
+    fetchData();
   }, []);
+  // HÀM TÍNH TOÁN SỐ LƯỢNG LỊCH HẸN TRONG NGÀY
 
   // HÀM ĐÁNH DẤU NGÀY CÓ LỊCH HẸN
   const tileClassName = ({ date, view }) => {
     // Chỉ đánh dấu ngày trong tháng (không đánh dấu tháng/năm)
     if (view === "month") {
       const dateStr = date.toISOString().split("T")[0];
-      if (appointments.some((app) => app.date === dateStr)) {
-        return "react-calendar__tile--hasAppointment";
+      const found = appointments.find((app) => app.date === dateStr);
+      if (found) {
+        if (found.status === "PENDING") return "calendar-pending";
+        if (found.status === "CONFIRMED") return "calendar-confirmed";
+        if (found.status === "REJECTED") return "calendar-rejected";
+        if (found.status === "COMPLETED") return "calendar-completed";
+        return "calendar-other";
       }
     }
     return null;
   };
 
   // HÀM HIỂN THỊ NỘI DUNG LỊCH HẸN KHI CLICK NGÀY (tùy chọn)
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [appointmentContent, setAppointmentContent] = useState(null);
+  // const [selectedDate, setSelectedDate] = useState(null);
+  // const [appointmentContent, setAppointmentContent] = useState(null);
 
-  const handleDateClick = (value) => {
-    const dateStr = value.toISOString().split("T")[0];
-    setSelectedDate(dateStr);
-    const found = appointments.find((app) => app.date === dateStr);
-    setAppointmentContent(found ? found.title : null);
+  // const handleDateClick = (value) => {
+  //   const dateStr = value.toISOString().split("T")[0];
+  //   setSelectedDate(dateStr);
+  //   const founds = appointments.filter((app) => app.date === dateStr);
+  //   setAppointmentContent(
+  //     founds.length > 0
+  //       ? founds.map((app, idx) => <div key={idx}>{app.title}</div>)
+  //       : null
+  //   );
+  // };
+
+  const statsBoxes = [
+    {
+      key: "totalAppointments",
+      label: "Tổng số lịch hẹn",
+      icon: "📅",
+      color: "bg-blue-100 text-blue-700 border-blue-300",
+    },
+    {
+      key: "pending",
+      label: "Lịch hẹn chờ xác nhận",
+      icon: "⏳",
+      color: "bg-yellow-100 text-yellow-700 border-yellow-300",
+    },
+    {
+      key: "confirmed",
+      label: "Lịch hẹn đã xác nhận",
+      icon: "✅",
+      color: "bg-green-100 text-green-700 border-green-300",
+    },
+    {
+      key: "completed",
+      label: "Lịch hẹn đã hoàn thành",
+      icon: "🎉",
+      color: "bg-indigo-100 text-indigo-700 border-indigo-300",
+    },
+    {
+      key: "rejected",
+      label: "Lịch hẹn bị từ chối",
+      icon: "❌",
+      color: "bg-red-100 text-red-700 border-red-300",
+    },
+  ];
+  const filteredAppointments = (type) => {
+    if (type === "totalAppointments") return appointments;
+    return appointments.filter(
+      (a) => a.status?.toUpperCase() === type.toUpperCase()
+    );
   };
 
   return (
     <>
       <ConsultantHeader />
       <div className="max-w-6xl mx-auto py-10">
-        <h1 className="text-3xl font-bold mb-6 text-blue-700">
+        <h1 className="text-3xl font-bold mb-8 text-blue-700">
           Consultant Dashboard
         </h1>
         {loading ? (
           <div>Đang tải dữ liệu...</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white rounded shadow p-6 flex flex-col items-center">
-              <div className="text-2xl font-semibold text-blue-700">
-                {stats.todayAppointments}
-              </div>
-              <div className="text-gray-600">Lịch hẹn hôm nay</div>
-            </div>
-            <div className="bg-white rounded shadow p-6 flex flex-col items-center">
-              <div className="text-2xl font-semibold text-blue-700">
-                {stats.upcomingAppointments}
-              </div>
-              <div className="text-gray-600">Lịch hẹn sắp tới</div>
-            </div>
-            <div className="bg-white rounded shadow p-6 flex flex-col items-center">
-              <div className="text-2xl font-semibold text-blue-700">
-                {stats.currentCases}
-              </div>
-              <div className="text-gray-600">Hồ sơ đang tư vấn</div>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 mb-10">
+            {statsBoxes.map((box) => (
+              <motion.div
+                whileHover={{
+                  scale: 1.07,
+                  boxShadow: "0 8px 32px rgba(0,0,0,.15)",
+                }}
+                whileTap={{ scale: 0.98 }}
+                key={box.key}
+                className={`cursor-pointer rounded-xl border-2 shadow transition-all duration-300 flex flex-col items-center py-6 ${box.color}`}
+                onClick={() => {
+                  setModalType(box.key);
+                  setShowModal(true);
+                }}
+              >
+                <div className="text-4xl mb-2">{box.icon}</div>
+                <div className="text-3xl font-bold mb-1">{stats[box.key]}</div>
+                <div className="text-base font-semibold text-center">
+                  {box.label}
+                </div>
+              </motion.div>
+            ))}
           </div>
         )}
 
-        {/* PHẦN CALENDAR ĐƯỢC THÊM */}
-        <div className="mt-10 flex flex-col items-center">
-          <Calendar
-            tileClassName={tileClassName}
-            onClickDay={handleDateClick}
-            defaultActiveStartDate={new Date(2025, 5, 1)}
-          />
-          {/* Hiển thị chú thích màu đánh dấu */}
-          <div className="mt-2 flex items-center gap-2 text-sm text-gray-600">
-            <span className="inline-block w-4 h-4 rounded-full bg-yellow-300 border border-yellow-500"></span>
-            Ngày có lịch hẹn
+        <div className="flex w-full max-w-5xl mx-auto mt-10 gap-8 items-center">
+          {/* Cột trái: Calendar to, không có khung ngoài */}
+          <div className="flex-1 flex flex-col items-center">
+            <PrettyCalendar appointments={appointments} />
           </div>
-          {/* Hiển thị nội dung lịch hẹn khi click ngày */}
-          {appointmentContent && (
-            <div className="mt-2 bg-white border rounded p-2 shadow text-blue-700 font-semibold">
-              {selectedDate}: {appointmentContent}
-            </div>
-          )}
+          {/* Cột phải: Ảnh minh họa */}
+          <div className="flex-1 flex items-center justify-center">
+            <img
+              src="https://cdn.pixabay.com/photo/2016/03/23/18/41/calendar-1275962_1280.png"
+              alt="Minh họa lịch hẹn"
+              className="w-full max-w-[350px] rounded-2xl shadow"
+            />
+            {/* Hoặc nội dung bạn muốn */}
+          </div>
         </div>
       </div>
       <Footer />
 
+      {/* MODAL HIỂN THỊ DANH SÁCH LỊCH HẸN khi click từng box */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowModal(false)}
+          >
+            <motion.div
+              className="bg-white rounded-lg shadow-lg p-8 w-full max-w-[600px] min-w-[400px] text-lg relative"
+              initial={{ scale: 0.8, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.8, y: 50 }}
+              transition={{ type: "spring", stiffness: 300, damping: 24 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <div className="text-xl font-bold mb-4 text-blue-700">
+                {statsBoxes.find((b) => b.key === modalType)?.label}
+              </div>
+              <div className="max-h-72 overflow-y-auto space-y-4">
+                {filteredAppointments(modalType).length === 0 ? (
+                  <div className="text-gray-500 text-center">
+                    Không có lịch hẹn nào.
+                  </div>
+                ) : (
+                  filteredAppointments(modalType).map((app, idx) => (
+                    <motion.div
+                      key={app.id || idx}
+                      className={`rounded border p-3 shadow bg-gray-50`}
+                      initial={{ opacity: 0, x: 30 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                    >
+                      <div>
+                        <b>Họ tên:</b> {app.fullName}
+                      </div>
+                      <div>
+                        <b>Email:</b> {app.email}
+                      </div>
+                      <div>
+                        <b>Thời gian:</b> {app.date} {app.time}
+                      </div>
+                      <div>
+                        <b>SĐT:</b> {app.phone} {app.phone}
+                      </div>
+                      <div>
+                        <b>Ghi chú:</b>{" "}
+                        {app.note || (
+                          <span className="italic text-gray-400">Không có</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-right text-blue-400 mt-1">
+                        {app.status}
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Style cho calendar theo trạng thái */}
       <style>
         {`
+          
+       
           .react-calendar__tile--hasAppointment {
             background: #fde047 !important; /* yellow */
             color: #1e40af !important;      /* blue */

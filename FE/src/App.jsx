@@ -17,6 +17,8 @@ import AdminLayout from "./admin/AdminLayout";
 import AdminProfilePage from "./admin/page/AdminProfilePage";
 import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
+import SurveyResult from "./admin/page/SurveyResult";
+import ScheduleManage from "./admin/page/ScheduleManage";
 
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
@@ -33,8 +35,9 @@ import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
+import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
-import Crafft from "./member/page/Crafft";
+
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
@@ -123,6 +126,9 @@ const router = createBrowserRouter([
       { path: "profile", element: <AdminProfilePage /> },
       { path: "users", element: <UserManage /> },
       { path: "courses", element: <CourseManage /> },
+      { path: "survey-results", element: <SurveyResult /> },
+      { path: "schedule", element: <ScheduleManage /> },
+
     ],
   },
   {
@@ -134,7 +140,10 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "dashboard", element: <ConsultantDashboard /> },
-      { path: "appointments", element: <AppointmentList /> },
+      { path: "appointments", 
+        element: <AppointmentList />, 
+        
+      },
       { path: "appointments/:id", element: <AppointmentDetail /> },
       { path: "cases", element: <UserCaseList /> },
       { path: "cases/:id", element: <UserCaseDetail /> },
