@@ -33,7 +33,7 @@ function CouresListPage() {
         const fetchCompleted = async () => {
             if (user?.userId) {
                 try {
-                    const res = await api.get(`quiz-result/completed-courses/${user.userId}`);
+                    const res = await api.get(`quiz/completed/${user.userId}`);
                     if (Array.isArray(res.data)) {
                         setCompletedCourses(res.data);
                     }

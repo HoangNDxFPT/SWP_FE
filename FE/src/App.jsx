@@ -9,6 +9,8 @@ import HomePage from "./member/page/HomePage";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
 import UserProfilePage from "./member/page/UserProfilePage";
+import Servey from "./member/page/Servey";
+import Assist from "./member/page/Assist";
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -16,7 +18,6 @@ import AdminProfilePage from "./admin/page/AdminProfilePage";
 import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
 import SurveyResult from "./admin/page/SurveyResult";
-import Dashboard from "./admin/page/Dashboard";
 import ScheduleManage from "./admin/page/ScheduleManage";
 
 // Consultant pages
@@ -35,6 +36,8 @@ import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
 import AssessmentManage from "./admin/page/AssessmentManage";
+import Crafft from "./member/page/Crafft"
+import AssessmentResult from "./member/page/AssessmentResult";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -95,6 +98,22 @@ const router = createBrowserRouter([
    {
     path: "/quiz-result/:id",
     element: <CourseResultPage/>,
+  },
+  {
+    path: "/servey",
+    element: <Servey />,
+  },
+  {
+    path: "/assist",
+    element: <Assist />,
+  },
+    {
+    path: "/crafft",
+    element: <Crafft />,
+  },
+    {
+    path: "/assessment-result/:resultId",
+    element: <AssessmentResult />,
   },
   
   {
