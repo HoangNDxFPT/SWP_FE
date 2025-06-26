@@ -35,9 +35,9 @@ import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
+import AssessmentManage from "./admin/page/AssessmentManage";
 import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
-import AssessmentManage from "./admin/page/AssessmentManage";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
