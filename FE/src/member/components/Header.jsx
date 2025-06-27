@@ -1,24 +1,24 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout, login } from '../../redux/features/userSlice'; 
-import api from '../../config/axios'; 
-import { toast } from 'react-toastify'; 
+import { logout, login } from '../../redux/features/userSlice';
+import api from '../../config/axios';
+import { toast } from 'react-toastify';
 
 function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
+
   // Lấy toàn bộ trạng thái của user slice từ Redux store.
   // Giả định user slice của bạn có thể trông như:
   // { user: { username: '...', fullName: '...', ... }, token: '...', ... }
-  const userSliceState = useSelector(state => state.user); 
+  const userSliceState = useSelector(state => state.user);
 
   // Truy cập đối tượng user thực tế từ userSliceState, có thể là userSliceState.user
   const currentUser = userSliceState ? userSliceState.user : null;
-  
+
   // Sử dụng fullName từ đối tượng user thực tế để hiển thị tên người dùng
-  const display_name = currentUser ? currentUser.userName : null; 
+  const display_name = currentUser ? currentUser.userName : null;
 
   // useEffect để kiểm tra và khôi phục trạng thái người dùng khi component mount hoặc Redux state thay đổi
   useEffect(() => {
@@ -39,11 +39,11 @@ function Header() {
             console.log("Header useEffect: Attempting to fetch user profile from API...");
             // Đã sửa URL từ '/api/profile' thành 'profile'
             // vì baseURL của axios đã bao gồm '/api/'
-            const response = await api.get('profile'); 
+            const response = await api.get('profile');
             console.log("Header useEffect: User profile fetched successfully:", response.data);
             // Gửi action login để cập nhật Redux store với thông tin người dùng đã lấy.
             // Điều này sẽ cập nhật userSliceState.user
-            dispatch(login(response.data)); 
+            dispatch(login(response.data));
           } catch (error) {
             console.error("Header useEffect: Lỗi khi lấy thông tin hồ sơ người dùng:", error);
             if (error.response) {
@@ -52,12 +52,12 @@ function Header() {
             }
 
             if (error.response?.status === 401 || error.response?.status === 403) {
-                 toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+              toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
             } else {
-                 toast.error("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
+              toast.error("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
             }
-            localStorage.removeItem('token'); 
-            dispatch(logout()); 
+            localStorage.removeItem('token');
+            dispatch(logout());
           }
         };
         fetchUserProfile();
@@ -119,7 +119,10 @@ function Header() {
       <div className="flex gap-2 items-center">
         {display_name ? (
           <>
-            <a href='/profile'>
+            <a href="/assessment-history">
+              <span className="font-semibold text-gray-700">Assessment History</span>
+            </a>
+            <a href="/profile" className="ml-4">
               <span className="font-semibold text-gray-700">Hello, {display_name}</span>
             </a>
             <button
