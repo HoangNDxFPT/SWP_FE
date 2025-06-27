@@ -3,7 +3,7 @@ import api from "../../config/axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function SurveyResult() {
+function CommunitySurvey() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filterName, setFilterName] = useState("");
@@ -153,4 +153,4 @@ function SurveyResult() {
   );
 }
 
-export default SurveyResult;
+export default CommunitySurvey;
