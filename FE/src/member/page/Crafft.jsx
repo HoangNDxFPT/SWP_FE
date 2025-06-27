@@ -50,7 +50,7 @@ function Crafft() {
       if (res.status === 200) {
         toast.success('Gửi câu trả lời thành công!');
         console.log('Submit response:', res.data);
-        navigate(`/assessment-result/${res.data.resultId}`);
+        navigate(`/assessment-result/${res.data.assessmentResultId}`);
       } else {
         toast.error('Gửi thất bại!');
       }
