@@ -38,27 +38,27 @@ function Assist() {
   };
 
   const handleSubmit = async () => {
-  if (!assessment) return;
+    if (!assessment) return;
 
-  const payload = Object.keys(answers).map(questionId => ({
-    questionId: parseInt(questionId),
-    answerId: answers[questionId],
-  }));
+    const payload = Object.keys(answers).map(questionId => ({
+      questionId: parseInt(questionId),
+      answerId: answers[questionId],
+    }));
 
-  try {
-    const res = await api.post(`/assessments/submit?assessmentId=${assessment.assessmentId}`, payload);
-    if (res.status === 200) {
-      toast.success('Gửi câu trả lời thành công!');
-      console.log('Submit response:', res.data);
-      navigate(`/assessment-result/${res.data.resultId}`);
-    } else {
-      toast.error('Gửi thất bại!');
+    try {
+      const res = await api.post(`assessments/submit?assessmentId=${assessment.assessmentId}`, payload);
+      if (res.status === 200) {
+        toast.success('Gửi câu trả lời thành công!');
+        console.log('Submit response:', res.data);
+        navigate(`/assessment-result/${res.data.assessmentResultId}`);
+      } else {
+        toast.error('Gửi thất bại!');
+      }
+    } catch (err) {
+      console.error('Submit error:', err);
+      toast.error('Có lỗi khi gửi câu trả lời!');
     }
-  } catch (err) {
-    console.error('Submit error:', err);
-    toast.error('Có lỗi khi gửi câu trả lời!');
-  }
-};
+  };
   if (loading) {
     return <div className="text-center mt-10">Đang tải câu hỏi...</div>;
   }

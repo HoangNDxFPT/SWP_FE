@@ -111,7 +111,7 @@ const router = createBrowserRouter([
     element: <Crafft />,
   },
     {
-    path: "/assessment-result/:resultId",
+    path: "/assessment-result/:assessmentResultId",
     element: <AssessmentResult />,
   },
   
