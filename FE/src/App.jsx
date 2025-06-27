@@ -25,9 +25,7 @@ import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
-import AppointmentDetail from "./consultant/page/AppointmentDetail";
 import UserCaseList from "./consultant/page/UserCaseList";
-import UserCaseDetail from "./consultant/page/UserCaseDetail";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
@@ -150,9 +148,9 @@ const router = createBrowserRouter([
         element: <AppointmentList />, 
         
       },
-      { path: "appointments/:id", element: <AppointmentDetail /> },
+      
       { path: "cases", element: <UserCaseList /> },
-      { path: "cases/:id", element: <UserCaseDetail /> },
+      
       { path: "profile", element: <ConsultantProfilePage /> },
     ],
   },

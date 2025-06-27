@@ -61,6 +61,7 @@ function ConsultantHeader() {
   const menuItems = [
     { label: "Trang chủ", path: "/consultant/dashboard" },
     { label: "Lịch làm việc", path: "/consultant/appointments" },
+    { label: "Khóa học", path: "/consultant/courses" },
 
     
     // Thêm các mục khác nếu cần
@@ -74,7 +75,7 @@ function ConsultantHeader() {
           src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824738/z6621531660497_00c45b7532add5b3a49055fb93d63a53_ewd8xj.jpg"
           alt="Logo"
           className="w-16 h-16 cursor-pointer rounded-xl object-cover"
-          onClick={() => navigate("/")}
+          
         />
         <nav className="hidden md:flex gap-7 font-semibold">
           {menuItems.map((item) => (
