@@ -26,7 +26,7 @@ import AppointmentList from "./consultant/page/AppointmentList";
 import AppointmentDetail from "./consultant/page/AppointmentDetail";
 import UserCaseList from "./consultant/page/UserCaseList";
 import UserCaseDetail from "./consultant/page/UserCaseDetail";
-import ConsultantProfilePage from "./consultant/page/ConsultantProfilePage";
+import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
