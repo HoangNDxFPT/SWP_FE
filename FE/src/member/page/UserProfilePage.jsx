@@ -53,7 +53,7 @@ function UserProfilePage() {
     const handleSave = async () => {
         setProfileMsg('');
         try {
-            const response = await api.put('profile', user);
+            const response = await api.patch('profile/update-self', user);
             if (response.status === 200) {
                 setEditMode(false);
                 setProfileMsg('Hồ sơ đã được cập nhật thành công!');

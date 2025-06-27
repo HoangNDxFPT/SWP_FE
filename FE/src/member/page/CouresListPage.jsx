@@ -6,6 +6,7 @@ import Header from '../components/Header'
 function CouresListPage() {
     const [courses, setCourses] = useState([]);
     const [search, setSearch] = useState('');
+    const [completedCourses, setCompletedCourses] = useState([]);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
@@ -28,6 +29,23 @@ function CouresListPage() {
         fetchUser();
     }, []);
 
+    useEffect(() => {
+        const fetchCompleted = async () => {
+            if (user?.userId) {
+                try {
+                    const res = await api.get(`quiz/completed/${user.userId}`);
+                    if (Array.isArray(res.data)) {
+                        setCompletedCourses(res.data);
+                    }
+                } catch (err) {
+                    console.error('Failed to fetch completed courses:', err);
+                }
+            }
+        };
+        fetchCompleted();
+    },);
+
+
     // Tính nhóm tuổi
     let userAgeGroup = '';
     if (user && user.dateOfBirth) {
@@ -41,7 +59,6 @@ function CouresListPage() {
         userAgeGroup = age < 18 ? 'Teenagers' : 'Adults';
     }
 
-    // Lấy danh sách khóa học theo search (debounce 400ms)
     useEffect(() => {
         const delayDebounce = setTimeout(() => {
             const fetchCourses = async () => {
@@ -51,23 +68,36 @@ function CouresListPage() {
                     if (search.trim() !== '') {
                         url = `http://localhost:8080/api/courses/search?name=${encodeURIComponent(search.trim())}`;
                     }
-                    const res = await api.get(url);
+
+                    const token = localStorage.getItem('token'); // or wherever you're storing it
+
+                    const res = await api.get(url, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            Accept: '*/*',
+                        },
+                    });
+
                     if (res.status === 200 && Array.isArray(res.data)) {
                         setCourses(res.data);
-                        setCurrentPage(1); // Reset về trang 1 khi search
+                        setCurrentPage(1);
                     } else {
                         setCourses([]);
                     }
-                } catch {
+                } catch (error) {
+                    console.error('Fetch error:', error);
                     setCourses([]);
                 } finally {
                     setLoading(false);
                 }
             };
+
             fetchCourses();
         }, 400);
+
         return () => clearTimeout(delayDebounce);
     }, [search]);
+
 
     // Lọc theo nhóm tuổi
     const filteredCourses = courses.filter(course =>
@@ -102,7 +132,7 @@ function CouresListPage() {
                         </p>
                     </div>
                     <img
-                        src="https://cdn.discordapp.com/attachments/1203731339766141021/1377606127147159683/kids_en.png?ex=6839932f&is=683841af&hm=77ea418268c5cdcb59d0173c30a8602b34c1036984df0534cc761d5e3d85ba3c&"
+                        src=""
                         alt="Group"
                         className="w-[500px] h-auto object-contain"
                     />
@@ -128,29 +158,33 @@ function CouresListPage() {
                     ) : paginatedCourses.length === 0 ? (
                         <div className="text-gray-500 text-center">No courses found.</div>
                     ) : (
-                        paginatedCourses.map(course => (
-                            <div key={course.id} className="bg-white rounded shadow-md flex flex-col md:flex-row">
-                                <div className="flex-1 p-6 flex flex-col">
-                                    <h2 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h2>
-                                    <p className="text-gray-700 mb-4">{course.description}</p>
-                                    <div className="flex flex-wrap gap-4 mb-4 text-gray-500 text-sm">
-                                        <span><b>Type:</b> {course.type}</span>
-                                        <span><b>Target Age:</b> {course.targetAgeGroup}</span>
-                                        <span><b>Start:</b> {course.startDate}</span>
-                                        <span><b>End:</b> {course.endDate}</span>
+                        
+                            paginatedCourses.map(course => (
+                                <div key={course.id} className="bg-white rounded shadow-md flex flex-col md:flex-row">
+                                    <div className="flex-1 p-6 flex flex-col">
+                                        <h2 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h2>
+                                        <p className="text-gray-700 mb-4">{course.description}</p>
+                                        <div className="flex flex-wrap gap-4 mb-4 text-gray-500 text-sm">
+                                            <span><b>Type:</b> {course.type}</span>
+                                            <span><b>Target Age:</b> {course.targetAgeGroup}</span>
+                                            <span><b>Start:</b> {course.startDate}</span>
+                                            <span><b>End:</b> {course.endDate}</span>
+                                        </div>
+                                        {completedCourses.includes(course.id) ? (
+                                            <button className="px-6 py-2 rounded font-semibold bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
+                                                Course Completed
+                                            </button>
+                                        ) : (
+                                            <Link to={`/course/${course.id}`} className="w-fit">
+                                                <button className="border border-blue-700 text-blue-700 px-6 py-2 rounded font-semibold hover:bg-blue-50 transition">
+                                                    Start This Free Course
+                                                </button>
+                                            </Link>
+                                        )}
                                     </div>
-                                    <Link
-                                        to={`/course/${course.id}`}
-                                        className="w-fit"
-                                    >
-                                        <button className="border border-blue-700 text-blue-700 px-6 py-2 rounded font-semibold hover:bg-blue-50 transition w-fit">
-                                            Start This Free Course
-                                        </button>
-                                    </Link>
                                 </div>
-                            </div>
-                        ))
-                    )}
+                            ))
+                        )}
                     {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex justify-center mt-4 gap-2">

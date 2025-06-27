@@ -9,16 +9,18 @@ import HomePage from "./member/page/HomePage";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
 import UserProfilePage from "./member/page/UserProfilePage";
+import Servey from "./member/page/Servey";
+import Assist from "./member/page/Assist";
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
 import AdminProfilePage from "./admin/page/AdminProfilePage";
 import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
-import SurveyResult from "./admin/page/SurveyResult";
-import Dashboard from "./admin/page/Dashboard";
-import ScheduleManage from "./admin/page/ScheduleManage";
-
+import CommunitySurvey from "./admin/page/CommunitySurvey";
+import AssessmentManage from "./admin/page/AssessmentManage";
+import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
+import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
@@ -26,12 +28,19 @@ import AppointmentList from "./consultant/page/AppointmentList";
 import AppointmentDetail from "./consultant/page/AppointmentDetail";
 import UserCaseList from "./consultant/page/UserCaseList";
 import UserCaseDetail from "./consultant/page/UserCaseDetail";
-import ConsultantProfilePage from "./consultant/page/ConsultantProfilePage";
+import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
 import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
+import CourseQuiz from "./member/page/CourseQuiz";
+import CourseResultPage from "./member/page/CourseResultPage";
+import Crafft from "./member/page/Crafft"
+import AssessmentResult from "./member/page/AssessmentResult";
+
+
+
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -85,7 +94,31 @@ const router = createBrowserRouter([
            {
     path: "/consultantList",
     element: <ConsultantList/>,
+  },           {
+    path: "/quiz/:courseId",
+    element: <CourseQuiz/>,
   },
+   {
+    path: "/quiz-result/:id",
+    element: <CourseResultPage/>,
+  },
+  {
+    path: "/servey",
+    element: <Servey />,
+  },
+  {
+    path: "/assist",
+    element: <Assist />,
+  },
+    {
+    path: "/crafft",
+    element: <Crafft />,
+  },
+    {
+    path: "/assessment-result/:assessmentResultId",
+    element: <AssessmentResult />,
+  },
+  
   {
     path: "/admin",
     element: (
@@ -97,9 +130,11 @@ const router = createBrowserRouter([
       { path: "profile", element: <AdminProfilePage /> },
       { path: "users", element: <UserManage /> },
       { path: "courses", element: <CourseManage /> },
-      { path: "survey-results", element: <SurveyResult /> },
-      { path: "schedule", element: <ScheduleManage /> },
-
+      { path: "survey", element: <CommunitySurvey /> },
+      { path: "schedule", element: <ConsultantScheduleManage /> },
+      { path: "assessment", element: <AssessmentManage /> },
+      { path: "assessment-result", element: <AssessmentResult /> },
+      { path: "course-enrollment", element: <CourseEnrollmentManage /> },
     ],
   },
   {

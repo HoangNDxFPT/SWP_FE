@@ -12,11 +12,14 @@ export default function AdminLayout() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("/profile")
+    api.get("/profile")  // Bỏ /api
       .then(res => {
         setFullName(res.data?.fullName || "User");
       })
-      .catch(() => setFullName("User"))
+      .catch((err) => {
+        console.error("Error fetching profile:", err);
+        setFullName("User");
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -24,8 +27,11 @@ export default function AdminLayout() {
     { label: "Dashboard", path: "/admin" },
     { label: "Account Management", path: "/admin/users" },
     { label: "Course Management", path: "/admin/courses" },
-    { label: "Survey Results", path: "/admin/survey-results" }, 
-    { label: "Schedule Manage", path: "/admin/schedule" }, 
+    { label: "Community Survey", path: "/admin/survey" },
+    { label: "Schedule Manage", path: "/admin/schedule" },
+    { label: "Assessment Manage", path: "/admin/assessment" },
+    { label: "Assessment Result", path: "/admin/assessment-result" },
+    { label: "Course Enrollment Manage", path: "/admin/course-enrollment" },
   ];
 
   React.useEffect(() => {

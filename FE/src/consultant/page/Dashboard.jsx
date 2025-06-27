@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import ConsultantHeader from "../components/Header";
 import Footer from "../components/Footer";
-import Calendar from "react-calendar";
+
 import "react-calendar/dist/Calendar.css";
 
 import api from "../../config/axios";
 import "../components/style.css"; // Import custom styles for calendar
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence,motion } from "framer-motion";
 import PrettyCalendar from "../../components/PrettyCalendar";
 
 function Dashboard() {
@@ -78,20 +78,7 @@ function Dashboard() {
     return null;
   };
 
-  // HÀM HIỂN THỊ NỘI DUNG LỊCH HẸN KHI CLICK NGÀY (tùy chọn)
-  // const [selectedDate, setSelectedDate] = useState(null);
-  // const [appointmentContent, setAppointmentContent] = useState(null);
-
-  // const handleDateClick = (value) => {
-  //   const dateStr = value.toISOString().split("T")[0];
-  //   setSelectedDate(dateStr);
-  //   const founds = appointments.filter((app) => app.date === dateStr);
-  //   setAppointmentContent(
-  //     founds.length > 0
-  //       ? founds.map((app, idx) => <div key={idx}>{app.title}</div>)
-  //       : null
-  //   );
-  // };
+ 
 
   const statsBoxes = [
     {

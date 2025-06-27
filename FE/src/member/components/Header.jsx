@@ -81,9 +81,8 @@ function Header() {
     { label: 'Courses', path: '/courseList' },
     { label: 'Survey', path: '/servey' },
     { label: 'Online Consultant', path: '/consultantList' },
-    { label: 'News', path: '#' },
     { label: 'Blogs', path: '/blogs' },
-    { label: 'Contact', path: '#' },
+
   ];
 
   return (
