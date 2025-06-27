@@ -19,6 +19,8 @@ import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
 import CommunitySurvey from "./admin/page/CommunitySurvey";
 import AssessmentManage from "./admin/page/AssessmentManage";
+import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
+import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
@@ -36,7 +38,7 @@ import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
 import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
-import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
+
 
 
 
@@ -131,7 +133,8 @@ const router = createBrowserRouter([
       { path: "survey", element: <CommunitySurvey /> },
       { path: "schedule", element: <ConsultantScheduleManage /> },
       { path: "assessment", element: <AssessmentManage /> },
-
+      { path: "assessment-result", element: <AssessmentResult /> },
+      { path: "course-enrollment", element: <CourseEnrollmentManage /> },
     ],
   },
   {
