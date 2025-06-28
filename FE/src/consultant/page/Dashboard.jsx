@@ -1,13 +1,17 @@
 import { useEffect, useState } from "react";
 import ConsultantHeader from "../components/Header";
 import Footer from "../components/Footer";
-
+import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
 import api from "../../config/axios";
 import "../components/style.css"; // Import custom styles for calendar
 
+<<<<<<< HEAD
 import { AnimatePresence,motion } from "framer-motion";
+=======
+import { AnimatePresence, motion } from "framer-motion";
+>>>>>>> khoi
 import PrettyCalendar from "../../components/PrettyCalendar";
 
 function Dashboard() {

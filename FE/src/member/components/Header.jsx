@@ -8,8 +8,21 @@ import { toast } from 'react-toastify';
 function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+<<<<<<< HEAD
   const userSliceState = useSelector(state => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
+=======
+
+  // Lấy toàn bộ trạng thái của user slice từ Redux store.
+  // Giả định user slice của bạn có thể trông như:
+  // { user: { username: '...', fullName: '...', ... }, token: '...', ... }
+  const userSliceState = useSelector(state => state.user);
+
+  // Truy cập đối tượng user thực tế từ userSliceState, có thể là userSliceState.user
+  const currentUser = userSliceState ? userSliceState.user : null;
+
+  // Sử dụng fullName từ đối tượng user thực tế để hiển thị tên người dùng
+>>>>>>> khoi
   const display_name = currentUser ? currentUser.userName : null;
 
   useEffect(() => {
@@ -24,8 +37,17 @@ function Header() {
         const fetchUserProfile = async () => {
           try {
             console.log("Header useEffect: Attempting to fetch user profile from API...");
+<<<<<<< HEAD
             const response = await api.get('profile');
             console.log("Header useEffect: User profile fetched successfully:", response.data);
+=======
+            // Đã sửa URL từ '/api/profile' thành 'profile'
+            // vì baseURL của axios đã bao gồm '/api/'
+            const response = await api.get('profile');
+            console.log("Header useEffect: User profile fetched successfully:", response.data);
+            // Gửi action login để cập nhật Redux store với thông tin người dùng đã lấy.
+            // Điều này sẽ cập nhật userSliceState.user
+>>>>>>> khoi
             dispatch(login(response.data));
           } catch (error) {
             console.error("Header useEffect: Lỗi khi lấy thông tin hồ sơ người dùng:", error);

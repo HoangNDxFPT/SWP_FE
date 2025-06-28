@@ -40,9 +40,6 @@ import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
 import AssessmentHistory from "./member/page/AssessmentHistory";
 
-
-
-
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   if (!user || !(user.role === "ADMIN" || user.role_id === 1)) {
