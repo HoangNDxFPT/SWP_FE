@@ -10,6 +10,7 @@ function AssessmentResult() {
   const navigate = useNavigate();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAnswerDetails, setShowAnswerDetails] = useState(false);
 
   useEffect(() => {
     const fetchResult = async () => {
@@ -29,6 +30,7 @@ function AssessmentResult() {
     fetchResult();
   }, [assessmentResultId]);
 
+<<<<<<< HEAD
   // Hàm điều hướng dựa vào mức độ rủi ro
   const handleNavigateBasedOnRisk = () => {
     if (result.riskLevel === 'MEDIUM') {
@@ -38,6 +40,8 @@ function AssessmentResult() {
     }
   };
 
+=======
+>>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
   // Lấy thông tin nút chuyển hướng dựa trên mức độ rủi ro
   const getActionButtonInfo = () => {
     switch (result.riskLevel) {
@@ -72,6 +76,14 @@ function AssessmentResult() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  // Hàm chuyển đổi hiển thị chi tiết câu trả lời
+  const toggleAnswerDetails = () => {
+    setShowAnswerDetails(!showAnswerDetails);
+  };
+
+>>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
   if (loading) {
     return <div className="text-center mt-10">Đang tải kết quả...</div>;
   }
@@ -100,11 +112,14 @@ function AssessmentResult() {
           <strong>Mức độ rủi ro:</strong> <span className={`font-semibold ${getRiskLevelClass(result.riskLevel)}`}>{result.riskLevel}</span>
         </div>
 
+<<<<<<< HEAD
         {/* <div className="mb-4">
           <strong>Khuyến nghị:</strong>
           <p className="mt-1">{result.recommendation}</p>
         </div> */}
 
+=======
+>>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
         {/* Hiển thị thông báo và hướng dẫn dựa vào mức độ rủi ro */}
         <div className={`p-4 mb-6 rounded-lg ${
           result.riskLevel === 'LOW' ? 'bg-green-50 border border-green-200' : 
@@ -130,22 +145,7 @@ function AssessmentResult() {
           )}
         </div>
 
-        {result.answers.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Chi tiết câu trả lời:</h2>
-            <ul className="list-disc pl-5">
-              {result.answers.map((answer) => (
-                <li key={answer.questionId}>
-                  <strong>Câu hỏi:</strong> {answer.questionText}<br />
-                  <strong>Trả lời:</strong> {answer.answerText}<br />
-                  <strong>Điểm:</strong> {answer.score}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {result.recommendedCourses.length > 0 && (
+        {result.recommendedCourses?.length > 0 && (
           <div className="mb-6">
             <h2 className="text-xl font-semibold mb-2">Khóa học khuyến nghị:</h2>
             <ul className="list-disc pl-5">
@@ -168,6 +168,49 @@ function AssessmentResult() {
           </div>
         )}
 
+<<<<<<< HEAD
+=======
+        {result.answers?.length > 0 && (
+          <div className="mb-6">
+            <button 
+              onClick={toggleAnswerDetails}
+              className="flex justify-between w-full items-center bg-gray-100 hover:bg-gray-200 px-4 py-3 rounded-lg transition"
+            >
+              <h2 className="text-xl font-semibold">Chi tiết câu trả lời</h2>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-5 w-5 transition-transform duration-300 ${showAnswerDetails ? 'transform rotate-180' : ''}`} 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+            
+            {showAnswerDetails && (
+              <div className="mt-2 p-4 border border-gray-200 rounded-lg bg-white">
+                <ul className="list-none pl-0">
+                  {result.answers.map((answer, index) => (
+                    <li key={answer.questionId} className="mb-4 pb-4 border-b border-gray-100 last:border-b-0">
+                      <div className="font-medium text-gray-700 mb-2 flex items-start">
+                        <span className="inline-flex justify-center items-center w-6 h-6 bg-blue-100 text-blue-800 rounded-full mr-2 shrink-0 font-semibold">
+                          {index + 1}
+                        </span>
+                        <span>{answer.questionText}</span>
+                      </div>
+                      <div className="pl-8">
+                        <div><strong>Trả lời:</strong> {answer.answerText}</div>
+                        <div><strong>Điểm:</strong> {answer.score}</div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+
+>>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
         <div className="flex flex-wrap gap-3 mt-8">
           {/* Nút hành động dựa theo mức độ rủi ro */}
           {actionButton.show && (

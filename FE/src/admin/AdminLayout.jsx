@@ -29,7 +29,9 @@ export default function AdminLayout() {
     { label: "Course Management", path: "/admin/courses" },
     { label: "Community Survey", path: "/admin/survey" },
     { label: "Schedule Manage", path: "/admin/schedule" },
-    { label: "AssessmentManage", path: "/admin/assessment" },
+    { label: "Assessment Manage", path: "/admin/assessment" },
+    { label: "Assessment Result", path: "/admin/assessment-result" },
+    { label: "Course Enrollment Manage", path: "/admin/course-enrollment" },
   ];
 
   React.useEffect(() => {

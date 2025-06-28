@@ -9,26 +9,14 @@ function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Lấy toàn bộ trạng thái của user slice từ Redux store.
-  // Giả định user slice của bạn có thể trông như:
-  // { user: { username: '...', fullName: '...', ... }, token: '...', ... }
   const userSliceState = useSelector(state => state.user);
-
-  // Truy cập đối tượng user thực tế từ userSliceState, có thể là userSliceState.user
   const currentUser = userSliceState ? userSliceState.user : null;
-
-  // Sử dụng fullName từ đối tượng user thực tế để hiển thị tên người dùng
   const display_name = currentUser ? currentUser.userName : null;
 
-  // useEffect để kiểm tra và khôi phục trạng thái người dùng khi component mount hoặc Redux state thay đổi
   useEffect(() => {
     console.log("Header useEffect: Component mounted or user/dispatch changed.");
     console.log("Header useEffect: Current Redux user slice state:", userSliceState);
     console.log("Header useEffect: Current user object in slice:", currentUser);
-
-    // QUAN TRỌNG: Chỉ cố gắng khôi phục nếu currentUser.fullName chưa có
-    // Điều này đảm bảo rằng nếu dữ liệu đã có từ login response (qua Redux Persist),
-    // chúng ta sẽ không gọi API /profile nữa.
     if (!currentUser || !currentUser.fullName) {
       const token = localStorage.getItem('token');
       console.log("Header useEffect: Token from localStorage:", token ? "Found" : "Not Found");
@@ -37,12 +25,9 @@ function Header() {
         const fetchUserProfile = async () => {
           try {
             console.log("Header useEffect: Attempting to fetch user profile from API...");
-            // Đã sửa URL từ '/api/profile' thành 'profile'
-            // vì baseURL của axios đã bao gồm '/api/'
             const response = await api.get('profile');
             console.log("Header useEffect: User profile fetched successfully:", response.data);
-            // Gửi action login để cập nhật Redux store với thông tin người dùng đã lấy.
-            // Điều này sẽ cập nhật userSliceState.user
+
             dispatch(login(response.data));
           } catch (error) {
             console.error("Header useEffect: Lỗi khi lấy thông tin hồ sơ người dùng:", error);
@@ -65,17 +50,15 @@ function Header() {
     } else {
       console.log("Header useEffect: User (fullName) đã có trong Redux state. Không cần fetch profile.");
     }
-  }, [userSliceState, currentUser, dispatch]); // Dependencies được cập nhật
+  }, [userSliceState, currentUser, dispatch]); 
 
-  // Xử lý sự kiện đăng xuất
   const handleLogout = () => {
-    dispatch(logout()); // Gửi action logout đến Redux store
-    localStorage.removeItem('token'); // Xóa token khỏi localStorage
-    navigate('/'); // Điều hướng về trang chủ
-    window.location.reload(); // Tải lại trang để đảm bảo trạng thái ứng dụng được làm mới hoàn toàn
+    dispatch(logout());
+    localStorage.removeItem('token'); 
+    navigate('/'); 
+    window.location.reload(); 
   };
 
-  // Các mục menu điều hướng
   const menuItems = [
     { label: 'About Us', path: '#' },
     { label: 'Courses', path: '/courseList' },

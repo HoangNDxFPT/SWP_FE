@@ -19,6 +19,8 @@ import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
 import CommunitySurvey from "./admin/page/CommunitySurvey";
 import AssessmentManage from "./admin/page/AssessmentManage";
+import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
+import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
@@ -36,7 +38,10 @@ import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
 import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
+<<<<<<< HEAD
 import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
+=======
+>>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
 import AssessmentHistory from "./member/page/AssessmentHistory";
 
 function RequireAdmin({ children }) {
@@ -115,11 +120,10 @@ const router = createBrowserRouter([
     path: "/assessment-result/:assessmentResultId",
     element: <AssessmentResult />,
   },
-      {
+   {
     path: "/assessment-history",
     element: <AssessmentHistory />,
   },
-  
   {
     path: "/admin",
     element: (
@@ -134,7 +138,8 @@ const router = createBrowserRouter([
       { path: "survey", element: <CommunitySurvey /> },
       { path: "schedule", element: <ConsultantScheduleManage /> },
       { path: "assessment", element: <AssessmentManage /> },
-
+      { path: "assessment-result", element: <AssessmentResult /> },
+      { path: "course-enrollment", element: <CourseEnrollmentManage /> },
     ],
   },
   {

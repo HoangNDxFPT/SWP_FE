@@ -8,10 +8,15 @@ import api from "../../config/axios";
 import "../components/style.css"; // Import custom styles for calendar
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { AnimatePresence,motion } from "framer-motion";
 =======
 import { AnimatePresence, motion } from "framer-motion";
 >>>>>>> khoi
+=======
+
+import { AnimatePresence,motion } from "framer-motion";
+>>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
 import PrettyCalendar from "../../components/PrettyCalendar";
 
 function Dashboard() {
