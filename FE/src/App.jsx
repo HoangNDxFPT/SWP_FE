@@ -38,6 +38,7 @@ import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
 import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
+import AssessmentHistory from "./member/page/AssessmentHistory";
 
 
 
@@ -118,7 +119,10 @@ const router = createBrowserRouter([
     path: "/assessment-result/:assessmentResultId",
     element: <AssessmentResult />,
   },
-  
+   {
+    path: "/assessment-history",
+    element: <AssessmentHistory />,
+  },
   {
     path: "/admin",
     element: (
