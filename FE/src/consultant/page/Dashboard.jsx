@@ -7,11 +7,8 @@ import "react-calendar/dist/Calendar.css";
 import api from "../../config/axios";
 import "../components/style.css"; // Import custom styles for calendar
 
-<<<<<<< HEAD
+
 import { AnimatePresence,motion } from "framer-motion";
-=======
-import { AnimatePresence, motion } from "framer-motion";
->>>>>>> khoi
 import PrettyCalendar from "../../components/PrettyCalendar";
 
 function Dashboard() {
