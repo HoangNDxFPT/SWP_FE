@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, login } from '../../redux/features/userSlice';
@@ -8,10 +8,26 @@ import { toast } from 'react-toastify';
 function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   const userSliceState = useSelector(state => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
   const display_name = currentUser ? currentUser.userName : null;
+
+  // Thêm event listener để đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     console.log("Header useEffect: Component mounted or user/dispatch changed.");
@@ -60,12 +76,11 @@ function Header() {
   };
 
   const menuItems = [
-    { label: 'About Us', path: '#' },
+    { label: 'About Us', path: '/about-us' },
     { label: 'Courses', path: '/courseList' },
     { label: 'Survey', path: '/servey' },
     { label: 'Online Consultant', path: '/consultantList' },
     { label: 'Blogs', path: '/blogs' },
-
   ];
 
   return (
@@ -101,20 +116,63 @@ function Header() {
       </nav>
       <div className="flex gap-2 items-center">
         {display_name ? (
-          <>
-            <a href="/assessment-history">
-              <span className="font-semibold text-gray-700">Assessment History</span>
-            </a>
-            <a href="/profile" className="ml-4">
-              <span className="font-semibold text-gray-700">Hello, {display_name}</span>
-            </a>
-            <button
-              onClick={handleLogout}
-              className="border border-blue-500 text-blue-500 px-4 py-1 rounded hover:bg-blue-50 transition"
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 text-gray-700 hover:text-blue-500 focus:outline-none"
             >
-              Log out
+              <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                {display_name?.charAt(0).toUpperCase()}
+              </div>
+              <span className="font-semibold">{display_name}</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-4 w-4 transition-transform duration-200 ${showDropdown ? 'transform rotate-180' : ''}`} 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
-          </>
+            
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-100">
+                <a 
+                  href="/profile" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                    Hồ sơ cá nhân
+                  </div>
+                </a>
+                <a 
+                  href="/assessment-history" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Lịch sử bài làm
+                  </div>
+                </a>
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                    </svg>
+                    Đăng xuất
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <>
             <a href="/register">
