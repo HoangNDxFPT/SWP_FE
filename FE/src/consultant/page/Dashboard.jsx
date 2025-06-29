@@ -7,7 +7,8 @@ import "react-calendar/dist/Calendar.css";
 import api from "../../config/axios";
 import "../components/style.css"; // Import custom styles for calendar
 
-import { AnimatePresence,motion } from "framer-motion";
+
+import { AnimatePresence, motion } from "framer-motion";
 
 import PrettyCalendar from "../../components/PrettyCalendar";
 
@@ -60,24 +61,7 @@ function Dashboard() {
     }
     fetchData();
   }, []);
-  // HÀM TÍNH TOÁN SỐ LƯỢNG LỊCH HẸN TRONG NGÀY
-
-  // HÀM ĐÁNH DẤU NGÀY CÓ LỊCH HẸN
-  const tileClassName = ({ date, view }) => {
-    // Chỉ đánh dấu ngày trong tháng (không đánh dấu tháng/năm)
-    if (view === "month") {
-      const dateStr = date.toISOString().split("T")[0];
-      const found = appointments.find((app) => app.date === dateStr);
-      if (found) {
-        if (found.status === "PENDING") return "calendar-pending";
-        if (found.status === "CONFIRMED") return "calendar-confirmed";
-        if (found.status === "REJECTED") return "calendar-rejected";
-        if (found.status === "COMPLETED") return "calendar-completed";
-        return "calendar-other";
-      }
-    }
-    return null;
-  };
+ 
 
  
 

@@ -10,21 +10,74 @@ import api from "../../config/axios";
 import { Button, Tabs, message } from "antd";
 import CreateAppointmentModal from "../components/CreateAppointmentModal";
 
+import { toast } from "react-toastify";
+import ScheduleTable from "../components/ScheduleTable";
+import CreateScheduleModal from "../components/CreateScheduleModal";
+import EditScheduleModal from "../components/EditScheduleModal";
+
 function AppointmentList() {
   // State chính
   const [appointments, setAppointments] = useState([]);
   const [cases, setCases] = useState([]);
   const [members, setMembers] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
-  // Modal state (KHÔNG còn showCreate nữa)
   const [showDetail, setShowDetail] = useState(false);
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
 
+  const [schedules, setSchedules] = useState([]); // Lịch làm việc của consultant
+  const [showCreateSchedule, setShowCreateSchedule] = useState(false);
+  const [loadingSchedules, setLoadingSchedules] = useState(true);
+  const [editingSchedule, setEditingSchedule] = useState(null);
+  const [showEditSchedule, setShowEditSchedule] = useState(false);
+
   // Item đang chọn
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  //lấy consultantId từ localStorage
+  const consultantId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+  useEffect(() => {
+    setLoadingSchedules(true);
+    api
+      .get(`/consultant/schedules`)
+      .then((res) => setSchedules(res.data))
+      .catch(() => setSchedules([]))
+      .finally(() => setLoadingSchedules(false));
+  }, []);
+
+  // Hàm tạo lịch làm việc
+  const handleCreateSchedule = async (body) => {
+    try {
+      await api.post("/consultant/schedules", body);
+      toast.success("Đăng ký lịch làm việc thành công!");
+      setShowCreateSchedule(false);
+      setLoadingSchedules(true);
+      const res = await api.get(`/consultant/schedules`);
+      setSchedules(res.data);
+      setLoadingSchedules(false);
+    } catch (error) {
+      toast.error("Đăng ký lịch làm việc thất bại!");
+      console.error("Error creating schedule:", error);
+    }
+  };
+
+  //hàm cập nhật lịch làm việc
+  const handleEditSchedule = async (scheduleId, body) => {
+    try {
+      await api.put(`/consultant/schedules/${scheduleId}`, body);
+      message.success("Cập nhật lịch làm việc thành công!");
+      setShowEditSchedule(false);
+      // Refetch lại lịch làm việc
+      setLoadingSchedules(true);
+      const res = await api.get("/consultant/schedules");
+      setSchedules(res.data);
+      setLoadingSchedules(false);
+    } catch (error) {
+      message.error("Cập nhật lịch làm việc thất bại!");
+      console.error("Error updating schedule:", error);
+    }
+  };
 
   // Lấy dữ liệu từ API
   useEffect(() => {
@@ -171,7 +224,7 @@ function AppointmentList() {
                     appointment={selectedAppointment}
                     onSend={handleSendSuggestion}
                   />
-                  
+
                   <CreateAppointmentModal
                     open={showCreate}
                     onCancel={() => setShowCreate(false)}
@@ -186,6 +239,42 @@ function AppointmentList() {
               label: "Hồ sơ tư vấn",
               children: (
                 <ConsultationCaseTable cases={cases} loading={loading} />
+              ),
+            },
+            {
+              key: "schedules",
+              label: "Lịch làm việc",
+              children: (
+                <>
+                  <div className="flex justify-end mb-4">
+                    <Button
+                      type="primary"
+                      onClick={() => setShowCreateSchedule(true)}
+                    >
+                      Đăng ký lịch làm việc
+                    </Button>
+                  </div>
+                  <ScheduleTable
+                    schedules={schedules}
+                    loading={loadingSchedules}
+                    onEdit={(sch) => {
+                      setEditingSchedule(sch);
+                      setShowEditSchedule(true);
+                    }}
+                  />
+                  <CreateScheduleModal
+                    open={showCreateSchedule}
+                    onCancel={() => setShowCreateSchedule(false)}
+                    onCreate={handleCreateSchedule}
+                    consultantId={consultantId}
+                  />
+                  <EditScheduleModal
+                    open={showEditSchedule}
+                    onCancel={() => setShowEditSchedule(false)}
+                    onEdit={handleEditSchedule}
+                    schedule={editingSchedule}
+                  />
+                </>
               ),
             },
           ]}
