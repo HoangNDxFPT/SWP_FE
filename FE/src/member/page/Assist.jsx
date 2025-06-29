@@ -6,28 +6,30 @@ import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 
 function Assist() {
-  const [assessment, setAssessment] = useState(null);
+  const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [unansweredQuestions, setUnansweredQuestions] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const startAssessment = async () => {
+    const fetchQuestions = async () => {
       try {
         const res = await api.post('/assessments/start?type=ASSIST');
-        if (res.status === 200) {
-          setAssessment(res.data);
+        if (res.status === 200 && res.data.questions) {
+          setQuestions(res.data.questions);
+        } else {
+          toast.error('Không có câu hỏi nào!');
         }
       } catch (err) {
-        console.error('Failed to start assessment:', err);
-        toast.error('Không thể tải câu hỏi');
+        console.error('Lỗi khi load câu hỏi:', err);
+        toast.error('Không thể tải câu hỏi!');
       } finally {
         setLoading(false);
       }
     };
 
-    startAssessment();
+    fetchQuestions();
   }, []);
 
   const handleAnswerChange = (questionId, answerId) => {
@@ -38,34 +40,26 @@ function Assist() {
     setUnansweredQuestions(prev => prev.filter(id => id !== questionId));
   };
 
-  const validateAllQuestionsAnswered = () => {
-    if (!assessment) return false;
-
-    const unanswered = assessment.questions
+  const validateAllAnswered = () => {
+    const unanswered = questions
       .filter(q => !answers[q.id])
       .map(q => q.id);
 
     setUnansweredQuestions(unanswered);
 
     if (unanswered.length > 0) {
-      toast.error('Vui lòng trả lời tất cả các câu hỏi!');
-
-      const firstUnansweredElement = document.getElementById(`question-${unanswered[0]}`);
-      if (firstUnansweredElement) {
-        firstUnansweredElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      toast.error('Vui lòng trả lời tất cả câu hỏi!');
+      const firstUnanswered = document.getElementById(`question-${unanswered[0]}`);
+      if (firstUnanswered) {
+        firstUnanswered.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
       return false;
     }
-
     return true;
   };
 
   const handleSubmit = async () => {
-    if (!assessment) return;
-
-    if (!validateAllQuestionsAnswered()) {
-      return;
-    }
+    if (!validateAllAnswered()) return;
 
     const payload = Object.keys(answers).map(questionId => ({
       questionId: parseInt(questionId),
@@ -73,9 +67,9 @@ function Assist() {
     }));
 
     try {
-      const res = await api.post(`assessments/submit?assessmentId=${assessment.assessmentId}`, payload);
+      const res = await api.post('/assessments/submit?type=ASSIST', payload);
       if (res.status === 200) {
-        toast.success('Gửi câu trả lời thành công!');
+        toast.success('Gửi bài thành công!');
         navigate(`/assessment-result/${res.data.assessmentResultId}`);
       } else {
         toast.error('Gửi thất bại!');
@@ -86,32 +80,23 @@ function Assist() {
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-10">Đang tải câu hỏi...</div>;
-  }
+  if (loading) return <div className="text-center mt-10">Đang tải câu hỏi...</div>;
 
-  if (!assessment) {
-    return <div className="text-center mt-10 text-red-500">Không có dữ liệu.</div>;
-  }
+  if (questions.length === 0) return <div className="text-center mt-10 text-red-500">Không có câu hỏi nào.</div>;
 
   return (
     <>
       <Header />
       <div className="max-w-3xl mx-auto py-10 px-4">
-        <h1 className="text-2xl font-bold mb-6">Đánh giá: {assessment.type}</h1>
+        <h1 className="text-2xl font-bold mb-6">Bộ câu hỏi ASSIST</h1>
 
         {unansweredQuestions.length > 0 && (
           <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800 flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              Bạn còn {unansweredQuestions.length} câu chưa trả lời!
-            </p>
+            <p className="text-yellow-800">Bạn còn {unansweredQuestions.length} câu chưa trả lời!</p>
           </div>
         )}
 
-        {assessment.questions.map((question, index) => {
+        {questions.map((question, index) => {
           const isUnanswered = unansweredQuestions.includes(question.id);
 
           return (
@@ -123,15 +108,10 @@ function Assist() {
               <div className="font-semibold mb-2 flex items-start">
                 <span className={`inline-flex justify-center items-center w-6 h-6 ${
                   isUnanswered ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'
-                } rounded-full mr-2 shrink-0 font-semibold`}>
+                } rounded-full mr-2 font-semibold`}>
                   {index + 1}
                 </span>
                 <span>{question.questionText}</span>
-                {isUnanswered && (
-                  <span className="ml-2 text-yellow-600 text-sm font-normal">
-                    (Chưa trả lời)
-                  </span>
-                )}
               </div>
 
               <div className="flex flex-col gap-2 pl-8">
@@ -154,14 +134,9 @@ function Assist() {
 
         <button
           onClick={handleSubmit}
-          className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition flex items-center justify-center"
+          className="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
         >
-          <span>Gửi câu trả lời</span>
-          {unansweredQuestions.length > 0 && (
-            <span className="ml-2 bg-white text-blue-500 rounded-full h-6 w-6 flex items-center justify-center text-sm font-bold">
-              {unansweredQuestions.length}
-            </span>
-          )}
+          Gửi câu trả lời
         </button>
       </div>
       <Footer />

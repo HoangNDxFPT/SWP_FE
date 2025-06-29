@@ -52,7 +52,7 @@ function HomePage() {
               Đánh giá nguy cơ, nhận tư vấn chuyên nghiệp và tự định hướng để xây dựng lối sống lành mạnh
             </p>
             <div className="flex flex-wrap gap-4">
-              <a href="/servey" className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-semibold shadow-lg transition hover:shadow-xl">
+              <a href="/assessment" className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-semibold shadow-lg transition hover:shadow-xl">
                 Bắt đầu khảo sát
               </a>
               <a href="#how-it-works" className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition">

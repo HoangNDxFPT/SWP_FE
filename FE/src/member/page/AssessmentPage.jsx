@@ -2,7 +2,7 @@ import React from 'react';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-function Survey() {
+function AssessmentPage() {
   return (
     <div className="bg-white min-h-screen">
       <Header />
@@ -148,4 +148,4 @@ function Survey() {
   );
 }
 
-export default Survey;
+export default AssessmentPage;

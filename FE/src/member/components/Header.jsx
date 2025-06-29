@@ -78,7 +78,7 @@ function Header() {
   const menuItems = [
     { label: 'About Us', path: '/about-us' },
     { label: 'Courses', path: '/courseList' },
-    { label: 'Survey', path: '/servey' },
+    { label: 'Assessment', path: '/assessment' },
     { label: 'Online Consultant', path: '/consultantList' },
     { label: 'Blogs', path: '/blogs' },
   ];
@@ -156,7 +156,18 @@ function Header() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                     </svg>
-                    Lịch sử bài làm
+                    Lịch sử đánh giá
+                  </div>
+                </a>
+                <a 
+                  href="/booking-history" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Lịch sử đặt lịch hẹn
                   </div>
                 </a>
                 <button 
