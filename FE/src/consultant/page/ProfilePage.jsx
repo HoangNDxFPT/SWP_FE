@@ -54,8 +54,8 @@ export default function ProfilePage() {
         onSubmit={async (e) => {
           e.preventDefault();
           try {
-            // Chỉ gửi các trường đã chỉnh sửa, nếu không có thì gửi chuỗi rỗng
             const safeProfile = {
+              consultantId: profile?.consultantId, // Gửi đúng id consultant
               fullName: editProfile.fullName || "",
               phoneNumber: editProfile.phoneNumber || "",
               address: editProfile.address || "",
@@ -63,16 +63,13 @@ export default function ProfilePage() {
               degree: editProfile.degree || "",
               information: editProfile.information || "",
               certifiedDegree: editProfile.certifiedDegree || "",
+              certifiedDegreeImage: editProfile.certifiedDegreeImage || "",
             };
             console.log("Body gửi lên:", safeProfile);
-            await api.put("/consultant/profile", safeProfile); // Gửi dữ liệu chỉnh sửa lên server
-
-            console.log("Body gửi đi:", editProfile);
-            await api.put("/consultant/profile", editProfile);
-            message.success("Cập nhật hồ sơ thành công!");
+            await api.put("/consultant/profile", safeProfile);
             toast.success("Cập nhật hồ sơ thành công!");
+            console.log("Cập nhật hồ sơ thành công:", safeProfile);
             setEditMode(false);
-            // Reload lại profile mới
             const res = await api.get("/consultant/profile");
             setProfile(res.data);
           } catch (err) {
