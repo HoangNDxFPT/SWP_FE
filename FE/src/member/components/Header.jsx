@@ -1,34 +1,38 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout, login } from '../../redux/features/userSlice'; 
-import api from '../../config/axios'; 
-import { toast } from 'react-toastify'; 
+import { logout, login } from '../../redux/features/userSlice';
+import api from '../../config/axios';
+import { toast } from 'react-toastify';
 
 function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  // Lấy toàn bộ trạng thái của user slice từ Redux store.
-  // Giả định user slice của bạn có thể trông như:
-  // { user: { username: '...', fullName: '...', ... }, token: '...', ... }
-  const userSliceState = useSelector(state => state.user); 
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Truy cập đối tượng user thực tế từ userSliceState, có thể là userSliceState.user
+  const userSliceState = useSelector(state => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
-  
-  // Sử dụng fullName từ đối tượng user thực tế để hiển thị tên người dùng
-  const display_name = currentUser ? currentUser.userName : null; 
+  const display_name = currentUser ? currentUser.userName : null;
 
-  // useEffect để kiểm tra và khôi phục trạng thái người dùng khi component mount hoặc Redux state thay đổi
+  // Thêm event listener để đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   useEffect(() => {
     console.log("Header useEffect: Component mounted or user/dispatch changed.");
     console.log("Header useEffect: Current Redux user slice state:", userSliceState);
     console.log("Header useEffect: Current user object in slice:", currentUser);
-
-    // QUAN TRỌNG: Chỉ cố gắng khôi phục nếu currentUser.fullName chưa có
-    // Điều này đảm bảo rằng nếu dữ liệu đã có từ login response (qua Redux Persist),
-    // chúng ta sẽ không gọi API /profile nữa.
     if (!currentUser || !currentUser.fullName) {
       const token = localStorage.getItem('token');
       console.log("Header useEffect: Token from localStorage:", token ? "Found" : "Not Found");
@@ -37,13 +41,10 @@ function Header() {
         const fetchUserProfile = async () => {
           try {
             console.log("Header useEffect: Attempting to fetch user profile from API...");
-            // Đã sửa URL từ '/api/profile' thành 'profile'
-            // vì baseURL của axios đã bao gồm '/api/'
-            const response = await api.get('profile'); 
+            const response = await api.get('profile');
             console.log("Header useEffect: User profile fetched successfully:", response.data);
-            // Gửi action login để cập nhật Redux store với thông tin người dùng đã lấy.
-            // Điều này sẽ cập nhật userSliceState.user
-            dispatch(login(response.data)); 
+
+            dispatch(login(response.data));
           } catch (error) {
             console.error("Header useEffect: Lỗi khi lấy thông tin hồ sơ người dùng:", error);
             if (error.response) {
@@ -52,12 +53,12 @@ function Header() {
             }
 
             if (error.response?.status === 401 || error.response?.status === 403) {
-                 toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+              toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
             } else {
-                 toast.error("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
+              toast.error("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
             }
-            localStorage.removeItem('token'); 
-            dispatch(logout()); 
+            localStorage.removeItem('token');
+            dispatch(logout());
           }
         };
         fetchUserProfile();
@@ -65,24 +66,21 @@ function Header() {
     } else {
       console.log("Header useEffect: User (fullName) đã có trong Redux state. Không cần fetch profile.");
     }
-  }, [userSliceState, currentUser, dispatch]); // Dependencies được cập nhật
+  }, [userSliceState, currentUser, dispatch]); 
 
-  // Xử lý sự kiện đăng xuất
   const handleLogout = () => {
-    dispatch(logout()); // Gửi action logout đến Redux store
-    localStorage.removeItem('token'); // Xóa token khỏi localStorage
-    navigate('/'); // Điều hướng về trang chủ
-    window.location.reload(); // Tải lại trang để đảm bảo trạng thái ứng dụng được làm mới hoàn toàn
+    dispatch(logout());
+    localStorage.removeItem('token'); 
+    navigate('/'); 
+    window.location.reload(); 
   };
 
-  // Các mục menu điều hướng
   const menuItems = [
-    { label: 'About Us', path: '#' },
+    { label: 'About Us', path: '/about-us' },
     { label: 'Courses', path: '/courseList' },
     { label: 'Survey', path: '/servey' },
     { label: 'Online Consultant', path: '/consultantList' },
     { label: 'Blogs', path: '/blogs' },
-
   ];
 
   return (
@@ -118,17 +116,63 @@ function Header() {
       </nav>
       <div className="flex gap-2 items-center">
         {display_name ? (
-          <>
-            <a href='/profile'>
-              <span className="font-semibold text-gray-700">Hello, {display_name}</span>
-            </a>
-            <button
-              onClick={handleLogout}
-              className="border border-blue-500 text-blue-500 px-4 py-1 rounded hover:bg-blue-50 transition"
+          <div className="relative" ref={dropdownRef}>
+            <button 
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="flex items-center gap-2 text-gray-700 hover:text-blue-500 focus:outline-none"
             >
-              Log out
+              <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                {display_name?.charAt(0).toUpperCase()}
+              </div>
+              <span className="font-semibold">{display_name}</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={`h-4 w-4 transition-transform duration-200 ${showDropdown ? 'transform rotate-180' : ''}`} 
+                viewBox="0 0 20 20" 
+                fill="currentColor"
+              >
+                <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
-          </>
+            
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-100">
+                <a 
+                  href="/profile" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                    </svg>
+                    Hồ sơ cá nhân
+                  </div>
+                </a>
+                <a 
+                  href="/assessment-history" 
+                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Lịch sử bài làm
+                  </div>
+                </a>
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                >
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                    </svg>
+                    Đăng xuất
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <>
             <a href="/register">

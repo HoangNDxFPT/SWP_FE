@@ -36,9 +36,10 @@ import CourseQuiz from "./member/page/CourseQuiz";
 import CourseResultPage from "./member/page/CourseResultPage";
 import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
-
-
-
+import AssessmentHistory from "./member/page/AssessmentHistory";
+import ConsultantDetail from "./member/page/ConsultantDetail";
+import AboutUs from "./member/page/AboutUs";
+import AssessmentResultManage from "./admin/page/AssessmentResultManage";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -60,6 +61,10 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
+  },
+   {
+    path: "/about-us",
+    element: <AboutUs />,
   },
   {
     path: "/login",
@@ -116,7 +121,14 @@ const router = createBrowserRouter([
     path: "/assessment-result/:assessmentResultId",
     element: <AssessmentResult />,
   },
-  
+   {
+    path: "/assessment-history",
+    element: <AssessmentHistory />,
+  },
+     {
+    path: "/consultantDetail/:id",
+    element: <ConsultantDetail />,
+  },
   {
     path: "/admin",
     element: (
@@ -131,7 +143,7 @@ const router = createBrowserRouter([
       { path: "survey", element: <CommunitySurvey /> },
       { path: "schedule", element: <ConsultantScheduleManage /> },
       { path: "assessment", element: <AssessmentManage /> },
-      { path: "assessment-result", element: <AssessmentResult /> },
+      { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
     ],
   },
