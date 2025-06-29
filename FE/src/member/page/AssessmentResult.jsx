@@ -15,7 +15,8 @@ function AssessmentResult() {
   useEffect(() => {
     const fetchResult = async () => {
       try {
-        const res = await api.get(`assessment-results/${assessmentResultId}`);
+        // Sửa đường dẫn API để truy vấn đúng endpoint
+        const res = await api.get(`/assessment-results/${assessmentResultId}`);
         if (res.status === 200) {
           setResult(res.data);
         }
