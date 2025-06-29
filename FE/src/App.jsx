@@ -43,6 +43,7 @@ import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
 =======
 >>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
 import AssessmentHistory from "./member/page/AssessmentHistory";
+import ConsultantDetail from "./member/page/ConsultantDetail";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -123,6 +124,10 @@ const router = createBrowserRouter([
    {
     path: "/assessment-history",
     element: <AssessmentHistory />,
+  },
+     {
+    path: "/consultantDetail/:id",
+    element: <ConsultantDetail />,
   },
   {
     path: "/admin",

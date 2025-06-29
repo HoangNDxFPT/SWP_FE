@@ -35,38 +35,35 @@ function Assist() {
       ...prev,
       [questionId]: answerId,
     }));
-    
-    // Xóa câu hỏi này khỏi danh sách câu hỏi chưa trả lời
-    setUnansweredQuestions(prev => 
-      prev.filter(id => id !== questionId)
-    );
+    setUnansweredQuestions(prev => prev.filter(id => id !== questionId));
   };
 
   const validateAllQuestionsAnswered = () => {
     if (!assessment) return false;
-    
+
     const unanswered = assessment.questions
       .filter(q => !answers[q.id])
       .map(q => q.id);
-    
+
     setUnansweredQuestions(unanswered);
-    
-    return unanswered.length === 0;
+
+    if (unanswered.length > 0) {
+      toast.error('Vui lòng trả lời tất cả các câu hỏi!');
+
+      const firstUnansweredElement = document.getElementById(`question-${unanswered[0]}`);
+      if (firstUnansweredElement) {
+        firstUnansweredElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      return false;
+    }
+
+    return true;
   };
 
   const handleSubmit = async () => {
     if (!assessment) return;
 
-    // Kiểm tra xem đã trả lời hết câu hỏi chưa
     if (!validateAllQuestionsAnswered()) {
-      toast.error('Vui lòng trả lời tất cả các câu hỏi!');
-      // Cuộn đến câu hỏi đầu tiên chưa được trả lời
-      if (unansweredQuestions.length > 0) {
-        const firstUnansweredElement = document.getElementById(`question-${unansweredQuestions[0]}`);
-        if (firstUnansweredElement) {
-          firstUnansweredElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }
       return;
     }
 
@@ -79,7 +76,6 @@ function Assist() {
       const res = await api.post(`assessments/submit?assessmentId=${assessment.assessmentId}`, payload);
       if (res.status === 200) {
         toast.success('Gửi câu trả lời thành công!');
-        console.log('Submit response:', res.data);
         navigate(`/assessment-result/${res.data.assessmentResultId}`);
       } else {
         toast.error('Gửi thất bại!');
@@ -103,26 +99,26 @@ function Assist() {
       <Header />
       <div className="max-w-3xl mx-auto py-10 px-4">
         <h1 className="text-2xl font-bold mb-6">Đánh giá: {assessment.type}</h1>
-        
+
         {unansweredQuestions.length > 0 && (
           <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <p className="text-yellow-800 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
               </svg>
-              Vui lòng trả lời tất cả câu hỏi ({unansweredQuestions.length} câu chưa trả lời)
+              Bạn còn {unansweredQuestions.length} câu chưa trả lời!
             </p>
           </div>
         )}
-        
+
         {assessment.questions.map((question, index) => {
           const isUnanswered = unansweredQuestions.includes(question.id);
-          
+
           return (
-            <div 
+            <div
               id={`question-${question.id}`}
-              key={question.id} 
-              className={`mb-6 bg-white p-4 rounded-lg shadow-sm ${isUnanswered ? 'border-2 border-yellow-300' : ''}`}
+              key={question.id}
+              className={`mb-6 bg-white p-4 rounded-lg shadow-sm ${isUnanswered ? 'border-2 border-yellow-400' : ''}`}
             >
               <div className="font-semibold mb-2 flex items-start">
                 <span className={`inline-flex justify-center items-center w-6 h-6 ${
@@ -137,6 +133,7 @@ function Assist() {
                   </span>
                 )}
               </div>
+
               <div className="flex flex-col gap-2 pl-8">
                 {question.answers.map(answer => (
                   <label key={answer.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded transition">
