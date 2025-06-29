@@ -15,7 +15,8 @@ function AssessmentResult() {
   useEffect(() => {
     const fetchResult = async () => {
       try {
-        const res = await api.get(`assessment-results/${assessmentResultId}`);
+        // Sửa đường dẫn API để truy vấn đúng endpoint
+        const res = await api.get(`/assessment-results/${assessmentResultId}`);
         if (res.status === 200) {
           setResult(res.data);
         }
@@ -30,18 +31,6 @@ function AssessmentResult() {
     fetchResult();
   }, [assessmentResultId]);
 
-<<<<<<< HEAD
-  // Hàm điều hướng dựa vào mức độ rủi ro
-  const handleNavigateBasedOnRisk = () => {
-    if (result.riskLevel === 'MEDIUM') {
-      navigate('/courseList'); // Chuyển hướng tới trang khóa học
-    } else if (result.riskLevel === 'HIGH') {
-      navigate('/consultantList'); // Chuyển hướng tới trang đặt lịch tư vấn
-    }
-  };
-
-=======
->>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
   // Lấy thông tin nút chuyển hướng dựa trên mức độ rủi ro
   const getActionButtonInfo = () => {
     switch (result.riskLevel) {
@@ -76,14 +65,11 @@ function AssessmentResult() {
     }
   };
 
-<<<<<<< HEAD
-=======
   // Hàm chuyển đổi hiển thị chi tiết câu trả lời
   const toggleAnswerDetails = () => {
     setShowAnswerDetails(!showAnswerDetails);
   };
 
->>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
   if (loading) {
     return <div className="text-center mt-10">Đang tải kết quả...</div>;
   }
@@ -112,14 +98,6 @@ function AssessmentResult() {
           <strong>Mức độ rủi ro:</strong> <span className={`font-semibold ${getRiskLevelClass(result.riskLevel)}`}>{result.riskLevel}</span>
         </div>
 
-<<<<<<< HEAD
-        {/* <div className="mb-4">
-          <strong>Khuyến nghị:</strong>
-          <p className="mt-1">{result.recommendation}</p>
-        </div> */}
-
-=======
->>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
         {/* Hiển thị thông báo và hướng dẫn dựa vào mức độ rủi ro */}
         <div className={`p-4 mb-6 rounded-lg ${
           result.riskLevel === 'LOW' ? 'bg-green-50 border border-green-200' : 
@@ -168,8 +146,6 @@ function AssessmentResult() {
           </div>
         )}
 
-<<<<<<< HEAD
-=======
         {result.answers?.length > 0 && (
           <div className="mb-6">
             <button 
@@ -210,7 +186,6 @@ function AssessmentResult() {
           </div>
         )}
 
->>>>>>> c9ac1dbe01ec78db4865d64910b6b7428758d220
         <div className="flex flex-wrap gap-3 mt-8">
           {/* Nút hành động dựa theo mức độ rủi ro */}
           {actionButton.show && (
