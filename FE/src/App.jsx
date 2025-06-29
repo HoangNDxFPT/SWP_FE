@@ -40,6 +40,7 @@ import Crafft from "./member/page/Crafft"
 import AssessmentResult from "./member/page/AssessmentResult";
 import AssessmentHistory from "./member/page/AssessmentHistory";
 import ConsultantDetail from "./member/page/ConsultantDetail";
+import AboutUs from "./member/page/AboutUs";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -61,6 +62,10 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <HomePage />,
+  },
+   {
+    path: "/about-us",
+    element: <AboutUs />,
   },
   {
     path: "/login",
