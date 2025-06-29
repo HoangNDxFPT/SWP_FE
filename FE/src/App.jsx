@@ -41,6 +41,7 @@ import AssessmentResult from "./member/page/AssessmentResult";
 import AssessmentHistory from "./member/page/AssessmentHistory";
 import ConsultantDetail from "./member/page/ConsultantDetail";
 import AboutUs from "./member/page/AboutUs";
+import AssessmentResultManage from "./admin/page/AssessmentResultManage";
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -144,7 +145,7 @@ const router = createBrowserRouter([
       { path: "survey", element: <CommunitySurvey /> },
       { path: "schedule", element: <ConsultantScheduleManage /> },
       { path: "assessment", element: <AssessmentManage /> },
-      { path: "assessment-result", element: <AssessmentResult /> },
+      { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
     ],
   },
