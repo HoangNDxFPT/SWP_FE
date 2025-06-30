@@ -24,9 +24,7 @@ import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
-import AppointmentDetail from "./consultant/page/AppointmentDetail";
 import UserCaseList from "./consultant/page/UserCaseList";
-import UserCaseDetail from "./consultant/page/UserCaseDetail";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
@@ -42,6 +40,8 @@ import ConsultantDetail from "./member/page/ConsultantDetail";
 import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
+import AssessmentResultManage from "./admin/page/AssessmentResultManage";
+
 
 function RequireAdmin({ children }) {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -149,7 +149,7 @@ const router = createBrowserRouter([
       { path: "survey", element: <CommunitySurvey /> },
       { path: "schedule", element: <ConsultantScheduleManage /> },
       { path: "assessment", element: <AssessmentManage /> },
-      { path: "assessment-result", element: <AssessmentResult /> },
+      { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
     ],
   },
@@ -166,9 +166,9 @@ const router = createBrowserRouter([
         element: <AppointmentList />, 
         
       },
-      { path: "appointments/:id", element: <AppointmentDetail /> },
+      
       { path: "cases", element: <UserCaseList /> },
-      { path: "cases/:id", element: <UserCaseDetail /> },
+      
       { path: "profile", element: <ConsultantProfilePage /> },
     ],
   },
