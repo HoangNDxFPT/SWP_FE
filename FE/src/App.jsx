@@ -26,6 +26,8 @@ import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
 import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
+
+
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
@@ -41,6 +43,8 @@ import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
 import AssessmentResultManage from "./admin/page/AssessmentResultManage";
+import ProgramListPage from "./consultant/page/ProgramListPage";
+import CourseListPage from "./consultant/page/CourseListPage";
 
 
 function RequireAdmin({ children }) {
@@ -165,11 +169,11 @@ const router = createBrowserRouter([
       { path: "appointments", 
         element: <AppointmentList />, 
         
-      },
-      
-      { path: "cases", element: <UserCaseList /> },
-      
+      },      
+      { path: "cases", element: <UserCaseList /> },      
       { path: "profile", element: <ConsultantProfilePage /> },
+      { path: "courses", element: <CourseListPage /> },
+      { path: "programs", element: <ProgramListPage /> },
     ],
   },
 ]);

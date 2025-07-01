@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 export default function ConsultantLayout() {
-  const navigate = useNavigate(); // Sửa lỗi useNavigate
+  
 
   // Kiểm tra role consultant, nếu không phải thì chuyển về trang login
   useEffect(() => {

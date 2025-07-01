@@ -27,7 +27,7 @@ function UserCaseList() {
   return (
     <>
       <ConsultantHeader />
-      <div className="max-w-6xl mx-auto py-10">
+      <div className="w-full">
         <h2 className="text-2xl font-bold mb-4 text-blue-700">Hồ sơ đang tư vấn</h2>
         {loading ? (
           <div>Đang tải hồ sơ...</div>

@@ -140,6 +140,7 @@ function AppointmentList() {
       );
       setShowDetail(false);
       message.success("Cập nhật thành công!");
+      toast.success("Cập nhật thành công!");
     } catch (e) {
       console.error("Lỗi cập nhật:", e);
       message.error("Cập nhật thất bại!");
@@ -187,7 +188,8 @@ function AppointmentList() {
   return (
     <>
       <ConsultantHeader />
-      <div className="max-w-7xl mx-auto py-10">
+      <div className="w-full min-h-screen py-10 px-4 bg-gradient-to-tr from-blue-50 to-blue-200">
+
         <MiniStats stats={miniStats} />
         <Tabs
           defaultActiveKey="appointments"

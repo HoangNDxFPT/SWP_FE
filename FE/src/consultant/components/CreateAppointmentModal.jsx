@@ -53,29 +53,31 @@ function CreateAppointmentModal({ open, onCancel, members, onCreate }) {
   };
 
   const handleFinish = async (values) => {
-    try {
-      if (!selectedMember || !selectedMember.id) {
-        message.error("Bạn phải chọn khách hàng từ bảng gợi ý!");
-        return;
-      }
-      const appointmentTime = dayjs(
-        values.date.format("YYYY-MM-DD") + "T" + values.time.format("HH:mm")
-      ).toISOString();
-      const body = {
-        userId: selectedMember.id,
-        fullName: selectedMember.fullName,
-        appointmentTime,
-        note: values.note || "",
-      };
-      await onCreate(body);
-      form.resetFields();
-      setMemberOptions([]);
-      setSelectedMember(null);
-    } catch (error) {
-      message.error("Tạo lịch hẹn thất bại!");
-      console.error(error);
+  try {
+    if (!selectedMember || !selectedMember.id) {
+      message.error("Bạn phải chọn khách hàng từ bảng gợi ý!");
+      return;
     }
-  };
+    const appointmentTime = dayjs(
+      values.date.format("YYYY-MM-DD") + "T" + values.time.format("HH:mm")
+    ).toISOString();
+    const body = {
+      userId: selectedMember.id,
+      fullName: selectedMember.fullName,
+      appointmentTime,
+      note: values.note || "",
+    };
+    console.log("Body gửi API tạo lịch hẹn:", body);     // <-- LOG tại đây
+
+    await onCreate(body); // truyền lên parent
+    form.resetFields();
+    setMemberOptions([]);
+    setSelectedMember(null);
+  } catch (error) {
+    message.error("Tạo lịch hẹn thất bại!");
+    console.error(error);
+  }
+};
 
   const now = dayjs();
 

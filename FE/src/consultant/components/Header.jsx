@@ -62,13 +62,15 @@ function ConsultantHeader() {
     { label: "Trang chủ", path: "/consultant/dashboard" },
     { label: "Lịch làm việc", path: "/consultant/appointments" },
     { label: "Khóa học", path: "/consultant/courses" },
+    { label: "Chương trình cộng đồng", path: "/consultant/programs" },
+
 
     
     // Thêm các mục khác nếu cần
   ];
 
   return (
-    <header className="bg-blue-600 text-white shadow flex items-center px-8 py-3 justify-between relative z-50">
+    <header className="w-full bg-blue-600 text-white shadow flex items-center px-8 py-3 justify-between relative z-50">
       {/* Logo + menu trái */}
       <div className="flex items-center gap-10">
         <img
@@ -140,15 +142,7 @@ function ConsultantHeader() {
             >
               Đăng xuất
             </button>
-            <button
-              className="block w-full text-left px-4 py-2 hover:bg-blue-50"
-              onClick={() => {
-                localStorage.clear();
-                window.location.href = "/reset-password";
-              }}
-            >
-              Đổi mật khẩu
-            </button>
+            
           </div>
         )}
       </div>
