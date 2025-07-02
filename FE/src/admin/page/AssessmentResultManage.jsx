@@ -20,6 +20,9 @@ export default function AssessmentResultManage() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
+  // Thêm state mới cho việc lọc bài toàn cục
+  const [filterGlobalType, setFilterGlobalType] = useState("");
+
   // Lấy tất cả bài khảo sát đã hoàn thành
   useEffect(() => {
     const fetchAssessments = async () => {
@@ -118,6 +121,12 @@ export default function AssessmentResultManage() {
   };
 
   const filteredResults = filterResults();
+
+  // Thêm hàm lọc
+  const getFilteredAssessments = () => {
+    if (!filterGlobalType) return assessments;
+    return assessments.filter(a => a.type === filterGlobalType);
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -302,9 +311,9 @@ export default function AssessmentResultManage() {
                   labels: ['Thấp', 'Trung bình', 'Cao'],
                   datasets: [{
                     data: [
-                      userResults.filter(r => r.riskLevel === 'LOW').length,
-                      userResults.filter(r => r.riskLevel === 'MEDIUM').length,
-                      userResults.filter(r => r.riskLevel === 'HIGH').length
+                      filteredResults.filter(r => r.riskLevel === 'LOW').length,
+                      filteredResults.filter(r => r.riskLevel === 'MEDIUM').length,
+                      filteredResults.filter(r => r.riskLevel === 'HIGH').length
                     ],
                     backgroundColor: ['#10B981', '#F59E0B', '#EF4444']
                   }]
@@ -328,8 +337,8 @@ export default function AssessmentResultManage() {
                   datasets: [{
                     label: 'Số lượng',
                     data: [
-                      userResults.filter(r => r.assessmentType === 'ASSIST').length,
-                      userResults.filter(r => r.assessmentType === 'CRAFFT').length
+                      filteredResults.filter(r => r.assessmentType === 'ASSIST').length,
+                      filteredResults.filter(r => r.assessmentType === 'CRAFFT').length
                     ],
                     backgroundColor: ['#3B82F6', '#8B5CF6']
                   }]
@@ -358,7 +367,18 @@ export default function AssessmentResultManage() {
       {/* Danh sách tất cả bài khảo sát */}
       <div className="bg-white rounded-xl shadow-md p-6 mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-blue-800">Tất cả bài khảo sát đã hoàn thành</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold text-blue-800">Tất cả bài khảo sát đã hoàn thành</h2>
+            <select
+              className="border border-gray-300 rounded px-3 py-1 text-sm"
+              value={filterGlobalType}
+              onChange={e => setFilterGlobalType(e.target.value)}
+            >
+              <option value="">Tất cả loại</option>
+              <option value="ASSIST">ASSIST</option>
+              <option value="CRAFFT">CRAFFT</option>
+            </select>
+          </div>
           <button className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -371,6 +391,8 @@ export default function AssessmentResultManage() {
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
             <div className="mt-2 text-blue-600">Đang tải...</div>
           </div>
+        ) : getFilteredAssessments().length === 0 ? (
+          <div className="text-center py-8 text-gray-500">Không có bài đánh giá nào phù hợp.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg shadow">
@@ -382,11 +404,10 @@ export default function AssessmentResultManage() {
                   <th className="px-4 py-2 text-left">Email</th>
                   <th className="px-4 py-2 text-left">Ngày tạo</th>
                   <th className="px-4 py-2 text-left">Trạng thái</th>
-                  {/* Xóa cột Thao tác */}
                 </tr>
               </thead>
               <tbody>
-                {assessments.map(a => (
+                {getFilteredAssessments().map(a => (
                   <tr key={a.id} className="hover:bg-green-50 transition">
                     <td className="px-4 py-2">{a.id}</td>
                     <td className="px-4 py-2">
@@ -403,7 +424,6 @@ export default function AssessmentResultManage() {
                         Đã nộp
                       </span>
                     </td>
-                    {/* Xóa nút Xem kết quả */}
                   </tr>
                 ))}
               </tbody>

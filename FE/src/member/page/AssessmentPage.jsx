@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
@@ -50,12 +51,12 @@ function AssessmentPage() {
                   <span className="text-gray-700">8 câu hỏi chính</span>
                 </div>
               </div>
-              <a 
-                href="/assist" 
+              <Link 
+                to="/assessment/assist" 
                 className="inline-block w-full py-3 px-6 text-center font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition shadow-md"
               >
                 Bắt đầu bài kiểm tra ASSIST
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -84,12 +85,12 @@ function AssessmentPage() {
                   <span className="text-gray-700">6 câu hỏi chính</span>
                 </div>
               </div>
-              <a 
-                href="/crafft" 
+              <Link 
+                to="/assessment/crafft" 
                 className="inline-block w-full py-3 px-6 text-center font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition shadow-md"
               >
                 Bắt đầu bài kiểm tra CRAFFT
-              </a>
+              </Link>
             </div>
           </div>
         </div>

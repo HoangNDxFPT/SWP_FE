@@ -48,7 +48,7 @@ export default function AdminLayout() {
       ) 
     },
     { 
-      label: "Account Management", 
+      label: "Quản lý người dùng", 
       path: "/admin/users",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -57,7 +57,7 @@ export default function AdminLayout() {
       )
     },
     { 
-      label: "Course Management", 
+      label: "Quản lý khóa học", 
       path: "/admin/courses",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -84,7 +84,7 @@ export default function AdminLayout() {
       )
     },
     { 
-      label: "Assessment Manage", 
+      label: "Quản lý câu hỏi đánh giá", 
       path: "/admin/assessment",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -93,7 +93,7 @@ export default function AdminLayout() {
       )
     },
     { 
-      label: "Assessment Result", 
+      label: "Kết quả đánh giá", 
       path: "/admin/assessment-result",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -287,9 +287,9 @@ export default function AdminLayout() {
           <header className="bg-white border-b border-gray-200 shadow-sm z-30">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold text-gray-800">{
+                {/* <h1 className="text-xl font-semibold text-gray-800">{
                   menu.find(item => item.path === location.pathname)?.label || "Dashboard"
-                }</h1>
+                }</h1> */}
               </div>
               
               <div className="flex items-center gap-3" ref={menuRef}>
