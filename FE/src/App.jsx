@@ -34,6 +34,7 @@ import AssessmentManage from "./admin/page/AssessmentManage";
 import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
 import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 import AssessmentResultManage from "./admin/page/AssessmentResultManage";
+import Program from "./admin/page/Program";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
@@ -129,6 +130,7 @@ const router = createBrowserRouter([
     path: "/assessment",
     element: <AssessmentPage />,
   },
+
        {
     path: "/booking-history",
     element: <BookingHistory />,
@@ -149,6 +151,7 @@ const router = createBrowserRouter([
       { path: "assessment", element: <AssessmentManage /> },
       { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
+      { path: "program", element: <Program /> },
     ],
   },
   {
