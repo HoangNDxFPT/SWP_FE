@@ -80,7 +80,7 @@ function Header() {
     { label: 'Courses', path: '/courseList' },
     { label: 'Assessment', path: '/assessment' },
     { label: 'Online Consultant', path: '/consultantList' },
-    { label: 'Blogs', path: '/blogs' },
+    { label: 'Community Program', path: '/com-program' },
   ];
 
   return (

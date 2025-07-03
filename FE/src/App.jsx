@@ -9,7 +9,20 @@ import HomePage from "./member/page/HomePage";
 import LoginPage from "./pages/login";
 import RegisterPage from "./pages/register";
 import UserProfilePage from "./member/page/UserProfilePage";
-import Assist from "./member/page/Assist";
+import ForgotPassword from "./member/page/ForgotPassword";
+import EnterNewPassword from "./member/page/EnterNewPassword";
+import CouresListPage from "./member/page/CouresListPage";
+import CourseVideo from "./member/page/CourseVideo";
+import ConsultantList from "./member/page/ConsultantList";
+import CourseQuiz from "./member/page/CourseQuiz";
+import CourseResultPage from "./member/page/CourseResultPage";
+import AssessmentResult from "./member/page/AssessmentResult";
+import AssessmentHistory from "./member/page/AssessmentHistory";
+import ConsultantDetail from "./member/page/ConsultantDetail";
+import AboutUs from "./member/page/AboutUs";
+import AssessmentPage from "./member/page/AssessmentPage";
+import BookingHistory from "./member/page/BookingHistory";
+import Assessment from "./member/page/Assessment";
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -20,27 +33,17 @@ import CommunitySurvey from "./admin/page/CommunitySurvey";
 import AssessmentManage from "./admin/page/AssessmentManage";
 import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
 import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
+import AssessmentResultManage from "./admin/page/AssessmentResultManage";
+import Program from "./admin/page/Program";
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
 import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
-import ForgotPassword from "./member/page/ForgotPassword";
-import EnterNewPassword from "./member/page/EnterNewPassword";
-import CouresListPage from "./member/page/CouresListPage";
-import CourseVideo from "./member/page/CourseVideo";
-import ConsultantList from "./member/page/ConsultantList";
-import CourseQuiz from "./member/page/CourseQuiz";
-import CourseResultPage from "./member/page/CourseResultPage";
-import Crafft from "./member/page/Crafft"
-import AssessmentResult from "./member/page/AssessmentResult";
-import AssessmentHistory from "./member/page/AssessmentHistory";
-import ConsultantDetail from "./member/page/ConsultantDetail";
-import AboutUs from "./member/page/AboutUs";
-import AssessmentPage from "./member/page/AssessmentPage";
-import BookingHistory from "./member/page/BookingHistory";
-import AssessmentResultManage from "./admin/page/AssessmentResultManage";
+
+
+
 
 
 function RequireAdmin({ children }) {
@@ -108,14 +111,10 @@ const router = createBrowserRouter([
     element: <CourseResultPage/>,
   },
   {
-    path: "/assist",
-    element: <Assist />,
+    path: "/assessment/:type",
+    element: <Assessment />,
   },
-    {
-    path: "/crafft",
-    element: <Crafft />,
-  },
-    {
+  {
     path: "/assessment-result/:assessmentResultId",
     element: <AssessmentResult />,
   },
@@ -131,6 +130,7 @@ const router = createBrowserRouter([
     path: "/assessment",
     element: <AssessmentPage />,
   },
+
        {
     path: "/booking-history",
     element: <BookingHistory />,
@@ -151,6 +151,7 @@ const router = createBrowserRouter([
       { path: "assessment", element: <AssessmentManage /> },
       { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
+      { path: "program", element: <Program /> },
     ],
   },
   {

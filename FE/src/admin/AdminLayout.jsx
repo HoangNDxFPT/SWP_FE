@@ -48,7 +48,7 @@ export default function AdminLayout() {
       ) 
     },
     { 
-      label: "Account Management", 
+      label: "Quản lý người dùng", 
       path: "/admin/users",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -57,7 +57,7 @@ export default function AdminLayout() {
       )
     },
     { 
-      label: "Course Management", 
+      label: "Quản lý khóa học", 
       path: "/admin/courses",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -84,7 +84,7 @@ export default function AdminLayout() {
       )
     },
     { 
-      label: "Assessment Manage", 
+      label: "Quản lý câu hỏi đánh giá", 
       path: "/admin/assessment",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -93,8 +93,17 @@ export default function AdminLayout() {
       )
     },
     { 
-      label: "Assessment Result", 
+      label: "Kết quả đánh giá", 
       path: "/admin/assessment-result",
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+      )
+    },
+    { 
+      label: "Chương trình cộng đồng", 
+      path: "/admin/program",
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
@@ -287,9 +296,9 @@ export default function AdminLayout() {
           <header className="bg-white border-b border-gray-200 shadow-sm z-30">
             <div className="px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <h1 className="text-xl font-semibold text-gray-800">{
+                {/* <h1 className="text-xl font-semibold text-gray-800">{
                   menu.find(item => item.path === location.pathname)?.label || "Dashboard"
-                }</h1>
+                }</h1> */}
               </div>
               
               <div className="flex items-center gap-3" ref={menuRef}>
