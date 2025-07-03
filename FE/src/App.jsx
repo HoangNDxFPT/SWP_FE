@@ -41,6 +41,7 @@ import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
 import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
+import ProgramList from "./member/page/ProgramList";
 
 
 
@@ -67,7 +68,7 @@ const router = createBrowserRouter([
     path: "/",
     element: <HomePage />,
   },
-   {
+  {
     path: "/about-us",
     element: <AboutUs />,
   },
@@ -83,32 +84,32 @@ const router = createBrowserRouter([
     path: "/profile",
     element: <UserProfilePage />,
   },
-    {
+  {
     path: "/forgot-password",
     element: <ForgotPassword />,
   },
-      {
+  {
     path: "/reset-password",
-    element: <EnterNewPassword/>,
+    element: <EnterNewPassword />,
   },
-       {
+  {
     path: "/courseList",
-    element: <CouresListPage/>,
+    element: <CouresListPage />,
   },
-         {
+  {
     path: "/course/:id",
-    element: <CourseVideo/>,
+    element: <CourseVideo />,
   },
-           {
+  {
     path: "/consultantList",
-    element: <ConsultantList/>,
-  },           {
+    element: <ConsultantList />,
+  }, {
     path: "/quiz/:courseId",
-    element: <CourseQuiz/>,
+    element: <CourseQuiz />,
   },
-   {
+  {
     path: "/quiz-result/:id",
-    element: <CourseResultPage/>,
+    element: <CourseResultPage />,
   },
   {
     path: "/assessment/:type",
@@ -118,22 +119,26 @@ const router = createBrowserRouter([
     path: "/assessment-result/:assessmentResultId",
     element: <AssessmentResult />,
   },
-   {
+  {
     path: "/assessment-history",
     element: <AssessmentHistory />,
   },
-     {
+  {
     path: "/consultantDetail/:id",
     element: <ConsultantDetail />,
   },
-     {
+  {
     path: "/assessment",
     element: <AssessmentPage />,
   },
 
-       {
+  {
     path: "/booking-history",
     element: <BookingHistory />,
+  },
+  {
+    path: "/com-program",
+    element: <ProgramList />,
   },
   {
     path: "/admin",
@@ -163,13 +168,14 @@ const router = createBrowserRouter([
     ),
     children: [
       { path: "dashboard", element: <ConsultantDashboard /> },
-      { path: "appointments", 
-        element: <AppointmentList />, 
-        
+      {
+        path: "appointments",
+        element: <AppointmentList />,
+
       },
-      
+
       { path: "cases", element: <UserCaseList /> },
-      
+
       { path: "profile", element: <ConsultantProfilePage /> },
     ],
   },
