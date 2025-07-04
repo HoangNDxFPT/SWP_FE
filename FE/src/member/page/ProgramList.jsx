@@ -49,7 +49,7 @@ function ProgramList() {
                 return;
             }
 
-            const res = await api.post(`/programs/${programId}`, null, {
+            const res = await api.post(`/programs/${programId}/register`, null, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -57,7 +57,7 @@ function ProgramList() {
 
             if (res.status === 200) {
                 toast.success('Tham gia chương trình thành công!');
-                navigate('/welcome-program');
+                // navigate('/welcome-program');
             } else {
                 toast.error('Tham gia chương trình thất bại.');
             }

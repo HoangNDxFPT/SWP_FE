@@ -48,6 +48,7 @@ function Program() {
     const [enrollments, setEnrollments] = useState([]);
     const [searchEnrollmentQuery, setSearchEnrollmentQuery] = useState('');
     const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+    const [programStatusFilter, setProgramStatusFilter] = useState('ALL');
 
     // Shared state
     const [loading, setLoading] = useState(false);
@@ -180,11 +181,28 @@ function Program() {
         setShowEditProgramModal(true);
     };
 
-    const filteredPrograms = programs.filter((program) =>
-        program.name.toLowerCase().includes(searchProgramQuery.toLowerCase()) ||
-        program.description?.toLowerCase().includes(searchProgramQuery.toLowerCase()) ||
-        program.location.toLowerCase().includes(searchProgramQuery.toLowerCase())
-    );
+    // Thay thế hàm filteredPrograms với phiên bản mới có bộ lọc trạng thái
+    const filteredPrograms = programs.filter((program) => {
+        // Lọc theo từ khóa tìm kiếm
+        const matchesSearchQuery =
+            program.name.toLowerCase().includes(searchProgramQuery.toLowerCase()) ||
+            program.description?.toLowerCase().includes(searchProgramQuery.toLowerCase()) ||
+            program.location.toLowerCase().includes(searchProgramQuery.toLowerCase());
+
+        // Lọc theo trạng thái
+        const currentDate = new Date();
+        const endDate = new Date(program.end_date);
+
+        if (programStatusFilter === 'ALL') {
+            return matchesSearchQuery;
+        } else if (programStatusFilter === 'ACTIVE') {
+            return matchesSearchQuery && endDate >= currentDate;
+        } else if (programStatusFilter === 'ENDED') {
+            return matchesSearchQuery && endDate < currentDate;
+        }
+
+        return matchesSearchQuery;
+    });
 
     // SURVEY TEMPLATES FUNCTIONS
     const fetchTemplates = async () => {
@@ -389,17 +407,18 @@ function Program() {
         }
     };
 
-    const filteredEnrollments = enrollments.filter(enrollment =>
-        enrollment.programName?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase()) ||
-        enrollment.userFullName?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase()) ||
-        enrollment.userEmail?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase())
-    );
+    // const filteredEnrollments = enrollments.filter(enrollment =>
+    //     enrollment.programName?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase()) ||
+    //     enrollment.userFullName?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase()) ||
+    //     enrollment.userEmail?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase())
+    // );
 
     // Format functions
     const formatDate = (dateString) => {
         try {
             return format(new Date(dateString), 'dd/MM/yyyy');
         } catch (error) {
+            console.error('Lỗi định dạng ngày:', error);
             return dateString;
         }
     };
@@ -408,6 +427,7 @@ function Program() {
         try {
             return format(new Date(dateString), 'dd/MM/yyyy HH:mm');
         } catch (error) {
+            console.error('Lỗi định dạng ngày giờ:', error);
             return dateString;
         }
     };
@@ -429,18 +449,21 @@ function Program() {
         return colors[type] || 'bg-gray-100 text-gray-800';
     };
 
+    const activePrograms = programs.filter(program => new Date(program.end_date) >= new Date());
+    const endedPrograms = programs.filter(program => new Date(program.end_date) < new Date());
+
     return (
-        <div className="container mx-auto px-4 py-6">
+        <div className="w-full">
             <ToastContainer position="top-right" autoClose={3000} />
-            <h1 className="text-2xl font-bold mb-6">Quản lý Chương Trình Cộng Đồng</h1>
+            <h1 className="text-2xl font-bold mb-6 text-blue-900">Quản lý Chương Trình Cộng Đồng</h1>
 
             {/* Tabs Navigation */}
             <div className="mb-8 border-b border-gray-200">
-                <div className="flex space-x-4">
+                <div className="flex flex-wrap space-x-4">
                     <button
                         className={`pb-2 px-4 ${activeTab === 'programs'
-                                ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                         onClick={() => setActiveTab('programs')}
                     >
@@ -448,42 +471,98 @@ function Program() {
                     </button>
                     <button
                         className={`pb-2 px-4 ${activeTab === 'templates'
-                                ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
-                                : 'text-gray-500 hover:text-gray-700'
+                            ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                            : 'text-gray-500 hover:text-gray-700'
                             }`}
                         onClick={() => setActiveTab('templates')}
                     >
                         Mẫu Khảo Sát
                     </button>
-                    
                 </div>
             </div>
 
             {/* Programs Tab */}
             {activeTab === 'programs' && (
                 <>
-                    {/* Search and Add button */}
+                    {/* Search, Filter and Add button */}
                     <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                        <div className="relative w-full sm:w-64">
-                            <input
-                                type="text"
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Tìm kiếm chương trình..."
-                                value={searchProgramQuery}
-                                onChange={(e) => setSearchProgramQuery(e.target.value)}
-                            />
-                            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
+                        <div className="flex flex-col w-full gap-3">
+                            <div className="flex flex-col sm:flex-row gap-3 w-full">
+                                <div className="relative w-full sm:w-64">
+                                    <input
+                                        type="text"
+                                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        placeholder="Tìm kiếm chương trình..."
+                                        value={searchProgramQuery}
+                                        onChange={(e) => setSearchProgramQuery(e.target.value)}
+                                    />
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                                        <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div className="flex flex-wrap gap-3">
+                                    <button
+                                        onClick={() => setProgramStatusFilter('ALL')}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${programStatusFilter === 'ALL'
+                                                ? 'bg-gray-200 text-gray-800'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                                            </svg>
+                                            Tất cả ({programs.length})
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => setProgramStatusFilter('ACTIVE')}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${programStatusFilter === 'ACTIVE'
+                                                ? 'bg-green-100 text-green-800'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Còn hoạt động ({activePrograms.length})
+                                        </div>
+                                    </button>
+                                    <button
+                                        onClick={() => setProgramStatusFilter('ENDED')}
+                                        className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${programStatusFilter === 'ENDED'
+                                                ? 'bg-gray-600 text-white'
+                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            }`}
+                                    >
+                                        <div className="flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Đã kết thúc ({endedPrograms.length})
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Thông tin số lượng chương trình sau khi lọc */}
+                            <div className="text-sm text-gray-600">
+                                Hiển thị <span className="font-semibold">{filteredPrograms.length}</span> trên tổng số <span className="font-semibold">{programs.length}</span> chương trình
+                                {programStatusFilter === 'ACTIVE' && <span> còn hoạt động</span>}
+                                {programStatusFilter === 'ENDED' && <span> đã kết thúc</span>}
+                                {searchProgramQuery && <span> phù hợp với từ khóa "<span className="font-medium">{searchProgramQuery}</span>"</span>}
                             </div>
                         </div>
+
                         <button
                             onClick={() => {
                                 resetProgramForm();
                                 setShowAddProgramModal(true);
                             }}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700 w-full sm:w-auto justify-center whitespace-nowrap"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -524,6 +603,9 @@ function Program() {
                                             Ngày kết thúc
                                         </th>
                                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Trạng thái
+                                        </th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                             Thao tác
                                         </th>
                                     </tr>
@@ -538,6 +620,19 @@ function Program() {
                                             <td className="px-6 py-4 text-sm text-gray-500">{program.location}</td>
                                             <td className="px-6 py-4 text-sm text-gray-500">{formatDate(program.start_date)}</td>
                                             <td className="px-6 py-4 text-sm text-gray-500">{formatDate(program.end_date)}</td>
+                                            <td className="px-6 py-4">
+                                                {new Date(program.end_date) >= new Date() ? (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <span className="h-2 w-2 rounded-full bg-green-400 mr-1.5"></span>
+                                                        Còn hoạt động
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                        <span className="h-2 w-2 rounded-full bg-gray-400 mr-1.5"></span>
+                                                        Đã kết thúc
+                                                    </span>
+                                                )}
+                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                                 <div className="flex space-x-2">
                                                     <button
@@ -555,7 +650,7 @@ function Program() {
                                                         title="Xem người tham gia"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.356-1.283.988-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                                         </svg>
                                                     </button>
                                                     <button
@@ -611,7 +706,7 @@ function Program() {
                                 resetTemplateForm();
                                 setShowAddTemplateModal(true);
                             }}
-                            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center hover:bg-blue-700 w-full sm:w-auto justify-center"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -714,7 +809,7 @@ function Program() {
             {/* Modal thêm chương trình */}
             {showAddProgramModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">Thêm Chương Trình Mới</h2>
                             <button
@@ -1270,10 +1365,10 @@ function Program() {
                 </div>
             )}
 
-            {/* Modal gửi khảo sát */}
+            {/* Modal gửi khảo sát - Make it more responsive */}
             {showSendSurveyModal && selectedProgramForSurvey && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg max-w-md w-full p-6">
+                    <div className="bg-white rounded-lg max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-xl font-bold">Gửi Email Khảo Sát</h2>
                             <button
@@ -1287,13 +1382,6 @@ function Program() {
                         </div>
 
                         <div className="space-y-4">
-                            <div>
-                                <p className="font-medium text-gray-700">Chương trình: <span className="text-blue-600">{selectedProgramForSurvey.name}</span></p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Gửi email khảo sát đến tất cả người tham gia chương trình này.
-                                </p>
-                            </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Loại khảo sát <span className="text-red-500">*</span>
