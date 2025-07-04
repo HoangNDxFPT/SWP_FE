@@ -95,6 +95,13 @@ export default function UserManage() {
     members: 0
   });
 
+  // Thêm state cho lịch sử hoạt động người dùng
+  const [activeHistoryTab, setActiveHistoryTab] = useState('profile');
+  const [userPrograms, setUserPrograms] = useState([]);
+  const [userAssessments, setUserAssessments] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [userCourses, setUserCourses] = useState([]);
+
   // Fetch user list
   const fetchUsers = async () => {
     try {
@@ -252,11 +259,35 @@ export default function UserManage() {
     }
   };
 
+  // Hàm fetch lịch sử hoạt động của người dùng
+  const fetchUserHistory = async (userId) => {
+    setLoadingHistory(true);
+    try {
+      // Lấy chương trình đã tham gia
+      const programsRes = await api.get(`/programs/history-user/${userId}`);
+      setUserPrograms(programsRes.data || []);
+
+      // Lấy lịch sử đánh giá
+      const assessmentsRes = await api.get(`/assessment-results/user/${userId}`);
+      setUserAssessments(assessmentsRes.data || []);
+
+      const coursesRes = await api.get(`/enrollments/user/${userId}`);
+      setUserCourses(coursesRes.data || []);
+    } catch (err) {
+      console.error("Error fetching user history:", err);
+      toast.error("Không thể tải lịch sử hoạt động của người dùng");
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   // View/Edit user
   const handleViewEdit = (user) => {
     setSelectedUser({ ...user });
     setEditMode(false);
     setShowViewEditModal(true);
+    setActiveHistoryTab('profile');
+    fetchUserHistory(user.id);
   };
 
   // Filter users
@@ -691,7 +722,7 @@ export default function UserManage() {
       {/* View/Edit User Modal */}
       {showViewEditModal && selectedUser && (
         <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">
                 {editMode ? "Chỉnh sửa người dùng" : "Thông tin người dùng"}
@@ -728,127 +759,370 @@ export default function UserManage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="col-span-1 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên {editMode && <span className="text-red-500">*</span>}</label>
-                <input
-                  type="text"
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
-                  value={selectedUser.fullName || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
-                  disabled={!editMode}
-                  placeholder="Chưa cập nhật"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none bg-gray-50"
-                  value={selectedUser.userName || ""}
-                  disabled={true}
-                />
-                {editMode && (
-                  <p className="text-xs text-gray-500 mt-1">
-                    Tên đăng nhập không thể thay đổi
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
-                  value={selectedUser.email || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
-                  disabled={!editMode}
-                  placeholder="Chưa cập nhật"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
-                <input
-                  type="text"
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
-                  value={selectedUser.phoneNumber || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, phoneNumber: e.target.value })}
-                  disabled={!editMode}
-                  placeholder="Chưa cập nhật"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
-                <input
-                  type="date"
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
-                  value={selectedUser.dateOfBirth || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, dateOfBirth: e.target.value })}
-                  disabled={!editMode}
-                />
-              </div>
-
-              <div className="col-span-1 md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
-                <input
-                  type="text"
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
-                  value={selectedUser.address || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, address: e.target.value })}
-                  disabled={!editMode}
-                  placeholder="Chưa cập nhật"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
-                <select
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode ? "bg-gray-50" : "bg-white"}`}
-                  value={selectedUser.gender || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, gender: e.target.value })}
-                  disabled={!editMode}
+            {/* Tabs Navigation */}
+            {!editMode && (
+              <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
+                <button
+                  onClick={() => setActiveHistoryTab('profile')}
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
+                    activeHistoryTab === 'profile'
+                      ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  {GENDER_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò {editMode && <span className="text-red-500">*</span>}</label>
-                <select
-                  className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode ? "bg-gray-50" : "bg-white"}`}
-                  value={selectedUser.role || ""}
-                  onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
-                  disabled={!editMode}
+                  Thông tin cá nhân
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('programs')}
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
+                    activeHistoryTab === 'programs'
+                      ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
-                  {ROLE_OPTIONS.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-                {editMode && selectedUser.role === "ADMIN" && (
-                  <p className="text-xs text-orange-500 mt-1">
-                    Cẩn thận khi thay đổi quyền của Quản trị viên
-                  </p>
-                )}
+                  Chương trình đã tham gia
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('courses')}
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
+                    activeHistoryTab === 'courses'
+                      ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Khóa học đã đăng ký
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('assessments')}
+                  className={`py-2 px-4 -mb-px whitespace-nowrap ${
+                    activeHistoryTab === 'assessments'
+                      ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Lịch sử đánh giá
+                </button>
               </div>
+            )}
 
-              {editMode && (
+            {/* Profile Information Tab */}
+            {(editMode || activeHistoryTab === 'profile') && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="col-span-1 md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Đặt mật khẩu mới (để trống nếu không thay đổi)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Họ tên {editMode && <span className="text-red-500">*</span>}</label>
                   <input
-                    type="password"
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={selectedUser.password || ""}
-                    onChange={e => setSelectedUser({ ...selectedUser, password: e.target.value })}
-                    placeholder="Nhập mật khẩu mới"
+                    type="text"
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
+                    value={selectedUser.fullName || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
+                    disabled={!editMode}
+                    placeholder="Chưa cập nhật"
                   />
                 </div>
-              )}
-            </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tên đăng nhập</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none bg-gray-50"
+                    value={selectedUser.userName || ""}
+                    disabled={true}
+                  />
+                  {editMode && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      Tên đăng nhập không thể thay đổi
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                  <input
+                    type="email"
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
+                    value={selectedUser.email || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, email: e.target.value })}
+                    disabled={!editMode}
+                    placeholder="Chưa cập nhật"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                  <input
+                    type="text"
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
+                    value={selectedUser.phoneNumber || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, phoneNumber: e.target.value })}
+                    disabled={!editMode}
+                    placeholder="Chưa cập nhật"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ngày sinh</label>
+                  <input
+                    type="date"
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
+                    value={selectedUser.dateOfBirth || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, dateOfBirth: e.target.value })}
+                    disabled={!editMode}
+                  />
+                </div>
+
+                <div className="col-span-1 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ</label>
+                  <input
+                    type="text"
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode && "bg-gray-50"}`}
+                    value={selectedUser.address || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, address: e.target.value })}
+                    disabled={!editMode}
+                    placeholder="Chưa cập nhật"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                  <select
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode ? "bg-gray-50" : "bg-white"}`}
+                    value={selectedUser.gender || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, gender: e.target.value })}
+                    disabled={!editMode}
+                  >
+                    {GENDER_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Vai trò {editMode && <span className="text-red-500">*</span>}</label>
+                  <select
+                    className={`w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${!editMode ? "bg-gray-50" : "bg-white"}`}
+                    value={selectedUser.role || ""}
+                    onChange={e => setSelectedUser({ ...selectedUser, role: e.target.value })}
+                    disabled={!editMode}
+                  >
+                    {ROLE_OPTIONS.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                  {editMode && selectedUser.role === "ADMIN" && (
+                    <p className="text-xs text-orange-500 mt-1">
+                      Cẩn thận khi thay đổi quyền của Quản trị viên
+                    </p>
+                  )}
+                </div>
+
+                {editMode && (
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Đặt mật khẩu mới (để trống nếu không thay đổi)</label>
+                    <input
+                      type="password"
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={selectedUser.password || ""}
+                      onChange={e => setSelectedUser({ ...selectedUser, password: e.target.value })}
+                      placeholder="Nhập mật khẩu mới"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Programs History Tab */}
+            {!editMode && activeHistoryTab === 'programs' && (
+              <div>
+                {loadingHistory ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p className="mt-2 text-gray-500">Đang tải lịch sử tham gia...</p>
+                  </div>
+                ) : userPrograms.length === 0 ? (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="mt-2 text-gray-500">Không tìm thấy chương trình nào</p>
+                    <button
+                      onClick={() => { setSearchTerm(""); setSelectedRole(""); }}
+                      className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      Xóa bộ lọc tìm kiếm
+                    </button>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên chương trình</th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Địa điểm</th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Thời gian</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {userPrograms.map(program => (
+                          <tr key={program.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">{program.name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">{program.location || "Không có thông tin"}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">
+                                {new Date(program.start_date).toLocaleDateString('vi-VN')} - {new Date(program.end_date).toLocaleDateString('vi-VN')}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Assessments History Tab */}
+            {!editMode && activeHistoryTab === 'assessments' && (
+              <div>
+                {loadingHistory ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p className="mt-2 text-gray-500">Đang tải lịch sử đánh giá...</p>
+                  </div>
+                ) : userAssessments.length === 0 ? (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <p className="mt-4 text-gray-600 text-lg font-medium">Chưa có lịch sử đánh giá</p>
+                    <p className="text-gray-500">Người dùng này chưa thực hiện bài đánh giá nào</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {userAssessments.map(assessment => (
+                      <div key={assessment.assessmentResultId} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">
+                                Đánh giá {assessment.assessmentType}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                Hoàn thành: {new Date(assessment.submittedAt).toLocaleDateString('vi-VN', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium
+                                ${assessment.riskLevel === 'LOW' ? 'bg-green-100 text-green-800' :
+                                  assessment.riskLevel === 'MODERATE' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-red-100 text-red-800'}`}>
+                                {assessment.riskLevel === 'LOW' ? 'Thấp' :
+                                  assessment.riskLevel === 'MODERATE' ? 'Trung bình' : 'Cao'}
+                              </span>
+                              <span className="ml-3 bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-medium">
+                                Điểm: {assessment.score}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Khuyến nghị:</h4>
+                            <p className="text-sm text-gray-600">{assessment.recommendation}</p>
+                          </div>
+
+                          {assessment.recommendedCourses && assessment.recommendedCourses.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Khóa học đề xuất:</h4>
+                              <ul className="list-disc pl-5 space-y-1">
+                                {assessment.recommendedCourses.map(course => (
+                                  <li key={course.id} className="text-sm text-gray-600">
+                                    {course.name}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Courses Enrollment Tab */}
+            {!editMode && activeHistoryTab === 'courses' && (
+              <div>
+                {loadingHistory ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p className="mt-2 text-gray-500">Đang tải danh sách khóa học...</p>
+                  </div>
+                ) : userCourses.length === 0 ? (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <p className="mt-4 text-gray-600 text-lg font-medium">Chưa đăng ký khóa học nào</p>
+                    <p className="text-gray-500">Người dùng này chưa đăng ký khóa học nào trong hệ thống</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khóa học</th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đăng ký</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {userCourses.map((course, index) => (
+                          <tr key={`${course.courseId}-${index}`} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm font-medium text-gray-900">{course.courseName}</div>
+                              <div className="text-xs text-gray-500">ID khóa học: {course.courseId}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                course.status === "Completed" ? "bg-green-100 text-green-800 border border-green-200" :
+                                course.status === "InProgress" ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                                "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                              }`}>
+                                {course.status === "Completed" ? "Đã hoàn thành" :
+                                 course.status === "InProgress" ? "Đang học" :
+                                 "Đã đăng ký"}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="text-sm text-gray-500">
+                                {new Date(course.enrolledAt).toLocaleDateString('vi-VN', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="flex justify-end gap-3 mt-8">
               {editMode ? (
@@ -901,6 +1175,178 @@ export default function UserManage() {
                   </button>
                 </>
               )}
+            </div>
+
+            {/* User Activity History - Tabbed interface for profile, programs, assessments */}
+            <div className="mt-6">
+              <div className="flex space-x-2 mb-4">
+                <button
+                  onClick={() => setActiveHistoryTab('profile')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center ${activeHistoryTab === 'profile' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.403 1.403A2 2 0 0116 21H8a2 2 0 01-1.597-3.215L5 17h5m5-8h4a2 2 0 002 2v4m-6-6h-4a2 2 0 00-2 2v4m6-10h-4a2 2 0 00-2 2v4" />
+                  </svg>
+                  Thông tin cá nhân
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('programs')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center ${activeHistoryTab === 'programs' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8h18M3 12h18m-7 8h4a2 2 0 002-2v-4m-6 6H5a2 2 0 01-2-2v-4m6 6v-6" />
+                  </svg>
+                  Chương trình đã tham gia
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('courses')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center ${activeHistoryTab === 'courses' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8h18M3 12h18m-7 8h4a2 2 0 002-2v-4m-6 6H5a2 2 0 01-2-2v-4m6 6v-6" />
+                  </svg>
+                  Khóa học đã đăng ký
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('assessments')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center ${activeHistoryTab === 'assessments' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-3-3v6m8-9a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V9l-4-4z" />
+                  </svg>
+                  Lịch sử đánh giá
+                </button>
+              </div>
+
+              {/* Tab content - Conditional rendering based on active tab */}
+              <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
+                {activeHistoryTab === 'profile' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Thông tin cá nhân</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Họ tên</p>
+                        <p className="text-gray-800">{selectedUser.fullName || "Chưa cập nhật"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Tên đăng nhập</p>
+                        <p className="text-gray-800">{selectedUser.userName}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Email</p>
+                        <p className="text-gray-800">{selectedUser.email || "Chưa cập nhật"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Số điện thoại</p>
+                        <p className="text-gray-800">{selectedUser.phoneNumber || "Chưa cập nhật"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Ngày sinh</p>
+                        <p className="text-gray-800">{selectedUser.dateOfBirth ? new Date(selectedUser.dateOfBirth).toLocaleDateString() : "Chưa cập nhật"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Địa chỉ</p>
+                        <p className="text-gray-800">{selectedUser.address || "Chưa cập nhật"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Giới tính</p>
+                        <p className="text-gray-800">{selectedUser.gender === "MALE" ? "Nam" : selectedUser.gender === "FEMALE" ? "Nữ" : "Chưa xác định"}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-600 font-medium">Vai trò</p>
+                        <p className="text-gray-800">{selectedUser.role}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeHistoryTab === 'programs' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Chương trình đã tham gia</h3>
+                    {loadingHistory ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                      </div>
+                    ) : userPrograms.length === 0 ? (
+                      <p className="text-center text-gray-500 py-4">Chưa có chương trình nào</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {userPrograms.map(program => (
+                          <div key={program.id} className="p-4 bg-white rounded-lg shadow">
+                            <h4 className="text-md font-semibold text-gray-800">{program.name}</h4>
+                            <p className="text-sm text-gray-600">Mô tả: {program.description || "Chưa có mô tả"}</p>
+                            <p className="text-sm text-gray-600">Thời gian: {new Date(program.startDate).toLocaleDateString()} - {new Date(program.endDate).toLocaleDateString()}</p>
+                            <p className="text-sm text-gray-600">Trạng thái: <span className={`font-medium ${program.status === "ACTIVE" ? "text-green-600" : "text-red-600"}`}>{program.status === "ACTIVE" ? "Đang diễn ra" : "Đã kết thúc"}</span></p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeHistoryTab === 'courses' && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Khóa học đã đăng ký</h3>
+                    {loadingHistory ? (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                      </div>
+                    ) : userCourses.length === 0 ? (
+                      <div className="bg-gray-50 rounded-lg p-8 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p className="mt-4 text-gray-600 text-lg font-medium">Chưa đăng ký khóa học nào</p>
+                        <p className="text-gray-500">Người dùng này chưa đăng ký khóa học nào trong hệ thống</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Khóa học</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trạng thái</th>
+                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày đăng ký</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {userCourses.map((course, index) => (
+                              <tr key={`${course.courseId}-${index}`} className="hover:bg-gray-50">
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm font-medium text-gray-900">{course.courseName}</div>
+                                  <div className="text-xs text-gray-500">ID khóa học: {course.courseId}</div>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    course.status === "Completed" ? "bg-green-100 text-green-800 border border-green-200" :
+                                    course.status === "InProgress" ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                                    "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                                  }`}>
+                                    {course.status === "Completed" ? "Đã hoàn thành" :
+                                     course.status === "InProgress" ? "Đang học" :
+                                     "Đã đăng ký"}
+                                  </span>
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <div className="text-sm text-gray-500">
+                                    {new Date(course.enrolledAt).toLocaleDateString('vi-VN', {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
