@@ -96,7 +96,7 @@ function UserProfilePage() {
         }
         setChangePwLoading(true);
         try {
-            await api.post('http://localhost:8080/api/change-password', {
+            await api.post('/change-password', {
                 oldPassword: pwForm.oldPassword,
                 newPassword: pwForm.newPassword
             });

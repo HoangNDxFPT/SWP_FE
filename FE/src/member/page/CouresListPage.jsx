@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+
 function CoursesListPage() {
   const [courses, setCourses] = useState([]);
   const [search, setSearch] = useState('');
@@ -16,8 +17,13 @@ function CoursesListPage() {
   const navigate = useNavigate();
   const COURSES_PER_PAGE = 5;
   const [enrolledCourses, setEnrolledCourses] = useState([]);
+  const [courseStatuses, setCourseStatuses] = useState({});
+  
+  // Modal states
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [courseToBeCancelled, setCourseToBeCancelled] = useState(null);
 
-  // Lấy thông tin user
+  // Lấy thông tin user và trạng thái khóa học
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -37,8 +43,9 @@ function CoursesListPage() {
               console.error('Failed to fetch completed courses:', err);
               toast.error('Không thể tải khóa học đã hoàn thành');
             }
+            
             try {
-
+              // Lấy danh sách đã đăng ký
               const enrolledRes = await api.get('/enrollments/my-courses');
               if (Array.isArray(enrolledRes.data)) {
                 setEnrolledCourses(enrolledRes.data.map((course) => course.id));
@@ -46,6 +53,20 @@ function CoursesListPage() {
             } catch (err) {
               console.error('Failed to fetch enrolled courses:', err);
               toast.error('Không thể tải khóa học đã tham gia');
+            }
+            
+            try {
+              // Lấy trạng thái của các khóa học
+              const statusRes = await api.get(`/enrollments/user/${res.data.userId}`);
+              if (Array.isArray(statusRes.data)) {
+                const statusMap = {};
+                statusRes.data.forEach(item => {
+                  statusMap[item.courseId] = item.status;
+                });
+                setCourseStatuses(statusMap);
+              }
+            } catch (err) {
+              console.error('Failed to fetch course statuses:', err);
             }
           }
         }
@@ -61,9 +82,11 @@ function CoursesListPage() {
     fetchUser();
   }, []);
 
+  // Hàm xử lý bắt đầu khóa học mới
   const handleStartCourse = async (courseId) => {
     if (!user || !user.userId) {
       toast.error('Bạn cần đăng nhập để bắt đầu học');
+      navigate('/login');
       return;
     }
 
@@ -72,7 +95,15 @@ function CoursesListPage() {
       const res = await api.post(`/enrollments/enroll?userId=${user.userId}&courseId=${courseId}`);
       if (res.status === 200) {
         toast.success('Đã đăng ký khóa học thành công');
-        // Điều hướng sau khi enroll thành công
+        
+        // Cập nhật danh sách khóa học đã đăng ký và trạng thái
+        setEnrolledCourses([...enrolledCourses, courseId]);
+        setCourseStatuses({
+          ...courseStatuses,
+          [courseId]: 'InProgress'
+        });
+        
+        // Chuyển hướng đến trang chi tiết khóa học
         navigate(`/course/${courseId}`);
       } else {
         toast.error('Đăng ký khóa học thất bại');
@@ -82,7 +113,71 @@ function CoursesListPage() {
       toast.error('Đã xảy ra lỗi khi đăng ký khóa học');
     }
   };
+  
+  // Hàm xử lý hủy đăng ký khóa học
+  const handleCancelCourse = (courseId) => {
+    if (!user || !user.userId) {
+      toast.error('Bạn cần đăng nhập để thực hiện thao tác này');
+      return;
+    }
+    
+    setCourseToBeCancelled(courseId);
+    setShowCancelModal(true);
+  };
+  
+  // Hàm xác nhận hủy đăng ký
+  const confirmCancelCourse = async () => {
+    try {
+      const res = await api.post(`/enrollments/cancel?userId=${user.userId}&courseId=${courseToBeCancelled}`);
+      if (res.status === 200) {
+        toast.success('Đã hủy đăng ký khóa học thành công');
+        
+        setCourseStatuses({
+          ...courseStatuses,
+          [courseToBeCancelled]: 'Cancelled'
+        });
+        
+        setShowCancelModal(false);
+        setCourseToBeCancelled(null);
+      } else {
+        toast.error('Hủy đăng ký khóa học thất bại');
+      }
+    } catch (error) {
+      console.error('Cancel enrollment error:', error);
+      toast.error('Đã xảy ra lỗi khi hủy đăng ký khóa học');
+    }
+  };
+  
+  // Hàm xử lý đăng ký lại khóa học
+  const handleReenrollCourse = async (courseId) => {
+    if (!user || !user.userId) {
+      toast.error('Bạn cần đăng nhập để đăng ký lại');
+      navigate('/login');
+      return;
+    }
 
+    try {
+      // Gọi API để đăng ký lại
+      const res = await api.post(`/enrollments/reenroll?userId=${user.userId}&courseId=${courseId}`);
+      if (res.status === 200) {
+        toast.success('Đã đăng ký lại khóa học thành công');
+        
+        // Cập nhật trạng thái khóa học
+        setCourseStatuses({
+          ...courseStatuses,
+          [courseId]: 'InProgress'
+        });
+        
+        // Chuyển hướng đến trang chi tiết khóa học
+        navigate(`/course/${courseId}`);
+      } else {
+        toast.error('Đăng ký lại khóa học thất bại');
+      }
+    } catch (error) {
+      console.error('Reenroll error:', error);
+      toast.error('Đã xảy ra lỗi khi đăng ký lại khóa học');
+    }
+  };
 
   // Tính nhóm tuổi
   const getUserAgeGroup = () => {
@@ -107,19 +202,14 @@ function CoursesListPage() {
       const fetchCourses = async () => {
         setLoading(true);
         try {
-          let url = 'http://localhost:8080/api/courses/list';
+          let url = 'courses/list';
           if (search.trim() !== '') {
-            url = `http://localhost:8080/api/courses/search?name=${encodeURIComponent(search.trim())}`;
+            url = `courses/search?name=${encodeURIComponent(search.trim())}`;
           }
 
           const token = localStorage.getItem('token');
 
-          const res = await api.get(url, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: '*/*',
-            },
-          });
+          const res = await api.get(url);
 
           if (res.status === 200 && Array.isArray(res.data)) {
             setCourses(res.data);
@@ -141,27 +231,43 @@ function CoursesListPage() {
 
     return () => clearTimeout(delayDebounce);
   }, [search]);
+  
+  // Lấy trạng thái của khóa học
+  const getCourseStatus = (courseId) => {
+    if (courseStatuses[courseId]) {
+      return courseStatuses[courseId];
+    }
+    if (completedCourses.includes(courseId)) {
+      return 'Completed';
+    }
+    return null;
+  };
 
   // Lọc theo các tiêu chí
   const getFilteredCourses = () => {
     let filtered = [...courses];
 
-    // Lọc theo nhóm tuổi nếu người dùng có thông tin
-    if (userAgeGroup && activeFilter === 'recommended') {
-      filtered = filtered.filter(course => course.targetAgeGroup === userAgeGroup);
-    }
-
-    // Lọc theo khóa học đã hoàn thành
-    if (activeFilter === 'completed') {
-      filtered = filtered.filter(course => completedCourses.includes(course.id));
-    }
-
-    // Lọc theo khóa học chưa hoàn thành
-    if (activeFilter === 'notCompleted') {
-      filtered = filtered.filter(course => !completedCourses.includes(course.id));
-    }
-    if (activeFilter === 'enrolled') {
-      filtered = filtered.filter(course => enrolledCourses.includes(course.id));
+    switch (activeFilter) {
+      case 'inProgress':
+        filtered = filtered.filter(course => getCourseStatus(course.id) === 'InProgress');
+        break;
+      case 'completed':
+        filtered = filtered.filter(course => getCourseStatus(course.id) === 'Completed' || completedCourses.includes(course.id));
+        break;
+      case 'cancelled':
+        filtered = filtered.filter(course => getCourseStatus(course.id) === 'Cancelled');
+        break;
+      case 'recommended':
+        if (userAgeGroup) {
+          filtered = filtered.filter(course => course.targetAgeGroup === userAgeGroup);
+        }
+        break;
+      case 'enrolled':
+        filtered = filtered.filter(course => enrolledCourses.includes(course.id));
+        break;
+      default:
+        // 'all' - không cần lọc thêm
+        break;
     }
 
     return filtered;
@@ -232,12 +338,12 @@ function CoursesListPage() {
                   Tất cả
                 </button>
                 <button
-                  onClick={() => { setActiveFilter('recommended'); setCurrentPage(1); }}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'recommended'
+                  onClick={() => { setActiveFilter('inProgress'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'inProgress'
                     ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
-                  Phù hợp với bạn
+                  Đang học
                 </button>
                 <button
                   onClick={() => { setActiveFilter('completed'); setCurrentPage(1); }}
@@ -248,20 +354,20 @@ function CoursesListPage() {
                   Đã hoàn thành
                 </button>
                 <button
-                  onClick={() => { setActiveFilter('notCompleted'); setCurrentPage(1); }}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'notCompleted'
+                  onClick={() => { setActiveFilter('cancelled'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'cancelled'
                     ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
-                  Chưa hoàn thành
+                  Đã hủy
                 </button>
                 <button
-                  onClick={() => { setActiveFilter('enrolled'); setCurrentPage(1); }}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'enrolled'
+                  onClick={() => { setActiveFilter('recommended'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'recommended'
                     ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
-                  Đã tham gia
+                  Phù hợp với bạn
                 </button>
               </div>
             </div>
@@ -306,9 +412,12 @@ function CoursesListPage() {
                 <p className="text-gray-500">
                   {search ? 'Không có kết quả phù hợp với từ khóa tìm kiếm của bạn.' : 'Hiện tại không có khóa học nào trong danh mục này.'}
                 </p>
-                {search && (
+                {(search || activeFilter !== 'all') && (
                   <button
-                    onClick={() => setSearch('')}
+                    onClick={() => {
+                      setSearch('');
+                      setActiveFilter('all');
+                    }}
                     className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
                   >
                     Xóa bộ lọc
@@ -317,66 +426,131 @@ function CoursesListPage() {
               </div>
             ) : (
               <div className="space-y-6">
-                {paginatedCourses.map(course => (
-                  <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
-                    <div className="p-6">
-                      <div className="flex items-center mb-2">
-                        <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full mr-2 ${completedCourses.includes(course.id)
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-blue-100 text-blue-800'}`}
-                        >
-                          {completedCourses.includes(course.id) ? 'Đã hoàn thành' : 'Khả dụng'}
-                        </span>
-                        <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                          {course.targetAgeGroup === 'Teenagers' ? 'Thanh thiếu niên' : 'Người trưởng thành'}
-                        </span>
+                {paginatedCourses.map(course => {
+                  // Lấy trạng thái khóa học
+                  const status = getCourseStatus(course.id);
+                  
+                  return (
+                    <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
+                      {/* Thêm ảnh đại diện khóa học */}
+                      <div className="relative w-full h-48">
+                        {course.url && course.url !== 'no' && course.url !== 'none' ? (
+                          <img 
+                            src={course.url} 
+                            alt={course.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png"; // Ảnh mặc định
+                            }}
+                          />
+                        ) : (
+                          <img 
+                            src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png" 
+                            alt="Hình ảnh mặc định" 
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                        {/* Hiển thị trạng thái khóa học ở góc ảnh */}
+                        <div className="absolute top-3 right-3">
+                          <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full 
+                            ${status === 'Completed' 
+                              ? 'bg-green-100 text-green-800 border border-green-200' 
+                              : status === 'InProgress' 
+                                ? 'bg-blue-100 text-blue-800 border border-blue-200'
+                                : status === 'Cancelled'
+                                  ? 'bg-red-100 text-red-800 border border-red-200' 
+                                  : 'bg-gray-100 text-gray-800'}`}
+                          >
+                            {status === 'Completed' 
+                              ? 'Đã hoàn thành' 
+                              : status === 'InProgress' 
+                                ? 'Đang học' 
+                                : status === 'Cancelled'
+                                  ? 'Đã hủy'
+                                  : 'Khả dụng'}
+                          </span>
+                        </div>
                       </div>
-
-                      <h3 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h3>
-                      <p className="text-gray-700 mb-4">{course.description}</p>
-
-                      <div className="flex flex-wrap gap-4 mb-4 text-gray-600 text-sm">
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          <span><b>Loại:</b> {course.type}</span>
+                      
+                      <div className="p-6">
+                        <div className="flex items-center mb-2">
+                          <span className="inline-block px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+                            {course.targetAgeGroup === 'Teenagers' ? 'Thanh thiếu niên' : 'Người trưởng thành'}
+                          </span>
                         </div>
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span><b>Ngày bắt đầu:</b> {new Date(course.startDate).toLocaleDateString('vi-VN')}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span><b>Ngày kết thúc:</b> {new Date(course.endDate).toLocaleDateString('vi-VN')}</span>
-                        </div>
-                      </div>
+                        
+                        <h3 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h3>
+                        <p className="text-gray-700 mb-4">{course.description}</p>
 
-                      {completedCourses.includes(course.id) ? (
-                        <div className="flex items-center space-x-4">
-                          <button className="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
-                            Đã hoàn thành
+                        <div className="flex flex-wrap gap-4 mb-4 text-gray-600 text-sm">
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <span><b>Loại:</b> {course.type || 'Giáo dục'}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span><b>Ngày bắt đầu:</b> {new Date(course.startDate).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span><b>Ngày kết thúc:</b> {new Date(course.endDate).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                        </div>
+
+                        {/* Các nút hành động dựa theo trạng thái khóa học */}
+                        {status === 'Completed' ? (
+                          <div className="flex items-center space-x-4">
+                            <button className="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
+                              Đã hoàn thành
+                            </button>
+                            <Link 
+                              to={`/course/${course.id}`}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              Xem lại khóa học
+                            </Link>
+                          </div>
+                        ) : status === 'InProgress' ? (
+                          <div className="flex flex-wrap gap-3 items-center">
+                            <Link 
+                              to={`/course/${course.id}`}
+                              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
+                            >
+                              Tiếp tục học
+                            </Link>
+                            <button
+                              onClick={() => handleCancelCourse(course.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              Hủy đăng ký
+                            </button>
+                          </div>
+                        ) : status === 'Cancelled' ? (
+                          <button
+                            onClick={() => handleReenrollCourse(course.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
+                          >
+                            Đăng ký lại
                           </button>
-                          <Link to={`/course/${course.id}`} className="text-blue-600 hover:text-blue-800">
-                            Xem lại khóa học
-                          </Link>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => handleStartCourse(course.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
-                        >
-                          Bắt đầu học ngay
-                        </button>
-
-                      )}
+                        ) : (
+                          <button
+                            onClick={() => handleStartCourse(course.id)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
+                          >
+                            Bắt đầu học ngay
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -502,22 +676,32 @@ function CoursesListPage() {
               </div>
             </div>
 
-            {/* Thống kê */}
+            {/* Thống kê khóa học */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Thống kê khóa học</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-2xl font-bold text-blue-700">{courses.length}</p>
-                  <p className="text-gray-600 text-sm">Tổng khóa học</p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {Object.values(courseStatuses).filter(status => status === 'InProgress').length}
+                  </p>
+                  <p className="text-gray-600 text-sm">Đang học</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg">
-                  <p className="text-2xl font-bold text-green-700">{completedCourses.length}</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    {completedCourses.length}
+                  </p>
                   <p className="text-gray-600 text-sm">Đã hoàn thành</p>
                 </div>
-                <div className="bg-purple-50 p-4 rounded-lg col-span-2">
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <p className="text-2xl font-bold text-red-700">
+                    {Object.values(courseStatuses).filter(status => status === 'Cancelled').length}
+                  </p>
+                  <p className="text-gray-600 text-sm">Đã hủy</p>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg">
                   <p className="text-2xl font-bold text-purple-700">
-                    {completedCourses.length > 0 && courses.length > 0
-                      ? Math.round((completedCourses.length / courses.length) * 100)
+                    {enrolledCourses.length > 0
+                      ? Math.round((completedCourses.length / enrolledCourses.length) * 100)
                       : 0}%
                   </p>
                   <p className="text-gray-600 text-sm">Tiến độ học tập</p>
@@ -527,6 +711,32 @@ function CoursesListPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal xác nhận hủy đăng ký */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Xác nhận hủy đăng ký</h3>
+            <p className="text-gray-600 mb-6">
+              Bạn có chắc chắn muốn hủy đăng ký khóa học này? Tiến độ học tập sẽ bị mất và bạn sẽ cần đăng ký lại để tiếp tục.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowCancelModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={confirmCancelCourse}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Xác nhận hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

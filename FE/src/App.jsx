@@ -23,6 +23,7 @@ import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
 import Assessment from "./member/page/Assessment";
+import CourseDetail from './member/page/CourseDetail';
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -96,14 +97,10 @@ const router = createBrowserRouter([
     element: <CouresListPage />,
   },
   {
-    path: "/course/:id",
-    element: <CourseVideo />,
-  },
-  {
     path: "/consultantList",
     element: <ConsultantList />,
   }, {
-    path: "/quiz/:courseId",
+    path: "/quiz/:id",
     element: <CourseQuiz />,
   },
   {
