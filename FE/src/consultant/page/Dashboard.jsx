@@ -107,9 +107,9 @@ function Dashboard() {
   return (
     <>
       <ConsultantHeader />
-      <div className="max-w-6xl mx-auto py-10">
+      <div className="w-full min-h-screen bg-gradient-to-tr from-blue-50 to-blue-200 py-10 px-4 ">
         <h1 className="text-3xl font-bold mb-8 text-blue-700">
-          Consultant Dashboard
+          
         </h1>
         {loading ? (
           <div>Đang tải dữ liệu...</div>
@@ -139,17 +139,17 @@ function Dashboard() {
           </div>
         )}
 
-        <div className="flex w-full max-w-5xl mx-auto mt-10 gap-8 items-center">
+        <div className="flex w-full mt-10 gap-8 items-center">
           {/* Cột trái: Calendar to, không có khung ngoài */}
           <div className="flex-1 flex flex-col items-center">
-            <PrettyCalendar appointments={appointments} />
+            <PrettyCalendar appointments={appointments} className="w-full" />
           </div>
           {/* Cột phải: Ảnh minh họa */}
           <div className="flex-1 flex items-center justify-center">
             <img
               src="https://cdn.pixabay.com/photo/2016/03/23/18/41/calendar-1275962_1280.png"
               alt="Minh họa lịch hẹn"
-              className="w-full max-w-[350px] rounded-2xl shadow"
+              className="w-3/4 max-w-[460px] rounded-2xl shadow"
             />
             {/* Hoặc nội dung bạn muốn */}
           </div>
