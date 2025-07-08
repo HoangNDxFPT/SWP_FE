@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { toast } from 'react-toastify';
-
+import { useNavigate } from 'react-router-dom';
 function CoursesListPage() {
   const [courses, setCourses] = useState([]);
   const [search, setSearch] = useState('');
@@ -13,8 +13,9 @@ function CoursesListPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState('all');
-
+  const navigate = useNavigate();
   const COURSES_PER_PAGE = 5;
+  const [enrolledCourses, setEnrolledCourses] = useState([]);
 
   // Lấy thông tin user
   useEffect(() => {
@@ -24,7 +25,7 @@ function CoursesListPage() {
         const res = await api.get('profile');
         if (res.status === 200 && res.data) {
           setUser(res.data);
-          
+
           // Lấy danh sách khóa học đã hoàn thành
           if (res.data.userId) {
             try {
@@ -36,6 +37,16 @@ function CoursesListPage() {
               console.error('Failed to fetch completed courses:', err);
               toast.error('Không thể tải khóa học đã hoàn thành');
             }
+            try {
+
+              const enrolledRes = await api.get('/enrollments/my-courses');
+              if (Array.isArray(enrolledRes.data)) {
+                setEnrolledCourses(enrolledRes.data.map((course) => course.id));
+              }
+            } catch (err) {
+              console.error('Failed to fetch enrolled courses:', err);
+              toast.error('Không thể tải khóa học đã tham gia');
+            }
           }
         }
       } catch (err) {
@@ -46,9 +57,32 @@ function CoursesListPage() {
         setLoading(false);
       }
     };
-    
+
     fetchUser();
   }, []);
+
+  const handleStartCourse = async (courseId) => {
+    if (!user || !user.userId) {
+      toast.error('Bạn cần đăng nhập để bắt đầu học');
+      return;
+    }
+
+    try {
+      // Gọi API để enroll
+      const res = await api.post(`/enrollments/enroll?userId=${user.userId}&courseId=${courseId}`);
+      if (res.status === 200) {
+        toast.success('Đã đăng ký khóa học thành công');
+        // Điều hướng sau khi enroll thành công
+        navigate(`/course/${courseId}`);
+      } else {
+        toast.error('Đăng ký khóa học thất bại');
+      }
+    } catch (error) {
+      console.error('Enroll error:', error);
+      toast.error('Đã xảy ra lỗi khi đăng ký khóa học');
+    }
+  };
+
 
   // Tính nhóm tuổi
   const getUserAgeGroup = () => {
@@ -121,10 +155,13 @@ function CoursesListPage() {
     if (activeFilter === 'completed') {
       filtered = filtered.filter(course => completedCourses.includes(course.id));
     }
-    
+
     // Lọc theo khóa học chưa hoàn thành
     if (activeFilter === 'notCompleted') {
       filtered = filtered.filter(course => !completedCourses.includes(course.id));
+    }
+    if (activeFilter === 'enrolled') {
+      filtered = filtered.filter(course => enrolledCourses.includes(course.id));
     }
 
     return filtered;
@@ -149,13 +186,13 @@ function CoursesListPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       {/* Banner */}
       <div className="bg-gradient-to-r from-blue-700 to-blue-900 py-16 px-4 shadow-md">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8">
           <div className="flex-1">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Giáo dục phòng chống<br className="hidden sm:block"/> ma túy
+              Giáo dục phòng chống<br className="hidden sm:block" /> ma túy
             </h1>
             <p className="text-white/90 text-lg mb-6">
               Bộ tài liệu giáo dục tương tác này được thiết kế để bạn có thể học hỏi về sự thật về ma túy theo nhịp độ riêng. Tìm hiểu ma túy là gì, chúng được làm từ gì, tác động ngắn hạn và dài hạn của chúng, và xem những câu chuyện thực tế từ người thật về mỗi loại ma túy phổ biến.
@@ -168,7 +205,7 @@ function CoursesListPage() {
           </div>
           <div className="md:w-2/5 flex justify-center">
             <img
-              src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png" 
+              src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png"
               alt="Giáo dục phòng chống ma túy"
               className="w-full max-w-md h-auto object-contain rounded-lg shadow-xl"
             />
@@ -183,40 +220,48 @@ function CoursesListPage() {
           <div className="w-full md:w-2/3">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">Danh sách khóa học</h2>
-              
+
               {/* Filter buttons */}
               <div className="flex flex-wrap gap-2">
-                <button 
-                  onClick={() => {setActiveFilter('all'); setCurrentPage(1);}}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'all' 
-                    ? 'bg-blue-700 text-white' 
+                <button
+                  onClick={() => { setActiveFilter('all'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'all'
+                    ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
                   Tất cả
                 </button>
-                <button 
-                  onClick={() => {setActiveFilter('recommended'); setCurrentPage(1);}}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'recommended' 
-                    ? 'bg-blue-700 text-white' 
+                <button
+                  onClick={() => { setActiveFilter('recommended'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'recommended'
+                    ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
                   Phù hợp với bạn
                 </button>
-                <button 
-                  onClick={() => {setActiveFilter('completed'); setCurrentPage(1);}}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'completed' 
-                    ? 'bg-blue-700 text-white' 
+                <button
+                  onClick={() => { setActiveFilter('completed'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'completed'
+                    ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
                   Đã hoàn thành
                 </button>
-                <button 
-                  onClick={() => {setActiveFilter('notCompleted'); setCurrentPage(1);}}
-                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'notCompleted' 
-                    ? 'bg-blue-700 text-white' 
+                <button
+                  onClick={() => { setActiveFilter('notCompleted'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'notCompleted'
+                    ? 'bg-blue-700 text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
                 >
                   Chưa hoàn thành
+                </button>
+                <button
+                  onClick={() => { setActiveFilter('enrolled'); setCurrentPage(1); }}
+                  className={`px-4 py-2 text-sm rounded-full ${activeFilter === 'enrolled'
+                    ? 'bg-blue-700 text-white'
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+                >
+                  Đã tham gia
                 </button>
               </div>
             </div>
@@ -262,7 +307,7 @@ function CoursesListPage() {
                   {search ? 'Không có kết quả phù hợp với từ khóa tìm kiếm của bạn.' : 'Hiện tại không có khóa học nào trong danh mục này.'}
                 </p>
                 {search && (
-                  <button 
+                  <button
                     onClick={() => setSearch('')}
                     className="mt-4 text-blue-600 hover:text-blue-800 font-medium"
                   >
@@ -276,8 +321,8 @@ function CoursesListPage() {
                   <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
                     <div className="p-6">
                       <div className="flex items-center mb-2">
-                        <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full mr-2 ${completedCourses.includes(course.id) 
-                          ? 'bg-green-100 text-green-800' 
+                        <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full mr-2 ${completedCourses.includes(course.id)
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-blue-100 text-blue-800'}`}
                         >
                           {completedCourses.includes(course.id) ? 'Đã hoàn thành' : 'Khả dụng'}
@@ -286,10 +331,10 @@ function CoursesListPage() {
                           {course.targetAgeGroup === 'Teenagers' ? 'Thanh thiếu niên' : 'Người trưởng thành'}
                         </span>
                       </div>
-                      
+
                       <h3 className="text-2xl font-bold text-blue-700 mb-2">{course.name}</h3>
                       <p className="text-gray-700 mb-4">{course.description}</p>
-                      
+
                       <div className="flex flex-wrap gap-4 mb-4 text-gray-600 text-sm">
                         <div className="flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -310,7 +355,7 @@ function CoursesListPage() {
                           <span><b>Ngày kết thúc:</b> {new Date(course.endDate).toLocaleDateString('vi-VN')}</span>
                         </div>
                       </div>
-                      
+
                       {completedCourses.includes(course.id) ? (
                         <div className="flex items-center space-x-4">
                           <button className="px-6 py-2 rounded-lg font-semibold bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
@@ -321,11 +366,13 @@ function CoursesListPage() {
                           </Link>
                         </div>
                       ) : (
-                        <Link to={`/course/${course.id}`}>
-                          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md">
-                            Bắt đầu học ngay
-                          </button>
-                        </Link>
+                        <button
+                          onClick={() => handleStartCourse(course.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
+                        >
+                          Bắt đầu học ngay
+                        </button>
+
                       )}
                     </div>
                   </div>
@@ -347,29 +394,28 @@ function CoursesListPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
-                  
+
                   {[...Array(totalPages)].map((_, idx) => {
                     const pageNum = idx + 1;
                     if (
-                      pageNum === 1 || 
-                      pageNum === totalPages || 
+                      pageNum === 1 ||
+                      pageNum === totalPages ||
                       (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
                     ) {
                       return (
                         <button
                           key={pageNum}
                           onClick={() => handlePageChange(pageNum)}
-                          className={`relative inline-flex items-center px-4 py-2 border ${
-                            currentPage === pageNum
-                              ? 'bg-blue-600 text-white border-blue-600'
-                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                          } text-sm font-medium`}
+                          className={`relative inline-flex items-center px-4 py-2 border ${currentPage === pageNum
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                            } text-sm font-medium`}
                         >
                           {pageNum}
                         </button>
                       );
                     } else if (
-                      (pageNum === currentPage - 2 && currentPage > 3) || 
+                      (pageNum === currentPage - 2 && currentPage > 3) ||
                       (pageNum === currentPage + 2 && currentPage < totalPages - 2)
                     ) {
                       return (
@@ -383,7 +429,7 @@ function CoursesListPage() {
                     }
                     return null;
                   })}
-                  
+
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
@@ -398,7 +444,7 @@ function CoursesListPage() {
               </div>
             )}
           </div>
-          
+
           {/* Sidebar */}
           <div className="w-full md:w-1/3 space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-600">
@@ -433,7 +479,7 @@ function CoursesListPage() {
                 </li>
               </ul>
             </div>
-            
+
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg shadow-md p-6">
               <div className="flex items-center mb-4">
                 <div className="p-3 bg-blue-100 rounded-full mr-3">
@@ -455,7 +501,7 @@ function CoursesListPage() {
                 <span className="text-gray-700">Tham gia cộng đồng những người đang nỗ lực xây dựng một thế giới không ma túy!</span>
               </div>
             </div>
-            
+
             {/* Thống kê */}
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">Thống kê khóa học</h3>
@@ -470,8 +516,8 @@ function CoursesListPage() {
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg col-span-2">
                   <p className="text-2xl font-bold text-purple-700">
-                    {completedCourses.length > 0 && courses.length > 0 
-                      ? Math.round((completedCourses.length / courses.length) * 100) 
+                    {completedCourses.length > 0 && courses.length > 0
+                      ? Math.round((completedCourses.length / courses.length) * 100)
                       : 0}%
                   </p>
                   <p className="text-gray-600 text-sm">Tiến độ học tập</p>
@@ -481,7 +527,7 @@ function CoursesListPage() {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );
