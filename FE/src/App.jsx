@@ -43,6 +43,7 @@ import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
 import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
+import ProgramList from "./member/page/ProgramList";
 
 
 function RequireAdmin({ children }) {
