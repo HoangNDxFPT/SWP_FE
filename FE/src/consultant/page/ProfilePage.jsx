@@ -11,6 +11,14 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("profile");
   const [editMode, setEditMode] = useState(false); // Chế độ chỉnh sửa hồ sơ
   const [editProfile, setEditProfile] = useState({}); // Dữ liệu chỉnh sửa hồ sơ
+  const [changePwLoading, setChangePwLoading] = useState(false); // Trạng thái loading khi đổi mật khẩu
+  const [pwForm, setPwForm] = useState({
+    oldPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [pwMsg, setPwMsg] = useState("");
+  const [pwMsgType, setPwMsgType] = useState(""); // "success" hoặc "error"
 
   // Giả lập dữ liệu badge (fans, trust, legal) nếu chưa có API thực
   const badges = {
@@ -41,6 +49,59 @@ export default function ProfilePage() {
         .finally(() => setLoading(false));
     }
   }, [activeTab]);
+
+  const handlePwInput = (e) => {
+    setPwForm({ ...pwForm, [e.target.name]: e.target.value });
+    setPwMsg("");
+    setPwMsgType("");
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPwMsg("");
+    setPwMsgType("");
+
+    if (!pwForm.oldPassword || !pwForm.newPassword || !pwForm.confirmPassword) {
+      setPwMsg("Vui lòng nhập đầy đủ thông tin!");
+      setPwMsgType("error");
+      return;
+    }
+    if (pwForm.newPassword.length < 6) {
+      setPwMsg("Mật khẩu mới phải có ít nhất 6 ký tự!");
+      setPwMsgType("error");
+      return;
+    }
+    if (pwForm.newPassword !== pwForm.confirmPassword) {
+      setPwMsg("Mật khẩu xác nhận không khớp!");
+      setPwMsgType("error");
+      return;
+    }
+
+    setChangePwLoading(true);
+    try {
+      // UPDATED: Sử dụng đường dẫn tương đối, không hardcode URL
+      await api.post("/change-password", {
+        oldPassword: pwForm.oldPassword,
+        newPassword: pwForm.newPassword,
+      });
+      setPwMsg("Đổi mật khẩu thành công!");
+      setPwMsgType("success");
+      setPwForm({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      if (err.response?.status === 401) {
+        setPwMsg("Mật khẩu cũ không đúng!");
+      } else {
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          "Đổi mật khẩu thất bại!";
+        setPwMsg(msg);
+      }
+      setPwMsgType("error");
+    } finally {
+      setChangePwLoading(false);
+    }
+  };
 
   // Nội dung động theo tab
   let mainContent = null;
@@ -263,12 +324,65 @@ export default function ProfilePage() {
         </div>
       </section>
     );
+  } else if (activeTab === "changePassword") {
+    mainContent = (
+      <section className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-xl font-bold mb-4">Đổi mật khẩu</h2>
+        <form className="flex flex-col gap-4" onSubmit={handleChangePassword}>
+          <label className="font-semibold">Mật khẩu cũ</label>
+          <input
+            type="password"
+            name="oldPassword"
+            value={pwForm.oldPassword}
+            onChange={handlePwInput}
+            className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            required
+          />
+          <label className="font-semibold">Mật khẩu mới</label>
+          <input
+            type="password"
+            name="newPassword"
+            value={pwForm.newPassword}
+            onChange={handlePwInput}
+            className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            required
+          />
+          <label className="font-semibold">Xác nhận mật khẩu mới</label>
+          <input
+            type="password"
+            name="confirmPassword"
+            value={pwForm.confirmPassword}
+            onChange={handlePwInput}
+            className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            required
+          />
+
+          {pwMsg && (
+            <div
+              className={`text-center mt-2 ${
+                pwMsgType === "success" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {pwMsg}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={changePwLoading}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200 mt-4 disabled:bg-gray-400"
+          >
+            {changePwLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
+          </button>
+        </form>
+      </section>
+    );
   }
 
   return (
     <div className="bg-gradient-to-tr from-blue-50 to-blue-200 min-h-screen">
       <Header user={user} />
-      <div className="flex justify-center gap-6 py-10 px-2 max-w-7xl mx-auto">
+      <div className="flex justify-center gap-6 py-10 px-4 sm:px-6 lg:px-8">
         {/* Sidebar trái */}
         <aside className="bg-white rounded-xl shadow-lg p-6 w-72 flex flex-col items-center">
           <img
@@ -316,6 +430,14 @@ export default function ProfilePage() {
               onClick={() => setActiveTab("contact")}
             >
               Liên lạc
+            </li>
+            <li
+              className={`hover:text-blue-500 cursor-pointer ${
+                activeTab === "changePassword" ? "font-bold underline" : ""
+              }`}
+              onClick={() => setActiveTab("changePassword")}
+            >
+              Đổi mật khẩu
             </li>
           </ul>
         </aside>

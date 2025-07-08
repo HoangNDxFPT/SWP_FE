@@ -23,7 +23,6 @@ import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
 import Assessment from "./member/page/Assessment";
-import CourseDetail from './member/page/CourseDetail';
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -35,16 +34,15 @@ import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
 import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 import AssessmentResultManage from "./admin/page/AssessmentResultManage";
 import Program from "./admin/page/Program";
+
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
 import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
-import ProgramList from "./member/page/ProgramList";
-
-
-
+import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
+import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
 
 
 function RequireAdmin({ children }) {
@@ -100,7 +98,7 @@ const router = createBrowserRouter([
     path: "/consultantList",
     element: <ConsultantList />,
   }, {
-    path: "/quiz/:id",
+    path: "/quiz/:courseId",
     element: <CourseQuiz />,
   },
   {
@@ -166,12 +164,11 @@ const router = createBrowserRouter([
       {
         path: "appointments",
         element: <AppointmentList />,
-
       },
-
       { path: "cases", element: <UserCaseList /> },
-
       { path: "profile", element: <ConsultantProfilePage /> },
+      { path: "courses", element: <CourseListPage /> }, // Added new route
+      { path: "programs", element: <ProgramListPage /> }, // Added new route
     ],
   },
 ]);
