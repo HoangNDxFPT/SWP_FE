@@ -137,8 +137,12 @@ function CourseDetailPage() {
 
   // Xử lý khi bắt đầu làm quiz
   const handleStartQuiz = (quiz) => {
-    navigate(`/quiz/${quiz.id}`);
-  };
+  if (course && course.id) {
+    navigate(`/quiz/${course.id}`);
+  } else {
+    toast.error('Không thể bắt đầu bài kiểm tra. Vui lòng thử lại sau.');
+  }
+};
 
   // Đánh dấu bài học đã hoàn thành
   const handleMarkComplete = async () => {
