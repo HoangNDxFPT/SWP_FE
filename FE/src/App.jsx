@@ -44,6 +44,8 @@ import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
 import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
 import ProgramList from "./member/page/ProgramList";
+import CourseDetailPage from "./member/page/CourseDetailPage";
+import QuizResult from "./member/page/QuizResult";
 
 
 function RequireAdmin({ children }) {
@@ -98,13 +100,18 @@ const router = createBrowserRouter([
   {
     path: "/consultantList",
     element: <ConsultantList />,
-  }, {
-    path: "/quiz/:courseId",
+  }, 
+  {
+    path: "/quiz/:id",
     element: <CourseQuiz />,
   },
   {
+    path: "/course/:id",
+    element: <CourseDetailPage />,
+  },
+  {
     path: "/quiz-result/:id",
-    element: <CourseResultPage />,
+    element: <QuizResult />,
   },
   {
     path: "/assessment/:type",
