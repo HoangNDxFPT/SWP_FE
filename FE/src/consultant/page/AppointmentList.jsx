@@ -14,6 +14,7 @@ import { toast } from "react-toastify";
 import ScheduleTable from "../components/ScheduleTable";
 import CreateScheduleModal from "../components/CreateScheduleModal";
 import EditScheduleModal from "../components/EditScheduleModal";
+import ConsultationCaseDetailModal from "../components/ConsultationCaseDetailModal";
 
 function AppointmentList() {
   // State chính
@@ -31,6 +32,9 @@ function AppointmentList() {
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [showEditSchedule, setShowEditSchedule] = useState(false);
+
+  const [showCaseDetail, setShowCaseDetail] = useState(false);
+  const [selectedCase, setSelectedCase] = useState(null);
 
   // Item đang chọn
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -162,6 +166,7 @@ function AppointmentList() {
       }
     }
   };
+
   const handleCreateAppointment = async (body) => {
     try {
       await api.post("/consultant/appointments", body);
@@ -189,8 +194,7 @@ function AppointmentList() {
     <>
       <ConsultantHeader />
       <div className="w-full min-h-screen py-10 px-4 bg-gradient-to-tr from-blue-50 to-blue-200">
-
-        <MiniStats stats={miniStats} />
+        <miniStats stats={miniStats} />
         <Tabs
           defaultActiveKey="appointments"
           items={[
@@ -240,7 +244,21 @@ function AppointmentList() {
               key: "cases",
               label: "Hồ sơ tư vấn",
               children: (
-                <ConsultationCaseTable cases={cases} loading={loading} />
+                <>
+                  <ConsultationCaseTable
+                    cases={cases}
+                    loading={loading}
+                    onDetail={(c) => {
+                      setSelectedCase(c);
+                      setShowCaseDetail(true);
+                    }}
+                  />
+                  <ConsultationCaseDetailModal
+                    open={showCaseDetail}
+                    onCancel={() => setShowCaseDetail(false)}
+                    caseInfo={selectedCase}
+                  />
+                </>
               ),
             },
             {
