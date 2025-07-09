@@ -10,7 +10,7 @@ function CourseDetailPage() {
   const navigate = useNavigate();
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
-  const [quizzes, setQuizzes] = useState([]);
+  const [quiz, setQuiz] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [progress, setProgress] = useState(0);
@@ -63,8 +63,8 @@ function CourseDetailPage() {
         
         // Lấy danh sách bài quiz của khóa học
         const quizzesRes = await api.get(`/quiz/course/${id}`);
-        if (quizzesRes.status === 200 && Array.isArray(quizzesRes.data)) {
-          setQuizzes(quizzesRes.data);
+        if (quizzesRes.status === 200 && Array.isArray(quizzesRes.data) && quizzesRes.data.length > 0) {
+          setQuiz(quizzesRes.data[0]); // Chỉ lấy bài kiểm tra đầu tiên
         }
         
         // Nếu user đã đăng nhập, lấy thông tin tiến độ học tập
@@ -86,7 +86,7 @@ function CourseDetailPage() {
               setCompletedLessons(completedLessonIds);
               
               // Tính toán tiến độ học tập
-              const totalLessons = lessonsRes.data.length + quizzesRes.data.length;
+              const totalLessons = lessonsRes.data.length + (quiz ? 1 : 0);
               if (totalLessons > 0) {
                 setProgress(Math.round((completedLessonIds.length / totalLessons) * 100));
               }
@@ -136,13 +136,13 @@ function CourseDetailPage() {
   };
 
   // Xử lý khi bắt đầu làm quiz
-  const handleStartQuiz = (quiz) => {
-  if (course && course.id) {
-    navigate(`/quiz/${course.id}`);
-  } else {
-    toast.error('Không thể bắt đầu bài kiểm tra. Vui lòng thử lại sau.');
-  }
-};
+  const handleStartQuiz = () => {
+    if (course && course.id) {
+      navigate(`/quiz/${course.id}`);
+    } else {
+      toast.error('Không thể bắt đầu bài kiểm tra. Vui lòng thử lại sau.');
+    }
+  };
 
   // Đánh dấu bài học đã hoàn thành
   const handleMarkComplete = async () => {
@@ -182,7 +182,7 @@ function CourseDetailPage() {
           
           // Tính toán lại tiến độ học tập
           const completedCount = completedLessonIds.length;
-          const totalLessons = lessons.length + quizzes.length;
+          const totalLessons = lessons.length + (quiz ? 1 : 0);
           if (totalLessons > 0) {
             setProgress(Math.round((completedCount / totalLessons) * 100));
           }
@@ -256,16 +256,16 @@ function CourseDetailPage() {
                   
                   {/* Progress Bar */}
                   <div className="mb-4">
-                    <div className="flex justify-between items-center mb-1">
+                    {/* <div className="flex justify-between items-center mb-1">
                       <span className="text-sm font-medium text-blue-100">Tiến độ khóa học</span>
                       <span className="text-sm font-medium text-blue-100">{progress}%</span>
-                    </div>
-                    <div className="w-full bg-blue-800 rounded-full h-2.5 overflow-hidden">
+                    </div> */}
+                    {/* <div className="w-full bg-blue-800 rounded-full h-2.5 overflow-hidden">
                       <div 
                         className="bg-yellow-400 h-2.5 rounded-full transition-all duration-500" 
                         style={{ width: `${progress}%` }}
                       ></div>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
                 
@@ -284,7 +284,7 @@ function CourseDetailPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                           </svg>
-                          <span><b>Bài kiểm tra:</b> {quizzes.length}</span>
+                          <span><b>Bài kiểm tra:</b> {quiz ? 1 : 0}</span>
                         </div>
                         <div className="flex items-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -376,7 +376,7 @@ function CourseDetailPage() {
                       <h2 className="text-xl font-bold text-gray-800 mb-4">Giới thiệu khóa học</h2>
                       <div className="prose max-w-none text-gray-700">
                         <p className="mb-4">{course.description}</p>
-                        <p>Khóa học này gồm {lessons.length} bài học và {quizzes.length} bài kiểm tra. Hãy hoàn thành tất cả các bài học và bài kiểm tra để có được chứng nhận hoàn thành khóa học.</p>
+                        <p>Khóa học này gồm {lessons.length} bài học và {quiz ? 1 : 0} bài kiểm tra. Hãy hoàn thành tất cả các bài học và bài kiểm tra để có được chứng nhận hoàn thành khóa học.</p>
                         
                         <h3 className="text-lg font-semibold mt-6 mb-3">Bạn sẽ học được gì?</h3>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-5">
@@ -531,11 +531,11 @@ function CourseDetailPage() {
                                   if (currentIndex < lessons.length - 1) {
                                     setCurrentLesson(lessons[currentIndex + 1]);
                                     window.scrollTo({ top: 0, behavior: 'smooth' });
-                                  } else if (quizzes.length > 0) {
+                                  } else if (quiz) {
                                     setActiveTab('quizzes');
                                   }
                                 }}
-                                disabled={lessons.findIndex(l => l.id === currentLesson.id) === lessons.length - 1 && quizzes.length === 0}
+                                disabled={lessons.findIndex(l => l.id === currentLesson.id) === lessons.length - 1 && !quiz}
                                 className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
                               >
                                 Bài tiếp theo
@@ -625,7 +625,7 @@ function CourseDetailPage() {
                             </div>
                           </div>
                           
-                          {quizzes.length > 0 && (
+                          {quiz && (
                             <div className="mt-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                               <h4 className="font-medium text-yellow-800 mb-2 flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -668,52 +668,48 @@ function CourseDetailPage() {
                         </button>
                       </div>
                       
-                      {quizzes.length > 0 ? (
-                        <div className="space-y-4">
-                          {quizzes.map((quiz) => (
-                            <div key={quiz.id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition">
-                              <div className="p-5">
-                                <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                                  <div>
-                                    <h3 className="text-lg font-semibold text-gray-800">{quiz.title}</h3>
-                                    <p className="text-gray-600 mt-1">{quiz.description}</p>
-                                    <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                                      <div className="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Thời gian: {quiz.timeLimit || 'Không giới hạn'}</span>
-                                      </div>
-                                      
-                                      <div className="flex items-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Số câu hỏi: {quiz.questionCount || '?'}</span>
-                                      </div>
-                                    </div>
+                      {quiz ? (
+                        <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition">
+                          <div className="p-5">
+                            <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
+                              <div>
+                                <h3 className="text-lg font-semibold text-gray-800">Bài kiểm tra cuối khóa</h3>
+                                <p className="text-gray-600 mt-1">{course?.name}</p>
+                                <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                                  <div className="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Thời gian: {quiz.timeLimit || 'Không giới hạn'}</span>
                                   </div>
                                   
-                                  <button
-                                    onClick={() => handleStartQuiz(quiz)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium transition flex items-center"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  <div className="flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    Làm bài kiểm tra
-                                  </button>
+                                    <span>Số câu hỏi: {quiz.questionCount || '?'}</span>
+                                  </div>
                                 </div>
                               </div>
+                              
+                              <button
+                                onClick={handleStartQuiz}
+                                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium transition flex items-center"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                Làm bài kiểm tra
+                              </button>
                             </div>
-                          ))}
+                          </div>
                         </div>
                       ) : (
                         <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
-                          <p className="text-gray-600 mb-2">Chưa có bài kiểm tra nào cho khóa học này</p>
+                          <p className="text-gray-600 mb-2">Chưa có bài kiểm tra cho khóa học này</p>
                           <p className="text-gray-500 text-sm">Hãy hoàn thành các bài học trước khi làm bài kiểm tra.</p>
                           <button
                             onClick={() => setActiveTab('content')}
