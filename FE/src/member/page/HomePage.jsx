@@ -13,7 +13,7 @@ function HomePage() {
     const fetchConsultants = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/consultant/consultants");
+        const response = await api.get("/consultant/public");
         setConsultants(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách chuyên viên tư vấn:", error);
@@ -200,12 +200,12 @@ function HomePage() {
                   <div key={consultant.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
                     <div className="h-48 overflow-hidden">
                       <img 
-                        src={consultant.avatar || consultant.image || consultant.profilePicture || '/images/default-avatar.png'} 
+                        src={consultant.avatar || consultant.image || consultant.profilePicture || 'https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824589/samples/upscale-face-1.jpg'} 
                         alt={`Chuyên viên ${consultant.fullName}`} 
                         className="w-full h-full object-cover object-center"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = '/images/default-avatar.png';
+                          e.target.src = 'https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824589/samples/upscale-face-1.jpg';
                         }}
                       />
                     </div>
