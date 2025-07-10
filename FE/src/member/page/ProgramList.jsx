@@ -5,6 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import MapEmbed from './MapEmbed';
 
 function ProgramList() {
   const [programs, setPrograms] = useState([]);
@@ -412,19 +413,20 @@ function ProgramList() {
                           <span><b>Ngày kết thúc:</b> {formatDate(program.end_date)}</span>
                         </div>
                       </div>
+                      <MapEmbed location={program.location} />
 
                       {/* Action buttons based on registration status */}
                       {isRegistered(program.id) ? (
                         <button
                           onClick={() => handleUnregister(program.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
+                          className="bg-red-600 hover:bg-red-700 text-white mt-4 px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
                         >
                           Hủy đăng ký
                         </button>
                       ) : (
                         <button
                           onClick={() => handleRegister(program.id)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
+                          className="bg-blue-600 hover:bg-blue-700 text-white mt-4 px-6 py-2 rounded-lg font-semibold transition shadow-sm hover:shadow-md"
                         >
                           Đăng ký tham gia
                         </button>
