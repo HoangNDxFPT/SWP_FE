@@ -43,7 +43,7 @@ function ConsultantList() {
       try {
         setLoading(true);
         setError(null);
-        const res = await api.get('/consultant/consultants');
+        const res = await api.get('consultant/all');
         if (res.status === 200) {
           setConsultants(res.data);
         }
@@ -60,19 +60,36 @@ function ConsultantList() {
 
   // Fetch schedules
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchAvailableSlots = async () => {
+      if (!date) return;
+
       try {
-        const res = await api.get('/consultant/schedules');
-        if (res.status === 200) {
-          setSchedules(res.data);
+        const allSchedules = [];
+        for (const consultant of consultants) {
+          const res = await api.get('/slot/registered', {
+            params: {
+              consultantId: consultant.id,
+              date: date
+            }
+          });
+          if (res.status === 200) {
+            allSchedules.push({
+              consultantId: consultant.id,
+              slots: res.data
+            });
+          }
         }
+        setSchedules(allSchedules);
       } catch (err) {
-        console.error('Failed to fetch schedules:', err);
-        toast.error('Không thể tải lịch trình của chuyên viên');
+        console.error('Failed to fetch slots:', err);
+        toast.error('Không thể tải lịch làm việc');
       }
     };
-    fetchSchedules();
-  }, []);
+
+    if (consultants.length > 0) {
+      fetchAvailableSlots();
+    }
+  }, [consultants, date]);
 
   const formatTimeSlot = (timeStr) => timeStr?.substring(0, 5);
 
@@ -88,19 +105,18 @@ function ConsultantList() {
   const filteredConsultants = consultants.filter(c => {
     // Lọc theo tên
     const matchName = c.fullName?.toLowerCase().includes(search.toLowerCase());
-    
+
     // Lọc theo chuyên môn
-    const matchSpecialty = specialty === 'all' || 
+    const matchSpecialty = specialty === 'all' ||
       c.specialty?.toLowerCase().includes(specialty.toLowerCase());
-    
+
     // Nếu không chọn ngày hoặc thời gian, chỉ lọc theo tên và chuyên môn
     if (!date || !time) return matchName && matchSpecialty;
 
     // Lọc thêm theo lịch làm việc nếu đã chọn cả ngày và thời gian
-    const matchedSlot = schedules.find(s =>
-      String(s.consultantId) === String(c.id) &&
-      s.workDate === date &&
-      formatTimeSlot(s.startTime) === time
+    const matchedSchedule = schedules.find(s => s.consultantId === c.id);
+    const matchedSlot = matchedSchedule?.slots.find(slot =>
+      formatTimeSlot(slot.startTime) === time && slot.available
     );
 
     return matchName && matchSpecialty && matchedSlot?.isAvailable;
@@ -109,7 +125,7 @@ function ConsultantList() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      
+
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -121,20 +137,20 @@ function ConsultantList() {
           </div>
         </div>
       </div>
-      
+
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 flex-grow">
         {/* Filters Section */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
           <div className="mb-4 flex justify-between items-center">
             <h2 className="text-xl font-semibold text-gray-800">Tìm chuyên viên tư vấn</h2>
-            <button 
+            <button
               onClick={resetFilters}
               className="text-blue-600 hover:text-blue-800 text-sm font-medium"
             >
               Xóa bộ lọc
             </button>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Tên chuyên viên</label>
@@ -158,7 +174,7 @@ function ConsultantList() {
                 )}
               </div>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Chuyên môn</label>
               <select
@@ -171,7 +187,7 @@ function ConsultantList() {
                 ))}
               </select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Ngày tư vấn</label>
               <input
@@ -182,7 +198,7 @@ function ConsultantList() {
                 min={today}
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Khung giờ</label>
               <select
@@ -198,7 +214,7 @@ function ConsultantList() {
               </select>
             </div>
           </div>
-          
+
           {date && time && (
             <div className="mt-4 bg-blue-50 p-3 rounded-md border border-blue-100">
               <p className="text-sm text-blue-800">
@@ -235,7 +251,7 @@ function ConsultantList() {
             </svg>
             <p className="text-lg font-medium mb-2">Rất tiếc, đã xảy ra lỗi</p>
             <p>{error}</p>
-            <button 
+            <button
               className="mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
               onClick={() => window.location.reload()}
             >
@@ -249,12 +265,12 @@ function ConsultantList() {
             </svg>
             <h3 className="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy chuyên viên nào</h3>
             <p className="text-gray-500 mb-4">
-              {search || date || time || specialty !== 'all' 
+              {search || date || time || specialty !== 'all'
                 ? 'Không có kết quả phù hợp với tiêu chí tìm kiếm của bạn.'
                 : 'Hiện tại chưa có thông tin về chuyên viên tư vấn.'}
             </p>
             {(search || date || time || specialty !== 'all') && (
-              <button 
+              <button
                 onClick={resetFilters}
                 className="mt-2 text-blue-600 hover:text-blue-800 font-medium"
               >
@@ -266,57 +282,29 @@ function ConsultantList() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredConsultants.map(consultant => (
               <div key={consultant.id} className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition duration-300">
-                <div className="h-48 overflow-hidden">
-                  <img 
-                    src={consultant.avatar || consultant.image || consultant.profilePicture || '/images/default-avatar.png'} 
-                    alt={`Chuyên viên ${consultant.fullName}`} 
-                    className="w-full h-full object-cover object-center"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/images/default-avatar.png';
-                    }}
-                  />
-                </div>
+
                 <div className="p-5">
                   <h3 className="text-lg font-semibold text-gray-800 mb-1">{consultant.fullName}</h3>
-                  
-                  {consultant.specialty && (
-                    <div className="text-blue-600 text-sm mb-2">
-                      {consultant.specialty}
-                    </div>
-                  )}
-                  
+
                   <div className="space-y-1 mb-4">
-                    {consultant.email && (
+                    {consultant.information && (
                       <div className="text-sm text-gray-600 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        {consultant.email}
+                        
+                        {consultant.information}
                       </div>
                     )}
-                    
-                    {consultant.phone && (
+
+                    {consultant.address && (
                       <div className="text-sm text-gray-600 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        {consultant.phone}
+                        {consultant.address}
                       </div>
                     )}
-                    
-                    {consultant.experience && (
-                      <div className="text-sm text-gray-600 flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {consultant.experience} năm kinh nghiệm
-                      </div>
-                    )}
-                  </div>
+
                   
-                  <Link 
-                    to={`/consultantDetail/${consultant.id}`}
+                  </div>
+
+                  <Link
+                    to={`/consultantDetail/${consultant.consultantId}`}
                     className="mt-2 inline-block w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-md transition shadow-sm hover:shadow-md font-medium"
                   >
                     Xem hồ sơ và đặt lịch
@@ -327,7 +315,7 @@ function ConsultantList() {
           </div>
         )}
       </div>
-      
+
       {/* Info Section */}
       <div className="bg-blue-50 py-12 mt-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -345,7 +333,7 @@ function ConsultantList() {
                   Đội ngũ chuyên viên được đào tạo bài bản và có nhiều kinh nghiệm trong lĩnh vực tư vấn về các vấn đề ma túy và nghiện.
                 </p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="w-12 h-12 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -357,7 +345,7 @@ function ConsultantList() {
                   Dễ dàng chọn thời gian tư vấn phù hợp với lịch trình của bạn và đặt lịch hẹn trực tuyến nhanh chóng.
                 </p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="w-12 h-12 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -373,7 +361,7 @@ function ConsultantList() {
           </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

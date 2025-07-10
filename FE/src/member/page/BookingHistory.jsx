@@ -1,79 +1,171 @@
 import React, { useEffect, useState } from 'react';
 import Header from '../components/Header';
-import Footer from '../components/Footer';
 import api from '../../config/axios';
 import { toast } from 'react-toastify';
 
+const TABS = [
+  { label: 'Chờ xác nhận', value: 'PENDING' },
+  { label: 'Hoàn thành', value: 'COMPLETED' },
+  { label: 'Đã hủy', value: 'CANCELLED' },
+];
+
 function BookingHistory() {
-  const [bookings, setBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedTab, setSelectedTab] = useState('PENDING');
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportData, setReportData] = useState({ appointmentId: null, reason: '', description: '' });
+
+  const fetchAppointments = async (status) => {
+    setLoading(true);
+    try {
+      const res = await api.get(`appointment/appointments?status=${status}`);
+      setAppointments(res.data || []);
+    } catch (err) {
+      console.error('Lỗi khi lấy danh sách lịch hẹn:', err);
+      toast.error('Không thể tải lịch hẹn. Vui lòng thử lại sau.');
+      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        const res = await api.get('/bookings/my-booking');
-        setBookings(res.data);
-      } catch (err) {
-        console.error('Lỗi khi load booking history:', err);
-        toast.error('Không thể tải lịch sử đặt lịch!');
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchAppointments(selectedTab);
+  }, [selectedTab]);
 
-    fetchBookings();
-  }, []);
+  const handleOpenReportModal = (id) => {
+    setReportData({ appointmentId: id, reason: '', description: '' });
+    setShowReportModal(true);
+  };
+
+  const handleReportSubmit = async () => {
+    const { appointmentId, reason, description } = reportData;
+    if (!reason || !description) {
+      toast.error('Vui lòng nhập đầy đủ lý do và mô tả!');
+      return;
+    }
+
+    try {
+      await api.post(`report?appointmentId=${appointmentId}&reason=${encodeURIComponent(reason)}&description=${encodeURIComponent(description)}`);
+      toast.success('Báo cáo thành công!');
+      setShowReportModal(false);
+    } catch (error) {
+      toast.error('Gửi báo cáo thất bại!');
+      console.error(error);
+    }
+  };
+  const handleCancelAppointment = async (appointmentId) => {
+    if (!window.confirm('Bạn có chắc muốn hủy cuộc hẹn này không?')) return;
+
+    try {
+      await api.delete(`appointment/appointments/${appointmentId}`);
+      toast.success('Hủy cuộc hẹn thành công!');
+      fetchAppointments(selectedTab); 
+    } catch (error) {
+      toast.error('Hủy cuộc hẹn thất bại!');
+      console.error(error);
+    }
+  };
+
 
   return (
     <>
       <Header />
-      <div className="max-w-4xl mx-auto py-10 px-4">
-        <h1 className="text-3xl font-bold mb-6">Lịch sử đặt lịch tư vấn</h1>
+      <div className="max-w-5xl mx-auto p-6">
+        <h2 className="text-2xl font-bold mb-4">Lịch sử đặt hẹn</h2>
+        <div className="flex space-x-4 mb-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab.value}
+              onClick={() => setSelectedTab(tab.value)}
+              className={`px-4 py-2 rounded font-semibold ${selectedTab === tab.value
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         {loading ? (
-          <p>Đang tải...</p>
-        ) : bookings.length === 0 ? (
-          <p>Chưa có lịch đặt nào.</p>
+          <p>Đang tải dữ liệu...</p>
+        ) : appointments.length === 0 ? (
+          <p className="text-gray-500">Không có lịch hẹn nào ở trạng thái này.</p>
         ) : (
-          <div className="space-y-4">
-            {bookings.map((booking) => (
-              <div
-                key={booking.id}
-                className="p-4 border rounded-lg bg-white shadow-sm"
-              >
+          <div className="grid grid-cols-1 gap-4">
+            {appointments.map((appt) => (
+              <div key={appt.id} className="border rounded p-4 shadow-sm bg-white hover:shadow-md transition">
+                <p><strong>Ngày hẹn:</strong> {appt.date}</p>
+                <p><strong>Thời gian:</strong> {appt.startTime} - {appt.endTime}</p>
+                <p><strong>Tư vấn viên:</strong> {appt.consultantName}</p>
                 <p>
-                  <strong>Thời gian:</strong>{' '}
-                  {new Date(booking.appointmentTime).toLocaleString('vi-VN')}
+                  <strong>Google Meet:</strong>{' '}
+                  <a href={appt.googleMeetLink} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                    {appt.googleMeetLink}
+                  </a>
                 </p>
-                <p>
-                  <strong>Trạng thái:</strong>{' '}
-                  <span
-                    className={`font-semibold ${
-                      booking.status === 'PENDING'
-                        ? 'text-yellow-500'
-                        : booking.status === 'CONFIRMED'
-                        ? 'text-green-500'
-                        : booking.status === 'CANCELLED'
-                        ? 'text-red-500'
-                        : ''
-                    }`}
+
+                {selectedTab === 'COMPLETED' && (
+                  <button
+                    onClick={() => handleOpenReportModal(appt.id)}
+                    className="mt-3 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                   >
-                    {booking.status}
-                  </span>
-                </p>
-                <p>
-                  <strong>Tư vấn viên:</strong> {booking.consultantFullName} (
-                  {booking.consultantEmail})
-                </p>
-                <p>
-                  <strong>Ghi chú:</strong> {booking.note}
-                </p>
+                    Báo cáo
+                  </button>
+                )}
+
+                {selectedTab === 'PENDING' && (
+                  <button
+                    onClick={() => handleCancelAppointment(appt.id)}
+                    className="mt-3 px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+                  >
+                    Hủy cuộc hẹn
+                  </button>
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
-      <Footer />
+
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg w-[400px]">
+            <h3 className="text-lg font-semibold mb-4">Báo cáo cuộc hẹn</h3>
+            <label className="block mb-2">Lý do:</label>
+            <input
+              type="text"
+              value={reportData.reason}
+              onChange={(e) => setReportData({ ...reportData, reason: e.target.value })}
+              className="w-full border px-3 py-2 rounded mb-4"
+            />
+            <label className="block mb-2">Mô tả:</label>
+            <textarea
+              rows="4"
+              value={reportData.description}
+              onChange={(e) => setReportData({ ...reportData, description: e.target.value })}
+              className="w-full border px-3 py-2 rounded mb-4"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-100"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleReportSubmit}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Gửi báo cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

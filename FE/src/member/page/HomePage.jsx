@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../../config/axios";
-import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
 function HomePage() {
@@ -17,7 +16,7 @@ function HomePage() {
         setConsultants(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách chuyên viên tư vấn:", error);
-        toast.error("Không thể tải danh sách chuyên viên tư vấn");
+       
       } finally {
         setLoading(false);
       }
