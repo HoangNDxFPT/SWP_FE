@@ -12,10 +12,8 @@ import UserProfilePage from "./member/page/UserProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
-import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
-import CourseResultPage from "./member/page/CourseResultPage";
 import AssessmentResult from "./member/page/AssessmentResult";
 import AssessmentHistory from "./member/page/AssessmentHistory";
 import ConsultantDetail from "./member/page/ConsultantDetail";
@@ -23,7 +21,9 @@ import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
 import Assessment from "./member/page/Assessment";
-import ProgramList from "./member/page/ProgramList"; // Kept from main branch
+import ProgramList from "./member/page/ProgramList";
+import CourseDetailPage from "./member/page/CourseDetailPage";
+import QuizResult from "./member/page/QuizResult";
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -96,20 +96,20 @@ const router = createBrowserRouter([
     element: <CouresListPage />,
   },
   {
-    path: "/course/:id",
-    element: <CourseVideo />,
-  },
-  {
     path: "/consultantList",
     element: <ConsultantList />,
-  },
+  }, 
   {
-    path: "/quiz/:courseId",
+    path: "/quiz/:id",
     element: <CourseQuiz />,
   },
   {
+    path: "/course/:id",
+    element: <CourseDetailPage />,
+  },
+  {
     path: "/quiz-result/:id",
-    element: <CourseResultPage />,
+    element: <QuizResult />,
   },
   {
     path: "/assessment/:type",
