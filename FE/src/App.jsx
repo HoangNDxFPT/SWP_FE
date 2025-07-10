@@ -44,6 +44,7 @@ import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
 import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
+import QuizHistory from "./member/page/QuizHistory";
 
 
 function RequireAdmin({ children }) {
@@ -110,6 +111,10 @@ const router = createBrowserRouter([
   {
     path: "/quiz-result/:id",
     element: <QuizResult />,
+  },
+  {
+    path: "/quiz-history",
+    element: <QuizHistory />,
   },
   {
     path: "/assessment/:type",

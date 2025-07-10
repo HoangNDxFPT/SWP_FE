@@ -19,6 +19,8 @@ function CourseDetailPage() {
   const [user, setUser] = useState(null);
   const [loadingProgress, setLoadingProgress] = useState(false);
   const [completedLessons, setCompletedLessons] = useState([]);
+  const [quizResults, setQuizResults] = useState([]);
+  const [loadingQuizHistory, setLoadingQuizHistory] = useState(false);
 
   // Lấy thông tin user
   useEffect(() => {
@@ -41,56 +43,56 @@ function CourseDetailPage() {
     const fetchCourseDetails = async () => {
       try {
         setLoading(true);
-        
+
         // Lấy thông tin chi tiết khóa học
         const courseRes = await api.get(`/courses/${id}`);
         if (courseRes.status === 200) {
           setCourse(courseRes.data);
         }
-        
+
         // Lấy danh sách bài học của khóa học
         const lessonsRes = await api.get(`/lessons/course/${id}`);
         if (lessonsRes.status === 200 && Array.isArray(lessonsRes.data)) {
           // Sắp xếp bài học theo thứ tự
           const sortedLessons = lessonsRes.data.sort((a, b) => a.lessonOrder - b.lessonOrder);
           setLessons(sortedLessons);
-          
+
           // Nếu có bài học, đặt bài học đầu tiên là bài học hiện tại
           if (sortedLessons.length > 0) {
             setCurrentLesson(sortedLessons[0]);
           }
         }
-        
+
         // Lấy danh sách bài quiz của khóa học
         const quizzesRes = await api.get(`/quiz/course/${id}`);
         if (quizzesRes.status === 200 && Array.isArray(quizzesRes.data) && quizzesRes.data.length > 0) {
           setQuiz(quizzesRes.data[0]); // Chỉ lấy bài kiểm tra đầu tiên
         }
-        
+
         // Nếu user đã đăng nhập, lấy thông tin tiến độ học tập
         if (user?.userId) {
           try {
             // Lấy thông tin tiến độ các bài học đã hoàn thành
             const progressRes = await api.get(`/progress/user/${user.userId}`);
-            
+
             if (progressRes.status === 200 && Array.isArray(progressRes.data)) {
               // Lọc các bài học thuộc khóa học hiện tại
               const courseProgress = progressRes.data.filter(
                 progress => progress.lesson.course.id === Number(id)
               );
-              
+
               // Lấy danh sách ID của các bài học đã hoàn thành
               const completedLessonIds = courseProgress.map(progress => progress.lesson.id);
-              
+
               // Lưu trữ trực tiếp vào state mới
               setCompletedLessons(completedLessonIds);
-              
+
               // Tính toán tiến độ học tập
               const totalLessons = lessonsRes.data.length + (quiz ? 1 : 0);
               if (totalLessons > 0) {
                 setProgress(Math.round((completedLessonIds.length / totalLessons) * 100));
               }
-              
+
               // Vẫn có thể lưu thông tin enrollment nếu cần
               try {
                 const enrollmentRes = await api.get(`/enrollments/status`, {
@@ -99,7 +101,7 @@ function CourseDetailPage() {
                     courseId: id
                   }
                 });
-                
+
                 if (enrollmentRes.status === 200) {
                   // Kết hợp thông tin từ cả hai API
                   setEnrollment({
@@ -122,7 +124,7 @@ function CourseDetailPage() {
         setLoading(false);
       }
     };
-    
+
     if (user) {
       fetchCourseDetails();
     }
@@ -153,7 +155,7 @@ function CourseDetailPage() {
 
     try {
       setLoadingProgress(true);
-      
+
       // Gọi API đánh dấu bài học hoàn thành
       const res = await api.post('/progress/complete', null, {
         params: {
@@ -161,25 +163,25 @@ function CourseDetailPage() {
           lessonId: currentLesson.id
         }
       });
-      
+
       if (res.status === 200) {
         toast.success('Đã đánh dấu bài học hoàn thành');
-        
+
         // Lấy danh sách bài học đã hoàn thành sử dụng API đúng
         const progressRes = await api.get(`/progress/user/${user.userId}`);
-        
+
         if (progressRes.status === 200 && Array.isArray(progressRes.data)) {
           // Lọc các bài học thuộc khóa học hiện tại
           const courseProgress = progressRes.data.filter(
             progress => progress.lesson.course.id === Number(id)
           );
-          
+
           // Tạo một mảng chỉ chứa ID của các bài học đã hoàn thành
           const completedLessonIds = courseProgress.map(progress => progress.lesson.id);
-          
+
           // Cập nhật state mới
           setCompletedLessons(completedLessonIds);
-          
+
           // Tính toán lại tiến độ học tập
           const completedCount = completedLessonIds.length;
           const totalLessons = lessons.length + (quiz ? 1 : 0);
@@ -187,7 +189,7 @@ function CourseDetailPage() {
             setProgress(Math.round((completedCount / totalLessons) * 100));
           }
         }
-        
+
         // Tự động chuyển đến bài học tiếp theo nếu có
         const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
         if (currentIndex < lessons.length - 1) {
@@ -211,29 +213,62 @@ function CourseDetailPage() {
   // Chuyển đổi URL YouTube thành dạng nhúng
   const getYoutubeEmbedUrl = (url) => {
     if (!url) return null;
-    
+
     try {
       // Xử lý các định dạng URL YouTube khác nhau
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
       const match = url.match(regExp);
-      
+
       if (match && match[2].length === 11) {
         return `https://www.youtube.com/embed/${match[2]}`;
       }
-      
+
       if (url.includes('youtube.com/embed/')) {
         return url;
       }
-      
+
       if (url.length === 11 && /^[A-Za-z0-9_-]{11}$/.test(url)) {
         return `https://www.youtube.com/embed/${url}`;
       }
     } catch (err) {
       console.error("Lỗi xử lý URL YouTube:", err);
     }
-    
+
     return url;
   };
+
+  // Fetch quiz history results
+  useEffect(() => {
+    const fetchQuizHistory = async () => {
+      if (activeTab !== 'quiz-history' || !id || !user) return;
+
+      try {
+        setLoadingQuizHistory(true);
+        const response = await api.get('/quiz-result/my-results');
+
+        if (response.status === 200 && Array.isArray(response.data)) {
+          // Filter results for the current course
+          const courseResults = response.data.filter(
+            result => result.course && result.course.id === parseInt(id)
+          );
+
+          // Sort by submission date (newest first)
+          courseResults.sort((a, b) =>
+            new Date(b.submittedAt) - new Date(a.submittedAt)
+          );
+
+          setQuizResults(courseResults);
+        }
+      } catch (error) {
+        console.error('Error fetching quiz history:', error);
+        toast.error('Không thể tải lịch sử làm bài kiểm tra');
+      } finally {
+        setLoadingQuizHistory(false);
+      }
+    };
+
+    fetchQuizHistory();
+  }, [id, activeTab, user]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -253,22 +288,9 @@ function CourseDetailPage() {
                 <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white p-6">
                   <h1 className="text-3xl font-bold mb-3">{course.name}</h1>
                   <p className="text-blue-100 mb-4">{course.description}</p>
-                  
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    {/* <div className="flex justify-between items-center mb-1">
-                      <span className="text-sm font-medium text-blue-100">Tiến độ khóa học</span>
-                      <span className="text-sm font-medium text-blue-100">{progress}%</span>
-                    </div> */}
-                    {/* <div className="w-full bg-blue-800 rounded-full h-2.5 overflow-hidden">
-                      <div 
-                        className="bg-yellow-400 h-2.5 rounded-full transition-all duration-500" 
-                        style={{ width: `${progress}%` }}
-                      ></div>
-                    </div> */}
-                  </div>
+
                 </div>
-                
+
                 <div className="p-6">
                   <div className="flex flex-col md:flex-row gap-6">
                     <div className="w-full md:w-2/3">
@@ -306,13 +328,13 @@ function CourseDetailPage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* Course Image */}
                     <div className="w-full md:w-1/3 flex justify-center md:justify-end">
                       {course.url && course.url !== 'no' && course.url !== 'none' ? (
-                        <img 
-                          src={course.url} 
-                          alt={course.name} 
+                        <img
+                          src={course.url}
+                          alt={course.name}
                           className="w-full max-w-xs h-auto object-cover rounded-lg shadow-md"
                           onError={(e) => {
                             e.target.onerror = null;
@@ -320,9 +342,9 @@ function CourseDetailPage() {
                           }}
                         />
                       ) : (
-                        <img 
-                          src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png" 
-                          alt={course.name} 
+                        <img
+                          src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png"
+                          alt={course.name}
                           className="w-full max-w-xs h-auto object-cover rounded-lg shadow-md"
                         />
                       )}
@@ -337,33 +359,39 @@ function CourseDetailPage() {
                   <nav className="flex flex-wrap">
                     <button
                       onClick={() => setActiveTab('overview')}
-                      className={`px-6 py-3 text-sm font-medium transition ${
-                        activeTab === 'overview'
+                      className={`px-6 py-3 text-sm font-medium transition ${activeTab === 'overview'
                           ? 'text-blue-700 border-b-2 border-blue-700 bg-blue-50'
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       Tổng quan
                     </button>
                     <button
                       onClick={() => setActiveTab('content')}
-                      className={`px-6 py-3 text-sm font-medium transition ${
-                        activeTab === 'content'
+                      className={`px-6 py-3 text-sm font-medium transition ${activeTab === 'content'
                           ? 'text-blue-700 border-b-2 border-blue-700 bg-blue-50'
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       Nội dung bài học
                     </button>
                     <button
                       onClick={() => setActiveTab('quizzes')}
-                      className={`px-6 py-3 text-sm font-medium transition ${
-                        activeTab === 'quizzes'
+                      className={`px-6 py-3 text-sm font-medium transition ${activeTab === 'quizzes'
                           ? 'text-blue-700 border-b-2 border-blue-700 bg-blue-50'
                           : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       Bài kiểm tra
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('quiz-history')}
+                      className={`px-6 py-3 text-sm font-medium transition ${activeTab === 'quiz-history'
+                          ? 'text-blue-700 border-b-2 border-blue-700 bg-blue-50'
+                          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                        }`}
+                    >
+                      Lịch sử làm bài
                     </button>
                   </nav>
                 </div>
@@ -377,7 +405,7 @@ function CourseDetailPage() {
                       <div className="prose max-w-none text-gray-700">
                         <p className="mb-4">{course.description}</p>
                         <p>Khóa học này gồm {lessons.length} bài học và {quiz ? 1 : 0} bài kiểm tra. Hãy hoàn thành tất cả các bài học và bài kiểm tra để có được chứng nhận hoàn thành khóa học.</p>
-                        
+
                         <h3 className="text-lg font-semibold mt-6 mb-3">Bạn sẽ học được gì?</h3>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 pl-5">
                           <li className="flex items-start">
@@ -411,9 +439,9 @@ function CourseDetailPage() {
                             <span>Các nguồn lực và dịch vụ hỗ trợ trong cộng đồng</span>
                           </li>
                         </ul>
-                        
+
                         <div className="mt-8 flex justify-center">
-                          <button 
+                          <button
                             onClick={() => {
                               setActiveTab('content');
                               if (lessons.length > 0) {
@@ -442,7 +470,7 @@ function CourseDetailPage() {
                           <>
                             <div className="flex justify-between items-center mb-4">
                               <h2 className="text-xl font-bold text-gray-800">{currentLesson.title}</h2>
-                              
+
                               {isLessonCompleted(currentLesson.id) && (
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                   <svg className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -452,7 +480,7 @@ function CourseDetailPage() {
                                 </span>
                               )}
                             </div>
-                            
+
                             {/* Video từ materialUrl */}
                             {currentLesson.materialUrl && (
                               <div className="mb-6 rounded-lg overflow-hidden shadow-md">
@@ -468,12 +496,12 @@ function CourseDetailPage() {
                                 </div>
                               </div>
                             )}
-                            
+
                             {/* Lesson Content */}
                             <div className="prose max-w-none text-gray-700 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                               <div dangerouslySetInnerHTML={{ __html: currentLesson.content }}></div>
                             </div>
-                            
+
                             {/* Action Buttons */}
                             <div className="mt-8 flex justify-between items-center">
                               <button
@@ -492,7 +520,7 @@ function CourseDetailPage() {
                                 </svg>
                                 Bài trước
                               </button>
-                              
+
                               {isLessonCompleted(currentLesson.id) ? (
                                 <div className="flex items-center text-green-600">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
@@ -524,7 +552,7 @@ function CourseDetailPage() {
                                   )}
                                 </button>
                               )}
-                              
+
                               <button
                                 onClick={() => {
                                   const currentIndex = lessons.findIndex(l => l.id === currentLesson.id);
@@ -551,19 +579,19 @@ function CourseDetailPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             <p className="text-gray-500">Chưa có bài học nào cho khóa học này</p>
-                            <Link 
-                              to="/courseList" 
+                            <Link
+                              to="/courseList"
                               className="mt-4 inline-flex items-center text-blue-600 hover:text-blue-800"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7 7-7m-7 7h18" />
                               </svg>
                               Quay lại danh sách khóa học
                             </Link >
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Lesson List */}
                       <div className="w-full lg:w-1/3">
                         <div className="sticky top-4">
@@ -585,18 +613,16 @@ function CourseDetailPage() {
                                       <button
                                         key={lesson.id}
                                         onClick={() => handleSelectLesson(lesson)}
-                                        className={`w-full flex items-center justify-between p-3 rounded-lg transition ${
-                                          currentLesson?.id === lesson.id
+                                        className={`w-full flex items-center justify-between p-3 rounded-lg transition ${currentLesson?.id === lesson.id
                                             ? 'bg-blue-100 border border-blue-200'
                                             : completed
                                               ? 'bg-green-50 hover:bg-green-100 border border-green-100'
                                               : 'bg-white hover:bg-gray-100 border border-gray-200'
-                                        }`}
+                                          }`}
                                       >
                                         <div className="flex items-center">
-                                          <span className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 ${
-                                            completed ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
-                                          } text-sm`}>
+                                          <span className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 ${completed ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'
+                                            } text-sm`}>
                                             {completed ? (
                                               <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -624,7 +650,7 @@ function CourseDetailPage() {
                               </div>
                             </div>
                           </div>
-                          
+
                           {quiz && (
                             <div className="mt-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
                               <h4 className="font-medium text-yellow-800 mb-2 flex items-center">
@@ -636,7 +662,7 @@ function CourseDetailPage() {
                               <p className="text-sm text-yellow-700 mb-3">
                                 Hoàn thành các bài học để mở khóa bài kiểm tra cuối khóa.
                               </p>
-                              <button 
+                              <button
                                 onClick={() => setActiveTab('quizzes')}
                                 className="w-full text-sm bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded transition flex items-center justify-center"
                               >
@@ -657,7 +683,7 @@ function CourseDetailPage() {
                     <div className="animate-fadeIn">
                       <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-gray-800">Bài kiểm tra</h2>
-                        <button 
+                        <button
                           onClick={() => setActiveTab('content')}
                           className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
                         >
@@ -667,7 +693,7 @@ function CourseDetailPage() {
                           Quay lại bài học
                         </button>
                       </div>
-                      
+
                       {quiz ? (
                         <div className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition">
                           <div className="p-5">
@@ -682,16 +708,9 @@ function CourseDetailPage() {
                                     </svg>
                                     <span>Thời gian: {quiz.timeLimit || 'Không giới hạn'}</span>
                                   </div>
-                                  
-                                  <div className="flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    <span>Số câu hỏi: {quiz.questionCount || '?'}</span>
-                                  </div>
                                 </div>
                               </div>
-                              
+
                               <button
                                 onClick={handleStartQuiz}
                                 className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-md text-sm font-medium transition flex items-center"
@@ -724,13 +743,179 @@ function CourseDetailPage() {
                       )}
                     </div>
                   )}
+
+                  {/* Quiz History Tab */}
+                  {activeTab === 'quiz-history' && (
+                    <div className="animate-fadeIn">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-xl font-bold text-gray-800">Lịch sử làm bài kiểm tra</h2>
+                        {quizResults.length > 0 && (
+                          <div className="text-sm text-gray-600">
+                            <span className="font-medium">{quizResults.length}</span> lần làm bài
+                          </div>
+                        )}
+                      </div>
+
+                      {loadingQuizHistory ? (
+                        <div className="flex justify-center py-12">
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                        </div>
+                      ) : quizResults.length > 0 ? (
+                        <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    #
+                                  </th>
+                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Ngày làm bài
+                                  </th>
+                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Điểm số
+                                  </th>
+                                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Trạng thái
+                                  </th>
+                                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Hành động
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {quizResults.map((result, index) => {
+                                  const scorePercentage = Math.round((result.score / result.totalQuestions) * 100);
+                                  const isPassed = scorePercentage >= 80;
+
+                                  return (
+                                    <tr key={result.id} className="hover:bg-gray-50">
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {index + 1}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {new Date(result.submittedAt).toLocaleString('vi-VN', {
+                                          year: 'numeric',
+                                          month: 'long',
+                                          day: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <div className="flex items-center">
+                                          <div className="text-sm font-medium text-gray-900">
+                                            {result.score}/{result.totalQuestions}
+                                          </div>
+                                          <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${scorePercentage >= 80 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {scorePercentage}%
+                                          </span>
+                                        </div>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        {isPassed ? (
+                                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                            </svg>
+                                            Đạt
+                                          </span>
+                                        ) : (
+                                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                            </svg>
+                                            Chưa đạt
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <Link
+                                          to={`/quiz-result/${result.id}`}
+                                          className="text-blue-600 hover:text-blue-900"
+                                        >
+                                          Chi tiết
+                                        </Link>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Best score card */}
+                          <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
+                              <div className="mb-4 sm:mb-0">
+                                <h3 className="text-sm font-medium text-gray-900">Kết quả tốt nhất</h3>
+                                {(() => {
+                                  const bestResult = quizResults.reduce((best, current) => {
+                                    const currentPercentage = (current.score / current.totalQuestions) * 100;
+                                    const bestPercentage = best ? (best.score / best.totalQuestions) * 100 : 0;
+                                    return currentPercentage > bestPercentage ? current : best;
+                                  }, null);
+
+                                  if (bestResult) {
+                                    const bestPercentage = Math.round((bestResult.score / bestResult.totalQuestions) * 100);
+                                    return (
+                                      <div className="mt-1 text-sm text-gray-600">
+                                        <span className={`font-medium ${bestPercentage >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>
+                                          {bestResult.score}/{bestResult.totalQuestions} ({bestPercentage}%)
+                                        </span> vào {new Date(bestResult.submittedAt).toLocaleDateString('vi-VN')}
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()}
+                              </div>
+
+                              <button
+                                onClick={handleStartQuiz}
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Làm lại bài kiểm tra
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                          <div className="w-16 h-16 mx-auto mb-4 text-gray-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-700 mb-2">Chưa có lịch sử làm bài</h3>
+                          <p className="text-gray-500 mb-4">
+                            Bạn chưa làm bài kiểm tra nào cho khóa học này.
+                          </p>
+                          {quiz && (
+                            <button
+                              onClick={handleStartQuiz}
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              Bắt đầu làm bài kiểm tra
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </>
           ) : (
             <div className="bg-white rounded-lg shadow-md p-8 text-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <h3 className="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy khóa học</h3>
               <p className="text-gray-500 mb-4">
@@ -751,7 +936,7 @@ function CourseDetailPage() {
       </main>
 
       <Footer />
-      
+
       {/* Add this to your CSS for animations */}
       <style jsx>{`
         @keyframes fadeIn {

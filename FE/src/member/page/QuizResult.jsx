@@ -214,6 +214,7 @@ function QuizResult() {
                       Quay lại khóa học
                     </Link>
                     
+                    
                     {!isPassed() && (
                       <Link
                         to={`/quiz/${course?.id}`}
