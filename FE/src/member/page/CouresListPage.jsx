@@ -462,7 +462,7 @@ function CoursesListPage() {
                   {/* Course Image */}
                   <div className="md:w-1/3 h-48 md:h-auto">
                     <img
-                      src={course.image || "https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png"}
+                      src={course.url || "https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png"}
                       alt={course.name}
                       className="w-full h-full object-cover object-center"
                       onError={(e) => {
