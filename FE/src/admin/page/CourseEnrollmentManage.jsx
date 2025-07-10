@@ -4,103 +4,112 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 function CourseEnrollmentManage() {
-  const [enrollments, setEnrollments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Main data states
+  const [allEnrollments, setAllEnrollments] = useState([]);
+  const [filteredEnrollments, setFilteredEnrollments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
   
-  // Filter mode: 'course' or 'user'
-  const [filterMode, setFilterMode] = useState('course');
+  // UI states
+  const [loading, setLoading] = useState(true);
+  const [filterMode, setFilterMode] = useState('all'); // 'all', 'course', 'user'
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
+  const [searchQuery, setSearchQuery] = useState('');
+  
   // Quiz result modal states
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [selectedQuizResult, setSelectedQuizResult] = useState(null);
   const [allQuizResults, setAllQuizResults] = useState([]);
   const [quizLoading, setQuizLoading] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState([]);
-  const [userAnswers, setUserAnswers] = useState([]);
+  const [userAnswers, setUserAnswers] = useState({});
   const [selectedEnrollment, setSelectedEnrollment] = useState(null);
 
+  // Fetch all data on component mount
   useEffect(() => {
-    // Fetch courses and users when component mounts
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
-        await Promise.all([
-          fetchCourses(),
-          fetchUsers()
+        setLoading(true);
+        
+        // Fetch all enrollments, courses, and users in parallel
+        const [enrollmentsRes, coursesRes, usersRes] = await Promise.all([
+          api.get('/enrollments/all-enrollments'),
+          api.get('/courses/list'),
+          api.get('/profile/all')
         ]);
+
+        if (enrollmentsRes.data && Array.isArray(enrollmentsRes.data)) {
+          setAllEnrollments(enrollmentsRes.data);
+          setFilteredEnrollments(enrollmentsRes.data);
+        }
+        
+        if (coursesRes.data) {
+          setCourses(coursesRes.data);
+        }
+        
+        if (usersRes.data) {
+          // Filter to only include MEMBER role users
+          const memberUsers = usersRes.data.filter(user => user.role === 'MEMBER');
+          setUsers(memberUsers);
+        }
       } catch (error) {
         console.error('Error fetching initial data:', error);
+        toast.error('Không thể tải dữ liệu. Vui lòng thử lại sau.');
       } finally {
-        // Reset loading state after initial load
         setLoading(false);
       }
     };
     
-    fetchData();
+    fetchInitialData();
   }, []);
 
-  // Watch for changes in filter mode, selected course or selected user
+  // Apply filters whenever filter criteria changes
   useEffect(() => {
+    if (!allEnrollments.length) return;
+    
+    let result = [...allEnrollments];
+    
+    // Filter by course
     if (filterMode === 'course' && selectedCourseId) {
-      fetchEnrollmentsByCourse(selectedCourseId);
-    } else if (filterMode === 'user' && selectedUserId) {
-      fetchEnrollmentsByUser(selectedUserId);
-    } else {
-      // Clear enrollments when no selection
-      setEnrollments([]);
+      result = result.filter(enrollment => 
+        String(enrollment.courseId) === String(selectedCourseId)
+      );
     }
-  }, [filterMode, selectedCourseId, selectedUserId]);
+    
+    // Filter by user
+    if (filterMode === 'user' && selectedUserId) {
+      result = result.filter(enrollment => 
+        String(enrollment.userId) === String(selectedUserId)
+      );
+    }
+    
+    // Filter by status
+    if (statusFilter) {
+      result = result.filter(enrollment => enrollment.status === statusFilter);
+    }
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      result = result.filter(enrollment => 
+        enrollment.userName?.toLowerCase().includes(query) ||
+        enrollment.courseName?.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredEnrollments(result);
+  }, [allEnrollments, filterMode, selectedCourseId, selectedUserId, statusFilter, searchQuery]);
 
-  const fetchCourses = async () => {
-    try {
-      const response = await api.get('/courses/list');
-      setCourses(response.data);
-    } catch (error) {
-      toast.error('Không thể tải danh sách khóa học');
-      console.error(error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await api.get('/profile/all');
-      // Chỉ lấy người dùng có role là MEMBER
-      const memberUsers = response.data.filter(user => user.role === 'MEMBER');
-      setUsers(memberUsers);
-    } catch (error) {
-      toast.error('Không thể tải danh sách người dùng');
-      console.error(error);
-    }
-  };
-
-  const fetchEnrollmentsByCourse = async (courseId) => {
-    try {
-      setLoading(true);
-      const response = await api.get(`/enrollments/course/${courseId}`);
-      setEnrollments(response.data);
-    } catch (error) {
-      toast.error('Không thể tải danh sách đăng ký khóa học');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchEnrollmentsByUser = async (userId) => {
-    try {
-      setLoading(true);
-      const response = await api.get(`/enrollments/user/${userId}`);
-      setEnrollments(response.data);
-    } catch (error) {
-      toast.error('Không thể tải danh sách đăng ký của người dùng');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+  // Reset filters
+  const handleResetFilters = () => {
+    setFilterMode('all');
+    setSelectedCourseId('');
+    setSelectedUserId('');
+    setStatusFilter('');
+    setSearchQuery('');
+    setFilteredEnrollments(allEnrollments);
   };
 
   const getStatusBadgeClass = (status) => {
@@ -111,19 +120,7 @@ function CourseEnrollmentManage() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-
-  const filterEnrollments = () => {
-    if (!statusFilter) return enrollments;
-    return enrollments.filter(enrollment => enrollment.status === statusFilter);
-  };
-
-  const filteredEnrollments = filterEnrollments();
   
-  // Calculate statistics
-  const getStatusCount = (status) => {
-    return enrollments.filter(e => e.status === status).length;
-  };
-
   const formatStatus = (status) => {
     switch(status) {
       case 'InProgress': return 'Đang học';
@@ -133,30 +130,33 @@ function CourseEnrollmentManage() {
     }
   };
 
+  // Calculate statistics
+  const getStatusCount = (status) => {
+    return filteredEnrollments.filter(e => e.status === status).length;
+  };
+
   // Fetch all quiz results for specific user and course
   const fetchAllQuizResultsForUserCourse = async (userId, courseId) => {
     try {
-      // Lấy tất cả quiz results từ API
+      // Get all quiz results from API
       const response = await api.get('/quiz-result');
       if (response.data && Array.isArray(response.data)) {
-        // Filter kết quả theo userId và courseId
+        // Filter results by userId and courseId
         const userCourseResults = response.data.filter(result => 
-          result.user && result.user.id == userId && 
-          result.course && result.course.id == courseId
+          result.user && String(result.user.id) === String(userId) && 
+          result.course && String(result.course.id) === String(courseId)
         );
         
         if (userCourseResults.length > 0) {
-          // Sắp xếp theo thời gian submittedAt giảm dần
-          const sortedResults = userCourseResults.sort((a, b) => 
+          // Sort by submittedAt in descending order
+          return userCourseResults.sort((a, b) => 
             new Date(b.submittedAt) - new Date(a.submittedAt)
           );
-          return sortedResults;
         }
       }
-      
       return [];
     } catch (error) {
-      console.error('Lỗi khi lấy kết quả quiz:', error);
+      console.error('Error fetching quiz results:', error);
       return [];
     }
   };
@@ -170,7 +170,7 @@ function CourseEnrollmentManage() {
       const latestResult = results[0];
       const bestResult = results.reduce((best, current) => 
         (current.score / current.totalQuestions) > (best.score / best.totalQuestions) ? current : best
-      );
+      , results[0]);
       
       return {
         totalAttempts: results.length,
@@ -182,7 +182,7 @@ function CourseEnrollmentManage() {
         bestPassed: (bestResult.score / bestResult.totalQuestions) >= 0.8
       };
     } catch (error) {
-      console.error('Lỗi khi lấy tóm tắt quiz:', error);
+      console.error('Error getting quiz summary:', error);
       return null;
     }
   };
@@ -195,7 +195,7 @@ function CourseEnrollmentManage() {
       setSelectedQuizResult(null);
       setAllQuizResults([]);
       setQuizQuestions([]);
-      setUserAnswers([]);
+      setUserAnswers({});
       setSelectedEnrollment(enrollment);
       
       const quizResults = await fetchAllQuizResultsForUserCourse(enrollment.userId, enrollment.courseId);
@@ -204,7 +204,7 @@ function CourseEnrollmentManage() {
         setAllQuizResults(quizResults);
         setSelectedQuizResult(quizResults[0]); // Set latest result as default
         
-        // Lấy chi tiết câu hỏi quiz
+        // Get quiz questions
         try {
           const quizRes = await api.get(`/quiz/course/${enrollment.courseId}`);
           if (quizRes.status === 200 && Array.isArray(quizRes.data)) {
@@ -215,16 +215,16 @@ function CourseEnrollmentManage() {
             setQuizQuestions(parsedQuizzes);
           }
         } catch (err) {
-          console.error('Lỗi khi lấy câu hỏi quiz:', err);
+          console.error('Error fetching quiz questions:', err);
         }
         
-        // Lấy câu trả lời của user cho result đã chọn
+        // Get user answers for selected result
         await loadUserAnswers(quizResults[0].id);
       } else {
         toast.info('Người dùng chưa làm bài kiểm tra cho khóa học này');
       }
     } catch (error) {
-      console.error('Lỗi khi xem kết quả quiz:', error);
+      console.error('Error viewing quiz result:', error);
       toast.error('Không thể tải kết quả quiz');
     } finally {
       setQuizLoading(false);
@@ -243,7 +243,7 @@ function CourseEnrollmentManage() {
         setUserAnswers(answersMap);
       }
     } catch (err) {
-      console.error('Lỗi khi lấy câu trả lời:', err);
+      console.error('Error loading user answers:', err);
       setUserAnswers({});
     }
   };
@@ -343,154 +343,241 @@ function CourseEnrollmentManage() {
   };
 
   return (
-      <div className="container mx-auto px-4 py-6">
-        <ToastContainer position="top-right" autoClose={3000} />
+    <div className="container mx-auto px-4 py-6">
+      <ToastContainer position="top-right" autoClose={3000} />
+      
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-2xl font-bold">Quản lý đăng ký khóa học</h1>
         
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Quản lý đăng ký khóa học</h1>
+        <div className="stats flex flex-wrap gap-2">
+          <div className="stat bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100 flex items-center">
+            <span className="text-xs text-gray-500 mr-1">Tổng số:</span>
+            <span className="font-semibold text-gray-800">{filteredEnrollments.length}</span>
+          </div>
+          <div className="stat bg-yellow-50 px-3 py-1.5 rounded-lg shadow-sm border border-yellow-100 flex items-center">
+            <span className="text-xs text-yellow-700 mr-1">Đang học:</span>
+            <span className="font-semibold text-yellow-800">{getStatusCount('InProgress')}</span>
+          </div>
+          <div className="stat bg-green-50 px-3 py-1.5 rounded-lg shadow-sm border border-green-100 flex items-center">
+            <span className="text-xs text-green-700 mr-1">Hoàn thành:</span>
+            <span className="font-semibold text-green-800">{getStatusCount('Completed')}</span>
+          </div>
+          <div className="stat bg-red-50 px-3 py-1.5 rounded-lg shadow-sm border border-red-100 flex items-center">
+            <span className="text-xs text-red-700 mr-1">Đã hủy:</span>
+            <span className="font-semibold text-red-800">{getStatusCount('Cancelled')}</span>
+          </div>
         </div>
-        
-        {/* Filter options */}
-        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-          <h2 className="text-lg font-medium mb-4">Bộ lọc</h2>
+      </div>
+      
+      {/* Filter Section */}
+      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+          <h2 className="text-lg font-medium mb-2 md:mb-0">Bộ lọc</h2>
           
-          {/* Filter mode toggle */}
-          <div className="flex gap-4 mb-4 border-b pb-4">
-            <div 
-              className={`cursor-pointer px-4 py-2 rounded-lg ${filterMode === 'course' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+          <div className="flex flex-wrap gap-2">
+            <button
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filterMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+              onClick={() => setFilterMode('all')}
+            >
+              Tất cả
+            </button>
+            <button
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filterMode === 'course' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
               onClick={() => {
                 setFilterMode('course');
                 setSelectedUserId('');
-                setEnrollments([]);
               }}
             >
               Lọc theo khóa học
-            </div>
-            
-            <div 
-              className={`cursor-pointer px-4 py-2 rounded-lg ${filterMode === 'user' 
-                ? 'bg-blue-600 text-white' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+            </button>
+            <button
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filterMode === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
               onClick={() => {
                 setFilterMode('user');
                 setSelectedCourseId('');
-                setEnrollments([]);
               }}
             >
               Lọc theo người dùng
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filterMode === 'course' ? (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chọn khóa học</label>
-                <select 
-                  className="w-full border rounded px-3 py-2"
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                >
-                  <option value="">Chọn khóa học</option>
-                  {courses.map(course => (
-                    <option key={course.id} value={course.id}>{course.name || course.title}</option>
-                  ))}
-                </select>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Chọn người dùng</label>
-                <select 
-                  className="w-full border rounded px-3 py-2"
-                  value={selectedUserId}
-                  onChange={(e) => setSelectedUserId(e.target.value)}
-                >
-                  <option value="">Chọn người dùng</option>
-                  {users.map(user => (
-                    <option key={user.userId} value={user.userId}>
-                      {user.fullName || user.userName || user.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
-              <select 
-                className="w-full border rounded px-3 py-2"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">Tất cả trạng thái</option>
-                <option value="InProgress">Đang học</option>
-                <option value="Completed">Đã hoàn thành</option>
-                <option value="Cancelled">Đã hủy</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="flex justify-end mt-4">
-            <button 
-              className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded"
-              onClick={() => {
-                if (filterMode === 'course') {
-                  setSelectedCourseId('');
-                } else {
-                  setSelectedUserId('');
-                }
-                setStatusFilter('');
-                setEnrollments([]);
-              }}
+            </button>
+            <button
+              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center"
+              onClick={handleResetFilters}
             >
-              Đặt lại bộ lọc
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Đặt lại
             </button>
           </div>
         </div>
         
-        {/* Enrollments Table */}
-        {loading ? (
-          <div className="flex justify-center py-8">
-            <svg className="animate-spin h-8 w-8 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Search Box */}
+          <div className="relative">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tìm kiếm</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Tìm theo tên người dùng, khóa học..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                  onClick={() => setSearchQuery('')}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Course Filter - Only show if filter mode is course */}
+          {(filterMode === 'all' || filterMode === 'course') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Khóa học</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedCourseId}
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+                disabled={filterMode !== 'course'}
+              >
+                <option value="">Tất cả khóa học</option>
+                {courses.map(course => (
+                  <option key={course.id} value={course.id}>
+                    {course.name || course.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          {/* User Filter - Only show if filter mode is user */}
+          {(filterMode === 'all' || filterMode === 'user') && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Người dùng</label>
+              <select
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                value={selectedUserId}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                disabled={filterMode !== 'user'}
+              >
+                <option value="">Tất cả người dùng</option>
+                {users.map(user => (
+                  <option key={user.userId} value={user.userId}>
+                    {user.fullName || user.userName || user.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          
+          {/* Status Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+            <select
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="InProgress">Đang học</option>
+              <option value="Completed">Đã hoàn thành</option>
+              <option value="Cancelled">Đã hủy</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Filter Info */}
+        <div className="mt-4 text-sm text-gray-600">
+          {filteredEnrollments.length > 0 ? (
+            <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
+              <p>
+                Hiển thị <span className="font-medium">{filteredEnrollments.length}</span> trên tổng số <span className="font-medium">{allEnrollments.length}</span> đăng ký
+                {filterMode === 'course' && selectedCourseId && courses.find(c => String(c.id) === String(selectedCourseId)) && 
+                  <> thuộc khóa học <span className="font-medium">{courses.find(c => String(c.id) === String(selectedCourseId)).name || courses.find(c => String(c.id) === String(selectedCourseId)).title}</span></>
+                }
+                {filterMode === 'user' && selectedUserId && users.find(u => String(u.userId) === String(selectedUserId)) && 
+                  <> của người dùng <span className="font-medium">{users.find(u => String(u.userId) === String(selectedUserId)).fullName || users.find(u => String(u.userId) === String(selectedUserId)).userName}</span></>
+                }
+                {statusFilter && <> với trạng thái <span className="font-medium">{formatStatus(statusFilter)}</span></>}
+                {searchQuery && <> chứa từ khóa <span className="font-medium">"{searchQuery}"</span></>}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-100">
+              <p>Không tìm thấy đăng ký nào phù hợp với bộ lọc hiện tại.</p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Enrollments Table */}
+      {loading ? (
+        <div className="flex justify-center py-12 bg-white rounded-lg shadow">
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50"></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-l-4 border-blue-600 absolute top-0 left-0" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+            </div>
+            <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        </div>
+      ) : filteredEnrollments.length === 0 ? (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy đăng ký nào</h3>
+          <p className="text-gray-500 mb-4">Không có đăng ký khóa học nào phù hợp với tiêu chí tìm kiếm hiện tại.</p>
+          <button
+            onClick={handleResetFilters}
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
+          >
+            <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-          </div>
-        ) : (filterMode === 'course' && !selectedCourseId) || (filterMode === 'user' && !selectedUserId) ? (
-          <div className="bg-white rounded-lg shadow p-5 text-center">
-            <p className="text-gray-500">
-              Vui lòng chọn {filterMode === 'course' ? 'khóa học' : 'người dùng'} để xem danh sách đăng ký.
-            </p>
-          </div>
-        ) : filteredEnrollments.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-5 text-center">
-            <p className="text-gray-500">
-              Không tìm thấy đăng ký nào {statusFilter && 'với trạng thái đã chọn'}.
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+            Xóa bộ lọc và thử lại
+          </button>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-blue-900">
+              <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-white">ID người dùng</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-white">Tên người dùng</th>
-                  {/* <th className="px-6 py-3 text-left text-xs font-semibold text-white">ID khóa học</th> */}
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-white">Tên khóa học</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-white">Ngày đăng ký</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-white">Trạng thái</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold text-white">Kết quả Quiz</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">ID người dùng</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên người dùng</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">ID khóa học</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên khóa học</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngày đăng ký</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Kết quả Quiz</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredEnrollments.map((enrollment, index) => (
-                  <tr key={index} className="hover:bg-blue-50">
-                    <td className="px-6 py-4 whitespace-nowrap">{enrollment.userId}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">{enrollment.userName}</td>
-                    {/* <td className="px-6 py-4 whitespace-nowrap">{enrollment.courseId}</td> */}
-                    <td className="px-6 py-4 whitespace-nowrap">{enrollment.courseName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                  <tr key={index} className="hover:bg-blue-50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{enrollment.userId}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{enrollment.userName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{enrollment.courseId}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{enrollment.courseName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(enrollment.enrolledAt).toLocaleDateString('vi-VN')}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -506,238 +593,287 @@ function CourseEnrollmentManage() {
               </tbody>
             </table>
           </div>
-        )}
-        
-        {/* Quiz Result Modal */}
-        {showQuizModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-              {/* Modal Header */}
-              <div className="bg-blue-600 text-white p-6 flex justify-between items-center">
-                <h2 className="text-xl font-bold">Kết quả Quiz</h2>
-                <button
-                  onClick={() => setShowQuizModal(false)}
-                  className="text-white hover:text-gray-200"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        </div>
+      )}
+
+      {/* User Progress Card - Only show when filtering by user */}
+      {filterMode === 'user' && selectedUserId && filteredEnrollments.length > 0 && (
+        <div className="mt-6 bg-white p-6 rounded-lg shadow">
+          <h2 className="text-lg font-medium mb-4 flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Tiến độ học tập
+          </h2>
+          
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div className="mb-3">
+              <span className="text-gray-700 font-medium">
+                {users.find(u => String(u.userId) === String(selectedUserId))?.fullName || 
+                 users.find(u => String(u.userId) === String(selectedUserId))?.userName ||
+                 'Người dùng'}
+              </span>
+              <span className="text-gray-500 ml-2">
+                ({filteredEnrollments.length} khóa học đã đăng ký)
+              </span>
+            </div>
+            
+            <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
+              <div
+                className="bg-blue-600 h-4 rounded-full transition-all duration-500"
+                style={{
+                  width: `${Math.round((getStatusCount('Completed') / filteredEnrollments.length) * 100)}%`,
+                }}
+              ></div>
+            </div>
+            
+            <div className="flex justify-between text-sm">
+              <div>
+                <span className="text-gray-600">Đã hoàn thành:</span>
+                <span className="ml-1 font-semibold text-blue-700">
+                  {getStatusCount('Completed')}/{filteredEnrollments.length} khóa học
+                </span>
               </div>
-
-              {/* Modal Content */}
-              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
-                {quizLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                  </div>
-                ) : selectedQuizResult ? (
-                  <div>
-                    {/* Quiz Attempts Navigation */}
-                    {allQuizResults.length > 1 && (
-                      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                        <h4 className="text-sm font-medium text-gray-700 mb-3">
-                          Chọn lần làm bài ({allQuizResults.length} lần):
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {allQuizResults.map((result, index) => (
-                            <button
-                              key={result.id}
-                              onClick={() => handleSelectQuizAttempt(result)}
-                              className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                selectedQuizResult.id === result.id
-                                  ? 'bg-blue-600 text-white'
-                                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              Lần {index + 1}
-                              <div className="text-xs mt-1">
-                                {calculatePercentage(result)}% - {new Date(result.submittedAt).toLocaleDateString('vi-VN')}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Result Summary */}
-                    <div className={`p-6 rounded-lg mb-6 ${isPassed(selectedQuizResult) ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                      <div className="flex flex-col md:flex-row justify-between items-center">
-                        <div>
-                          <h3 className="text-2xl font-bold mb-2">
-                            {isPassed(selectedQuizResult) ? 'Đậu' : 'Rớt'} - {calculatePercentage(selectedQuizResult)}%
-                            {allQuizResults.length > 1 && (
-                              <span className="text-base font-normal text-gray-600 ml-2">
-                                (Lần {allQuizResults.findIndex(r => r.id === selectedQuizResult.id) + 1}/{allQuizResults.length})
-                              </span>
-                            )}
-                          </h3>
-                          <p className="text-gray-600 mb-2">
-                            {selectedQuizResult.score}/{selectedQuizResult.totalQuestions} câu đúng
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Ngày làm bài: {new Date(selectedQuizResult.submittedAt).toLocaleDateString('vi-VN', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
-                          {allQuizResults.length > 1 && (
-                            <div className="mt-2 text-sm">
-                              <span className="text-gray-600">Điểm tốt nhất: </span>
-                              <span className="font-medium text-green-600">
-                                {Math.max(...allQuizResults.map(r => calculatePercentage(r)))}%
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="mt-4 md:mt-0">
-                          <div className={`text-5xl font-bold ${isPassed(selectedQuizResult) ? 'text-green-600' : 'text-red-600'}`}>
-                            {calculatePercentage(selectedQuizResult)}%
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Detailed Questions and Answers */}
-                    {quizQuestions.length > 0 && (
-                      <div>
-                        <h4 className="text-lg font-semibold mb-4">Chi tiết từng câu hỏi</h4>
-                        <div className="space-y-6">
-                          {quizQuestions.map((question, index) => {
-                            const userAnswerIndex = userAnswers[question.id];
-                            const isCorrect = userAnswerIndex === question.correct;
-                            
-                            return (
-                              <div key={question.id} className="border rounded-lg p-4">
-                                <div className="flex items-start mb-3">
-                                  <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-1 ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                                    {isCorrect ? '✓' : '✗'}
-                                  </div>
-                                  <div className="flex-grow">
-                                    <h5 className="font-semibold text-gray-800 mb-2">
-                                      {index + 1}. {question.question}
-                                    </h5>
-                                    
-                                    <div className="space-y-2">
-                                      {question.answer.map((ans, idx) => (
-                                        <div 
-                                          key={idx} 
-                                          className={`p-2 rounded border ${
-                                            idx === question.correct
-                                              ? 'bg-green-50 border-green-300'
-                                              : userAnswerIndex === idx 
-                                                ? (isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300')
-                                                : 'border-gray-200'
-                                          }`}
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <span>
-                                              <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
-                                              {ans}
-                                            </span>
-                                            
-                                            {idx === question.correct && (
-                                              <span className="text-green-600 text-sm font-medium">Đáp án đúng</span>
-                                            )}
-                                            
-                                            {userAnswerIndex === idx && idx !== question.correct && (
-                                              <span className="text-red-600 text-sm font-medium">Lựa chọn của bạn</span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">Chưa có kết quả quiz</h3>
-                    <p className="text-gray-500">Người dùng chưa làm bài kiểm tra cho khóa học này.</p>
-                  </div>
-                )}
+              <div>
+                <span className="text-gray-600">Tỉ lệ hoàn thành:</span>
+                <span className="ml-1 font-semibold text-blue-700">
+                  {Math.round((getStatusCount('Completed') / filteredEnrollments.length) * 100)}%
+                </span>
               </div>
-
-              {/* Modal Footer */}
-              <div className="bg-gray-50 px-6 py-4 flex justify-end">
-                <button
-                  onClick={() => setShowQuizModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-                >
-                  Đóng
-                </button>
+            </div>
+            
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-center">
+                <div className="text-green-700 text-sm mb-1">Đã hoàn thành</div>
+                <div className="text-xl font-bold text-green-800">{getStatusCount('Completed')}</div>
+              </div>
+              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-center">
+                <div className="text-yellow-700 text-sm mb-1">Đang học</div>
+                <div className="text-xl font-bold text-yellow-800">{getStatusCount('InProgress')}</div>
+              </div>
+              <div className="bg-red-50 p-3 rounded-lg border border-red-100 text-center">
+                <div className="text-red-700 text-sm mb-1">Đã hủy</div>
+                <div className="text-xl font-bold text-red-800">{getStatusCount('Cancelled')}</div>
               </div>
             </div>
           </div>
-        )}
-        
-        {/* Statistics Section */}
-       {/* Statistics Section */}
-{enrollments.length > 0 && (
-  <div className="mt-6 bg-white p-4 rounded-lg shadow-md">
-    <h2 className="text-lg font-medium mb-3">Thống kê</h2>
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-        <div className="text-sm text-gray-500">Tổng số đăng ký</div>
-        <div className="text-xl font-semibold">{enrollments.length}</div>
-      </div>
-      <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-        <div className="text-sm text-gray-500">Đã hoàn thành</div>
-        <div className="text-xl font-semibold">
-          {getStatusCount('Completed')}
         </div>
-      </div>
-      <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-        <div className="text-sm text-gray-500">Đang học</div>
-        <div className="text-xl font-semibold">
-          {getStatusCount('InProgress')}
+      )}
+      
+      {/* Quiz Result Modal */}
+      {showQuizModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-5 flex justify-between items-center">
+              <h2 className="text-xl font-bold">Kết quả Quiz</h2>
+              <button
+                onClick={() => setShowQuizModal(false)}
+                className="text-white hover:text-gray-200"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {quizLoading ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="relative">
+                    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50"></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-l-4 border-blue-600 absolute top-0 left-0" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                  </div>
+                  <p className="mt-4 text-gray-600">Đang tải kết quả quiz...</p>
+                </div>
+              ) : selectedQuizResult ? (
+                <div>
+                  {/* Quiz User Info */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-sm font-medium text-gray-500 block mb-1">Người làm bài:</span>
+                        <p className="text-gray-900 font-medium">{selectedEnrollment?.userName}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-500 block mb-1">Khóa học:</span>
+                        <p className="text-gray-900 font-medium">{selectedEnrollment?.courseName}</p>
+                      </div>
+                    </div>
+                  </div>
+                
+                  {/* Quiz Attempts Navigation */}
+                  {allQuizResults.length > 1 && (
+                    <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                      <h4 className="text-sm font-medium text-blue-700 mb-3 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Chọn lần làm bài ({allQuizResults.length} lần):
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {allQuizResults.map((result, index) => (
+                          <button
+                            key={result.id}
+                            onClick={() => handleSelectQuizAttempt(result)}
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                              selectedQuizResult.id === result.id
+                                ? 'bg-blue-600 text-white shadow-sm'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                            }`}
+                          >
+                            Lần {index + 1}
+                            <div className="text-xs mt-1">
+                              {calculatePercentage(result)}% - {new Date(result.submittedAt).toLocaleDateString('vi-VN')}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Result Summary */}
+                  <div className={`p-6 rounded-xl shadow-sm mb-6 ${isPassed(selectedQuizResult) ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                    <div className="flex flex-col md:flex-row justify-between items-center">
+                      <div>
+                        <h3 className="text-2xl font-bold mb-2">
+                          {isPassed(selectedQuizResult) ? 'Đậu' : 'Rớt'} - {calculatePercentage(selectedQuizResult)}%
+                          {allQuizResults.length > 1 && (
+                            <span className="text-base font-normal text-gray-600 ml-2">
+                              (Lần {allQuizResults.findIndex(r => r.id === selectedQuizResult.id) + 1}/{allQuizResults.length})
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-gray-600 mb-2">
+                          {selectedQuizResult.score}/{selectedQuizResult.totalQuestions} câu đúng
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Ngày làm bài: {new Date(selectedQuizResult.submittedAt).toLocaleDateString('vi-VN', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                        {allQuizResults.length > 1 && (
+                          <div className="mt-2 text-sm">
+                            <span className="text-gray-600">Điểm tốt nhất: </span>
+                            <span className="font-medium text-green-600">
+                              {Math.max(...allQuizResults.map(r => calculatePercentage(r)))}%
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-4 md:mt-0">
+                        <div className={`text-5xl font-bold ${isPassed(selectedQuizResult) ? 'text-green-600' : 'text-red-600'}`}>
+                          {calculatePercentage(selectedQuizResult)}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Detailed Questions and Answers */}
+                  {quizQuestions.length > 0 && (
+                    <div>
+                      <h4 className="text-lg font-medium mb-4 flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Chi tiết từng câu hỏi
+                      </h4>
+                      <div className="space-y-6">
+                        {quizQuestions.map((question, index) => {
+                          const userAnswerIndex = userAnswers[question.id];
+                          const isCorrect = userAnswerIndex === question.correct;
+                          
+                          return (
+                            <div key={question.id} className="border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-start">
+                                <div className={`flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center mr-3 mt-1 ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                                  {isCorrect ? '✓' : '✗'}
+                                </div>
+                                <div className="flex-grow">
+                                  <h5 className="font-semibold text-gray-800 mb-3 text-lg">
+                                    {index + 1}. {question.question}
+                                  </h5>
+                                  
+                                  <div className="space-y-2.5 mt-4">
+                                    {question.answer.map((ans, idx) => (
+                                      <div 
+                                        key={idx} 
+                                        className={`p-3 rounded-lg ${
+                                          idx === question.correct
+                                            ? 'bg-green-50 border border-green-200'
+                                            : userAnswerIndex === idx 
+                                              ? (isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200')
+                                              : 'bg-white border border-gray-200'
+                                        }`}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span>
+                                            <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
+                                            {ans}
+                                          </span>
+                                          
+                                          {idx === question.correct && (
+                                            <span className="text-green-600 text-sm font-medium flex items-center">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                              </svg>
+                                              Đáp án đúng
+                                            </span>
+                                          )}
+                                          
+                                          {userAnswerIndex === idx && idx !== question.correct && (
+                                            <span className="text-red-600 text-sm font-medium flex items-center">
+                                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                              </svg>
+                                              Lựa chọn của người dùng
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">Chưa có kết quả quiz</h3>
+                  <p className="text-gray-500 max-w-md mx-auto">Người dùng chưa làm bài kiểm tra cho khóa học này hoặc đã xảy ra lỗi khi tải dữ liệu.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end border-t">
+              <button
+                onClick={() => setShowQuizModal(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors flex items-center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Đóng
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="bg-red-50 p-3 rounded-lg border border-red-100">
-        <div className="text-sm text-gray-500">Đã hủy</div>
-        <div className="text-xl font-semibold">
-          {getStatusCount('Cancelled')}
-        </div>
-      </div>
+      )}
     </div>
-
-    {filterMode === 'user' && selectedUserId && enrollments.length > 0 && (
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="font-medium mb-2">Tiến độ học tập:</div>
-        <div className="w-full bg-gray-200 rounded-full h-4 mb-1">
-          <div
-            className="bg-blue-600 h-4 rounded-full"
-            style={{
-              width: `${Math.round(
-                (getStatusCount('Completed') / enrollments.length) * 100
-              )}%`,
-            }}
-          ></div>
-        </div>
-        <div className="text-sm text-gray-500">
-          {Math.round(
-            (getStatusCount('Completed') / enrollments.length) * 100
-          )}
-          % khóa học đã hoàn thành
-        </div>
-      </div>
-    )}
-  </div>
-)}
-
-      </div>
   );
 }
 
