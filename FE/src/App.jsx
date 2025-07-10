@@ -12,10 +12,8 @@ import UserProfilePage from "./member/page/UserProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
-import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
-import CourseResultPage from "./member/page/CourseResultPage";
 import AssessmentResult from "./member/page/AssessmentResult";
 import AssessmentHistory from "./member/page/AssessmentHistory";
 import ConsultantDetail from "./member/page/ConsultantDetail";
@@ -23,6 +21,9 @@ import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
 import Assessment from "./member/page/Assessment";
+import ProgramList from "./member/page/ProgramList";
+import CourseDetailPage from "./member/page/CourseDetailPage";
+import QuizResult from "./member/page/QuizResult";
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -34,16 +35,15 @@ import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
 import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 import AssessmentResultManage from "./admin/page/AssessmentResultManage";
 import Program from "./admin/page/Program";
+
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
 import UserCaseList from "./consultant/page/UserCaseList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
-import ProgramList from "./member/page/ProgramList";
-
-
-
+import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
+import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
 
 
 function RequireAdmin({ children }) {
@@ -96,19 +96,20 @@ const router = createBrowserRouter([
     element: <CouresListPage />,
   },
   {
-    path: "/course/:id",
-    element: <CourseVideo />,
-  },
-  {
     path: "/consultantList",
     element: <ConsultantList />,
-  }, {
-    path: "/quiz/:courseId",
+  }, 
+  {
+    path: "/quiz/:id",
     element: <CourseQuiz />,
   },
   {
+    path: "/course/:id",
+    element: <CourseDetailPage />,
+  },
+  {
     path: "/quiz-result/:id",
-    element: <CourseResultPage />,
+    element: <QuizResult />,
   },
   {
     path: "/assessment/:type",
@@ -169,12 +170,11 @@ const router = createBrowserRouter([
       {
         path: "appointments",
         element: <AppointmentList />,
-
       },
-
       { path: "cases", element: <UserCaseList /> },
-
       { path: "profile", element: <ConsultantProfilePage /> },
+      { path: "courses", element: <CourseListPage /> }, // Added new route
+      { path: "programs", element: <ProgramListPage /> }, // Added new route
     ],
   },
 ]);

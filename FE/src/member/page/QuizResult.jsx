@@ -45,7 +45,7 @@ function QuizResult() {
           }
 
           // Lấy thông tin câu trả lời của người dùng
-          const answersRes = await api.get(`/quiz-answers/result/${id}`);
+          const answersRes = await api.get(`/quiz/result/${id}`);
           if (answersRes.status === 200 && Array.isArray(answersRes.data)) {
             const answersMap = {};
             answersRes.data.forEach(answer => {
