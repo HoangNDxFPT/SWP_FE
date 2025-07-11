@@ -82,6 +82,7 @@ export default function ProfilePage() {
       setUser(userData);
     } catch (e) {
       setUser(null);
+      console.error("Error loading user from localStorage:", e);
     } finally {
       setLoading(false);
     }
@@ -102,6 +103,7 @@ export default function ProfilePage() {
       } catch (e) {
         toast.error("Không thể tải thông tin hồ sơ!");
         setProfile(null);
+        console.error("Error fetching profile data:", e);
       } finally {
         setLoading(false);
       }

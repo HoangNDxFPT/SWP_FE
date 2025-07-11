@@ -46,6 +46,7 @@ import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri
 import QuizHistory from "./member/page/QuizHistory";
 import Crafft from "./member/page/Crafft";
 import AssistAssessment from "./member/page/AssistAssessment";
+import CourseDetailForConsultant from "./consultant/components/CourseDetailForConsultant";
 
 
 function RequireAdmin({ children }) {
@@ -183,7 +184,8 @@ const router = createBrowserRouter([
       },
       { path: "profile", element: <ConsultantProfilePage /> },
       { path: "courses", element: <CourseListPage /> }, // Added new route
-      { path: "programs", element: <ProgramListPage /> }, // Added new route
+      { path: "programs", element: <ProgramListPage /> },
+      { path: "course/:id", element: <CourseDetailForConsultant/> }, // Added new route
     ],
   },
 ]);
