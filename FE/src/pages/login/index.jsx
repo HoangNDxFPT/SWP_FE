@@ -43,7 +43,7 @@ function LoginPage() {
       if (response.data.role === "ADMIN") {
         navigate("/admin");
       } else if (response.data.role === "CONSULTANT") {
-        navigate("/consultant/dashboard");
+        navigate("/consultant/appointments");
       } else {
         navigate("/");
       }

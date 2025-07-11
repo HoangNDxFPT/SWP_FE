@@ -5,6 +5,7 @@ import { logout, login } from "../../redux/features/userSlice";
 import api from "../../config/axios";
 import { toast } from "react-toastify";
 
+
 function ConsultantHeader() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -59,7 +60,7 @@ function ConsultantHeader() {
 
   // MENU CHUYÊN VIÊN TƯ VẤN
   const menuItems = [
-    { label: "Trang chủ", path: "/consultant/dashboard" },
+    
     { label: "Lịch làm việc", path: "/consultant/appointments" },
     { label: "Khóa học", path: "/consultant/courses" },
     { label: "Chương trình cộng đồng", path: "/consultant/programs" },
