@@ -61,7 +61,7 @@ function ConsultantHeader() {
   // MENU CHUYÊN VIÊN TƯ VẤN
   const menuItems = [
     
-    { label: "Lịch làm việc", path: "/consultant/appointments" },
+    { label: "Trang chủ", path: "/consultant/appointments" },
     { label: "Khóa học", path: "/consultant/courses" },
     { label: "Chương trình cộng đồng", path: "/consultant/programs" },
 
