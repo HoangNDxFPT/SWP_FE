@@ -8,6 +8,20 @@ function HomePage() {
   const [consultants, setConsultants] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Thêm hàm tạo placeholder image từ tên
+  const getPlaceholderImage = (name) => {
+    if (!name) return 'https://ui-avatars.com/api/?background=0D8ABC&color=fff&size=150';
+    
+    const initials = name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+    
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=150`;
+  };
+
   useEffect(() => {
     const fetchConsultants = async () => {
       try {
@@ -198,12 +212,12 @@ function HomePage() {
                   <div key={consultant.consultantId} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
                     <div className="h-48 overflow-hidden">
                       <img 
-                        src={consultant.certifiedDegreeImage || 'https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824589/samples/upscale-face-1.jpg'} 
+                        src={consultant.id || getPlaceholderImage(consultant.fullName)} 
                         alt={`Chuyên viên ${consultant.fullName}`} 
                         className="w-full h-full object-cover object-center"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = 'https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824589/samples/upscale-face-1.jpg';
+                          e.target.src = getPlaceholderImage(consultant.fullName);
                         }}
                       />
                     </div>
@@ -222,15 +236,6 @@ function HomePage() {
                           <span className="line-clamp-1">{consultant.address}</span>
                         </div>
                       )}
-                      <Link 
-                        to={`/consultant/${consultant.consultantId}`}
-                        className="mt-3 text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
-                      >
-                        Xem chi tiết
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </Link>
                     </div>
                   </div>
                 ))

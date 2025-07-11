@@ -20,7 +20,6 @@ import ConsultantDetail from "./member/page/ConsultantDetail";
 import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
-import Assessment from "./member/page/Assessment";
 import ProgramList from "./member/page/ProgramList";
 import CourseDetailPage from "./member/page/CourseDetailPage";
 import QuizResult from "./member/page/QuizResult";
@@ -45,6 +44,8 @@ import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
 import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
 import QuizHistory from "./member/page/QuizHistory";
+import Crafft from "./member/page/Crafft";
+import AssistAssessment from "./member/page/AssistAssessment";
 
 
 function RequireAdmin({ children }) {
@@ -117,8 +118,12 @@ const router = createBrowserRouter([
     element: <QuizHistory />,
   },
   {
-    path: "/assessment/:type",
-    element: <Assessment />,
+    path: "/assessment-crafft",
+    element: <Crafft />,
+  },
+  {
+    path: "/assessment-assist",
+    element: <AssistAssessment />,
   },
   {
     path: "/assessment-result/:assessmentResultId",
