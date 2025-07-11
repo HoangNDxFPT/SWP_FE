@@ -27,6 +27,10 @@ function ConsultantList() {
   const [activeTab, setActiveTab] = useState('consultants'); // 'consultants' or 'appointments'
   const [appointmentStatusFilter, setAppointmentStatusFilter] = useState('PENDING');
   
+  // 1. Thêm state cho modal báo cáo (đặt dưới state khác)
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportData, setReportData] = useState({ appointmentId: null, reason: '', description: '' });
+  
   const navigate = useNavigate();
   
   // Min date for the date input (today)
@@ -305,6 +309,29 @@ function ConsultantList() {
     } catch (error) {
       console.error('Error cancelling appointment:', error);
       toast.error('Có lỗi xảy ra khi hủy lịch hẹn. Vui lòng thử lại sau.');
+    }
+  };
+
+  // 2. Thêm các hàm xử lý báo cáo (đặt sau hàm handleCancelAppointment)
+  const handleOpenReportModal = (id) => {
+    setReportData({ appointmentId: id, reason: '', description: '' });
+    setShowReportModal(true);
+  };
+
+  const handleReportSubmit = async () => {
+    const { appointmentId, reason, description } = reportData;
+    if (!reason || !description) {
+      toast.error('Vui lòng nhập đầy đủ lý do và mô tả!');
+      return;
+    }
+
+    try {
+      await api.post(`report?appointmentId=${appointmentId}&reason=${encodeURIComponent(reason)}&description=${encodeURIComponent(description)}`);
+      toast.success('Báo cáo thành công!');
+      setShowReportModal(false);
+    } catch (error) {
+      toast.error('Gửi báo cáo thất bại!');
+      console.error(error);
     }
   };
 
@@ -698,7 +725,7 @@ function ConsultantList() {
                     >
                       <div className="flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0114 0z" />
                         </svg>
                         Sắp tới
                       </div>
@@ -864,7 +891,7 @@ function ConsultantList() {
                                 </div>
                                 <div className="flex items-center text-sm text-gray-900">
                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0114 0z" />
                                   </svg>
                                   {formatTime(appointment.startTime)} - {formatTime(appointment.endTime)}
                                 </div>
@@ -934,6 +961,18 @@ function ConsultantList() {
                                     Hủy lịch
                                   </button>
                                 )}
+                                {/* 3. Thêm nút báo cáo cho desktop view - tìm phần desktop table dưới phần actions và thêm: */}
+                                {appointment.status === 'COMPLETED' && (
+                                  <button
+                                    onClick={() => handleOpenReportModal(appointment.id)}
+                                    className="inline-flex items-center px-3 py-1.5 border border-red-300 rounded text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Báo cáo
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -991,7 +1030,7 @@ function ConsultantList() {
                             </div>
                             <div className="flex items-center text-sm text-gray-700">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0114 0z" />
                               </svg>
                               <span className="font-medium">{formatTime(appointment.startTime)} - {formatTime(appointment.endTime)}</span>
                             </div>
@@ -1041,6 +1080,18 @@ function ConsultantList() {
                               Hủy lịch
                             </button>
                           )}
+                          {/* 4. Thêm nút báo cáo cho mobile view - tìm phần flex space-x-2 trong mobile card và thêm: */}
+                          {appointment.status === 'COMPLETED' && (
+                            <button
+                              onClick={() => handleOpenReportModal(appointment.id)}
+                              className="py-2 px-3 flex justify-center items-center rounded-lg text-sm font-medium border border-red-300 text-red-700 hover:bg-red-50"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Báo cáo
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1051,6 +1102,67 @@ function ConsultantList() {
           </div>
         )}
       </div>
+
+      {/* Report Modal */}
+      {showReportModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+              <h3 className="text-lg font-medium leading-6 text-gray-900">Báo cáo vấn đề</h3>
+              <p className="mt-1 text-sm text-gray-500">Vui lòng cho chúng tôi biết chi tiết về vấn đề bạn gặp phải</p>
+            </div>
+            
+            <div className="px-4 py-5 sm:p-6">
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
+                    Lý do báo cáo <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="reason"
+                    value={reportData.reason}
+                    onChange={(e) => setReportData({ ...reportData, reason: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Nhập lý do báo cáo"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    Chi tiết <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="description"
+                    rows="4"
+                    value={reportData.description}
+                    onChange={(e) => setReportData({ ...reportData, description: e.target.value })}
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    placeholder="Mô tả chi tiết vấn đề bạn gặp phải"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="px-4 py-4 sm:px-6 border-t border-gray-200 flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setShowReportModal(false)}
+                className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={handleReportSubmit}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Gửi báo cáo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

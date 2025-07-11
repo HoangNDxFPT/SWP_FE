@@ -230,7 +230,8 @@ function BookingHistory() {
                         </div>
                       </div>
                       
-                      {appt.googleMeetLink && (
+                      {/* Chỉ hiển thị Google Meet link cho các cuộc hẹn đang chờ xác nhận */}
+                      {appt.googleMeetLink && selectedTab === 'PENDING' && (
                         <div className="flex items-start">
                           <Icons.VideoCamera className="h-5 w-5 text-gray-400 mt-0.5 mr-3" />
                           <div>
