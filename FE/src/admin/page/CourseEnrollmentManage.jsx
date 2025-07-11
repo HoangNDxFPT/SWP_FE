@@ -72,14 +72,14 @@ function CourseEnrollmentManage() {
     let result = [...allEnrollments];
     
     // Filter by course
-    if (filterMode === 'course' && selectedCourseId) {
+    if (selectedCourseId) {
       result = result.filter(enrollment => 
         String(enrollment.courseId) === String(selectedCourseId)
       );
     }
     
     // Filter by user
-    if (filterMode === 'user' && selectedUserId) {
+    if (selectedUserId) {
       result = result.filter(enrollment => 
         String(enrollment.userId) === String(selectedUserId)
       );
@@ -100,11 +100,10 @@ function CourseEnrollmentManage() {
     }
     
     setFilteredEnrollments(result);
-  }, [allEnrollments, filterMode, selectedCourseId, selectedUserId, statusFilter, searchQuery]);
+  }, [allEnrollments, selectedCourseId, selectedUserId, statusFilter, searchQuery]);
 
   // Reset filters
   const handleResetFilters = () => {
-    setFilterMode('all');
     setSelectedCourseId('');
     setSelectedUserId('');
     setStatusFilter('');
@@ -343,11 +342,12 @@ function CourseEnrollmentManage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <>
       <ToastContainer position="top-right" autoClose={3000} />
       
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold">Quản lý đăng ký khóa học</h1>
+      {/* Page Header - Adjusted for AdminLayout */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Quản lý đăng ký khóa học</h1>
         
         <div className="stats flex flex-wrap gap-2">
           <div className="stat bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100 flex items-center">
@@ -369,52 +369,20 @@ function CourseEnrollmentManage() {
         </div>
       </div>
       
-      {/* Filter Section */}
-      <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
-          <h2 className="text-lg font-medium mb-2 md:mb-0">Bộ lọc</h2>
+      {/* Filter Section - Simplified */}
+      <div className="bg-white p-4 rounded-lg shadow-sm mb-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-medium">Bộ lọc</h2>
           
-          <div className="flex flex-wrap gap-2">
-            <button
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterMode === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => setFilterMode('all')}
-            >
-              Tất cả
-            </button>
-            <button
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterMode === 'course' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => {
-                setFilterMode('course');
-                setSelectedUserId('');
-              }}
-            >
-              Lọc theo khóa học
-            </button>
-            <button
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filterMode === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              onClick={() => {
-                setFilterMode('user');
-                setSelectedCourseId('');
-              }}
-            >
-              Lọc theo người dùng
-            </button>
-            <button
-              className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center"
-              onClick={handleResetFilters}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Đặt lại
-            </button>
-          </div>
+          <button
+            className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center"
+            onClick={handleResetFilters}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Đặt lại bộ lọc
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -447,45 +415,39 @@ function CourseEnrollmentManage() {
             </div>
           </div>
           
-          {/* Course Filter - Only show if filter mode is course */}
-          {(filterMode === 'all' || filterMode === 'course') && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Khóa học</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedCourseId}
-                onChange={(e) => setSelectedCourseId(e.target.value)}
-                disabled={filterMode !== 'course'}
-              >
-                <option value="">Tất cả khóa học</option>
-                {courses.map(course => (
-                  <option key={course.id} value={course.id}>
-                    {course.name || course.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Course Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Khóa học</label>
+            <select
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+            >
+              <option value="">Tất cả khóa học</option>
+              {courses.map(course => (
+                <option key={course.id} value={course.id}>
+                  {course.name || course.title}
+                </option>
+              ))}
+            </select>
+          </div>
           
-          {/* User Filter - Only show if filter mode is user */}
-          {(filterMode === 'all' || filterMode === 'user') && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Người dùng</label>
-              <select
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                value={selectedUserId}
-                onChange={(e) => setSelectedUserId(e.target.value)}
-                disabled={filterMode !== 'user'}
-              >
-                <option value="">Tất cả người dùng</option>
-                {users.map(user => (
-                  <option key={user.userId} value={user.userId}>
-                    {user.fullName || user.userName || user.email}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* User Filter */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Người dùng</label>
+            <select
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+            >
+              <option value="">Tất cả người dùng</option>
+              {users.map(user => (
+                <option key={user.userId} value={user.userId}>
+                  {user.fullName || user.userName || user.email}
+                </option>
+              ))}
+            </select>
+          </div>
           
           {/* Status Filter */}
           <div>
@@ -509,10 +471,10 @@ function CourseEnrollmentManage() {
             <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
               <p>
                 Hiển thị <span className="font-medium">{filteredEnrollments.length}</span> trên tổng số <span className="font-medium">{allEnrollments.length}</span> đăng ký
-                {filterMode === 'course' && selectedCourseId && courses.find(c => String(c.id) === String(selectedCourseId)) && 
+                {selectedCourseId && courses.find(c => String(c.id) === String(selectedCourseId)) && 
                   <> thuộc khóa học <span className="font-medium">{courses.find(c => String(c.id) === String(selectedCourseId)).name || courses.find(c => String(c.id) === String(selectedCourseId)).title}</span></>
                 }
-                {filterMode === 'user' && selectedUserId && users.find(u => String(u.userId) === String(selectedUserId)) && 
+                {selectedUserId && users.find(u => String(u.userId) === String(selectedUserId)) && 
                   <> của người dùng <span className="font-medium">{users.find(u => String(u.userId) === String(selectedUserId)).fullName || users.find(u => String(u.userId) === String(selectedUserId)).userName}</span></>
                 }
                 {statusFilter && <> với trạng thái <span className="font-medium">{formatStatus(statusFilter)}</span></>}
@@ -529,7 +491,7 @@ function CourseEnrollmentManage() {
       
       {/* Enrollments Table */}
       {loading ? (
-        <div className="flex justify-center py-12 bg-white rounded-lg shadow">
+        <div className="flex justify-center py-12 bg-white rounded-lg shadow-sm">
           <div className="flex flex-col items-center">
             <div className="relative">
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50"></div>
@@ -539,7 +501,7 @@ function CourseEnrollmentManage() {
           </div>
         </div>
       ) : filteredEnrollments.length === 0 ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
           <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -556,7 +518,7 @@ function CourseEnrollmentManage() {
           </button>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
@@ -597,11 +559,11 @@ function CourseEnrollmentManage() {
       )}
 
       {/* User Progress Card - Only show when filtering by user */}
-      {filterMode === 'user' && selectedUserId && filteredEnrollments.length > 0 && (
-        <div className="mt-6 bg-white p-6 rounded-lg shadow">
+      {selectedUserId && filteredEnrollments.length > 0 && (
+        <div className="mt-5 bg-white p-6 rounded-lg shadow-sm">
           <h2 className="text-lg font-medium mb-4 flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Tiến độ học tập
           </h2>
@@ -873,7 +835,7 @@ function CourseEnrollmentManage() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
