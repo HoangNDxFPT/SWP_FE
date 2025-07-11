@@ -37,7 +37,7 @@ import Program from "./admin/page/Program";
 
 // Consultant pages
 import ConsultantLayout from "./consultant/ConsultantLayout";
-import ConsultantDashboard from "./consultant/page/Dashboard";
+
 import AppointmentList from "./consultant/page/AppointmentList";
 
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
@@ -176,7 +176,7 @@ const router = createBrowserRouter([
       </RequireConsultant>
     ),
     children: [
-      { path: "dashboard", element: <ConsultantDashboard /> },
+      
       {
         path: "appointments",
         element: <AppointmentList />,

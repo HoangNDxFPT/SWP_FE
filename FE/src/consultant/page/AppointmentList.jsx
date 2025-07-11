@@ -10,27 +10,27 @@ import ModernWorkdayTable from "../components/ModernWorkdayTable";
 import { Plus, Calendar as CalendarIcon, Users, FileText } from "lucide-react";
 import AnimatedCard from "../components/AnimatedCard";
 import AppointmentManagement from "../components/AppointmentManagement";
+import ConsultationCases from "../components/ConsultationCases";
 
 function AppointmentList() {
- 
   const [appointments, setAppointments] = useState([]);
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
-  
 
- 
   const [showCreateSchedule, setShowCreateSchedule] = useState(false);
   const [refresh, setRefresh] = useState(0);
 
-  
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const appointmentsRes = await api.get("appointment/appointments/consultant", {
-          params: { status: 'PENDING' }
-        });
-        
+        const appointmentsRes = await api.get(
+          "appointment/appointments/consultant",
+          {
+            params: { status: "PENDING" },
+          }
+        );
+
         // Cases API - keeping placeholder for now
         const casesRes = { data: [] };
 
@@ -62,9 +62,9 @@ function AppointmentList() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <AppointmentManagement 
-            appointments={appointments} 
-            onAppointmentCreated={() => setRefresh(r => r + 1)}
+          <AppointmentManagement
+            appointments={appointments}
+            onAppointmentCreated={() => setRefresh((r) => r + 1)}
           />
         </motion.div>
       ),
@@ -83,11 +83,7 @@ function AppointmentList() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* TODO: Tạo component mới cho consultation cases */}
-          <div className="p-8 text-center">
-            <h3 className="text-xl font-semibold mb-4">📋 Hồ sơ tư vấn</h3>
-            <p className="text-gray-600">Chức năng đang được phát triển...</p>
-          </div>
+          <ConsultationCases />
         </motion.div>
       ),
     },
