@@ -12,18 +12,17 @@ import UserProfilePage from "./member/page/UserProfilePage";
 import ForgotPassword from "./member/page/ForgotPassword";
 import EnterNewPassword from "./member/page/EnterNewPassword";
 import CouresListPage from "./member/page/CouresListPage";
-import CourseVideo from "./member/page/CourseVideo";
 import ConsultantList from "./member/page/ConsultantList";
 import CourseQuiz from "./member/page/CourseQuiz";
-import CourseResultPage from "./member/page/CourseResultPage";
 import AssessmentResult from "./member/page/AssessmentResult";
 import AssessmentHistory from "./member/page/AssessmentHistory";
 import ConsultantDetail from "./member/page/ConsultantDetail";
 import AboutUs from "./member/page/AboutUs";
 import AssessmentPage from "./member/page/AssessmentPage";
 import BookingHistory from "./member/page/BookingHistory";
-import Assessment from "./member/page/Assessment";
-import ProgramList from "./member/page/ProgramList"; // Kept from main branch
+import ProgramList from "./member/page/ProgramList";
+import CourseDetailPage from "./member/page/CourseDetailPage";
+import QuizResult from "./member/page/QuizResult";
 
 // Admin pages
 import AdminLayout from "./admin/AdminLayout";
@@ -44,6 +43,9 @@ import AppointmentList from "./consultant/page/AppointmentList";
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
 import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
+import QuizHistory from "./member/page/QuizHistory";
+import Crafft from "./member/page/Crafft";
+import AssistAssessment from "./member/page/AssistAssessment";
 
 
 function RequireAdmin({ children }) {
@@ -96,24 +98,32 @@ const router = createBrowserRouter([
     element: <CouresListPage />,
   },
   {
-    path: "/course/:id",
-    element: <CourseVideo />,
-  },
-  {
     path: "/consultantList",
     element: <ConsultantList />,
-  },
+  }, 
   {
-    path: "/quiz/:courseId",
+    path: "/quiz/:id",
     element: <CourseQuiz />,
   },
   {
-    path: "/quiz-result/:id",
-    element: <CourseResultPage />,
+    path: "/course/:id",
+    element: <CourseDetailPage />,
   },
   {
-    path: "/assessment/:type",
-    element: <Assessment />,
+    path: "/quiz-result/:id",
+    element: <QuizResult />,
+  },
+  {
+    path: "/quiz-history",
+    element: <QuizHistory />,
+  },
+  {
+    path: "/assessment-crafft",
+    element: <Crafft />,
+  },
+  {
+    path: "/assessment-assist",
+    element: <AssistAssessment />,
   },
   {
     path: "/assessment-result/:assessmentResultId",

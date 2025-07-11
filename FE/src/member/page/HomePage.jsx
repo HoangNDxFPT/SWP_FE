@@ -2,22 +2,34 @@ import React, { useState, useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import api from "../../config/axios";
-import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
 function HomePage() {
   const [consultants, setConsultants] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Thêm hàm tạo placeholder image từ tên
+  const getPlaceholderImage = (name) => {
+    if (!name) return 'https://ui-avatars.com/api/?background=0D8ABC&color=fff&size=150';
+    
+    const initials = name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+    
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=150`;
+  };
+
   useEffect(() => {
     const fetchConsultants = async () => {
       try {
         setLoading(true);
-        const response = await api.get("/consultant/consultants");
+        const response = await api.get("/consultant/public");
         setConsultants(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách chuyên viên tư vấn:", error);
-        toast.error("Không thể tải danh sách chuyên viên tư vấn");
       } finally {
         setLoading(false);
       }
@@ -155,7 +167,7 @@ function HomePage() {
               <p className="text-gray-600 mb-4">
                 Sử dụng các công cụ khảo sát như ASSIST, CRAFFT để xác định mức độ rủi ro cá nhân và nhận được khuyến nghị phù hợp.
               </p>
-              <a href="/servey" className="text-blue-600 hover:underline inline-flex items-center">
+              <a href="/assessment" className="text-blue-600 hover:underline inline-flex items-center">
                 Bắt đầu khảo sát
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -197,33 +209,33 @@ function HomePage() {
                 </div>
               ) : consultants.length > 0 ? (
                 consultants.slice(0, 4).map((consultant) => (
-                  <div key={consultant.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+                  <div key={consultant.consultantId} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
                     <div className="h-48 overflow-hidden">
                       <img 
-                        src={consultant.avatar || consultant.image || consultant.profilePicture || '/images/default-avatar.png'} 
+                        src={consultant.id || getPlaceholderImage(consultant.fullName)} 
                         alt={`Chuyên viên ${consultant.fullName}`} 
                         className="w-full h-full object-cover object-center"
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.src = '/images/default-avatar.png';
+                          e.target.src = getPlaceholderImage(consultant.fullName);
                         }}
                       />
                     </div>
                     <div className="p-4">
                       <h3 className="font-bold text-lg">{consultant.fullName}</h3>
-                      <div className="text-blue-600 text-sm mb-2">{consultant.specialty || "Chuyên viên tư vấn"}</div>
+                      <div className="text-blue-600 text-sm mb-2">{consultant.degree || "Chuyên viên tư vấn"}</div>
                       <p className="text-gray-600 text-sm line-clamp-3">
-                        {consultant.description || "Chuyên gia tư vấn có kinh nghiệm trong lĩnh vực phòng chống và điều trị các vấn đề liên quan đến ma túy."}
+                        {consultant.information || "Chuyên gia tư vấn có kinh nghiệm trong lĩnh vực phòng chống và điều trị các vấn đề liên quan đến ma túy."}
                       </p>
-                      <a 
-                        href={`/consultant/${consultant.id}`}
-                        className="mt-3 text-blue-500 hover:text-blue-700 text-sm font-medium flex items-center"
-                      >
-                        Xem chi tiết
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </a>
+                      {consultant.address && (
+                        <div className="mt-2 text-gray-500 text-sm flex items-start">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <span className="line-clamp-1">{consultant.address}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -235,9 +247,9 @@ function HomePage() {
             </div>
             
             <div className="text-center mt-10">
-              <a href="/consultantList" className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow transition">
+              <Link to="/consultantList" className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow transition">
                 Xem tất cả chuyên viên
-              </a>
+              </Link>
             </div>
           </div>
         </section>

@@ -139,17 +139,17 @@ export default function CourseManage() {
       setLoading(true);
       await api.put(`/courses/${editCourse.id}`, payload);
       toast.success("Cập nhật khóa học thành công!");
-      
+
       // Cập nhật state courses ngay lập tức để thấy thay đổi
-      setCourses(prevCourses => 
-        prevCourses.map(course => 
+      setCourses(prevCourses =>
+        prevCourses.map(course =>
           course.id === editCourse.id ? { ...editCourse } : course
         )
       );
-      
+
       setEditMode(false);
       setEditCourse(null);
-      
+
       // Gọi API để lấy dữ liệu mới nhất
       fetchCourses();
     } catch (err) {
@@ -220,51 +220,51 @@ export default function CourseManage() {
     }
   };
 
-  
+
   // Save lesson
-const handleSaveLesson = async () => {
-  const courseIdToUse = currentLesson.courseId || selectedCourse.id;
+  const handleSaveLesson = async () => {
+    const courseIdToUse = currentLesson.courseId || selectedCourse.id;
 
-  if (!currentLesson.title || !courseIdToUse) {
-    toast.error("Vui lòng nhập tiêu đề bài học");
-    return;
-  }
+    if (!currentLesson.title || !courseIdToUse) {
+      toast.error("Vui lòng nhập tiêu đề bài học");
+      return;
+    }
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const lessonPayload = {
-      title: currentLesson.title,
-      content: currentLesson.content || "",
-      materialUrl: currentLesson.materialUrl || "",
-      lessonOrder: currentLesson.lessonOrder || 0,
-      course: {
-        id: courseIdToUse
+      const lessonPayload = {
+        title: currentLesson.title,
+        content: currentLesson.content || "",
+        materialUrl: currentLesson.materialUrl || "",
+        lessonOrder: currentLesson.lessonOrder || 0,
+        course: {
+          id: courseIdToUse
+        }
+      };
+
+      if (currentLesson.id) {
+        lessonPayload.id = currentLesson.id;
       }
-    };
 
-    if (currentLesson.id) {
-      lessonPayload.id = currentLesson.id;
-    }
+      if (currentLesson.id) {
+        await api.put(`/lessons/${currentLesson.id}`, lessonPayload);
+        toast.success("Cập nhật bài học thành công");
+      } else {
+        await api.post("/lessons", lessonPayload);
+        toast.success("Thêm bài học thành công");
+      }
 
-    if (currentLesson.id) {
-      await api.put(`/lessons/${currentLesson.id}`, lessonPayload);
-      toast.success("Cập nhật bài học thành công");
-    } else {
-      await api.post("/lessons", lessonPayload);
-      toast.success("Thêm bài học thành công");
+      // Đảm bảo lấy dữ liệu mới nhất từ server
+      await fetchLessons(courseIdToUse);
+      setShowLessonModal(false);
+    } catch (error) {
+      toast.error(currentLesson.id ? "Cập nhật bài học thất bại" : "Thêm bài học thất bại");
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
-    
-    // Đảm bảo lấy dữ liệu mới nhất từ server
-    await fetchLessons(courseIdToUse);
-    setShowLessonModal(false);
-  } catch (error) {
-    toast.error(currentLesson.id ? "Cập nhật bài học thất bại" : "Thêm bài học thất bại");
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // Delete lesson
   const handleDeleteLesson = async (id) => {
@@ -413,18 +413,18 @@ const handleSaveLesson = async () => {
   const filteredCourses = courses.filter(
     (c) => {
       // Filter by search term
-      const matchesSearch = !searchTerm || 
-        (c.name && c.name.toLowerCase().includes(searchTerm.toLowerCase())) || 
+      const matchesSearch = !searchTerm ||
+        (c.name && c.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (c.targetAgeGroup && c.targetAgeGroup.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
       // Filter by status
       const currentDate = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
-    
-      const matchesStatus = 
-        statusFilter === "all" || 
-        (statusFilter === "active" && c.endDate >= currentDate) || 
+
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && c.endDate >= currentDate) ||
         (statusFilter === "ended" && c.endDate < currentDate);
-    
+
       return matchesSearch && matchesStatus;
     }
   );
@@ -554,31 +554,28 @@ const handleSaveLesson = async () => {
           {/* Add this in the filter section, after the existing filters */}
           <div className="flex flex-wrap gap-2 mt-3">
             <button
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === "all" 
-                  ? "bg-indigo-600 text-white" 
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "all"
+                  ? "bg-indigo-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setStatusFilter("all")}
             >
               Tất cả khóa học
             </button>
             <button
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === "active" 
-                  ? "bg-green-600 text-white" 
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "active"
+                  ? "bg-green-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setStatusFilter("active")}
             >
               Đang hoạt động
             </button>
             <button
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                statusFilter === "ended" 
-                  ? "bg-red-600 text-white" 
+              className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "ended"
+                  ? "bg-red-600 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
+                }`}
               onClick={() => setStatusFilter("ended")}
             >
               Đã kết thúc
@@ -629,8 +626,8 @@ const handleSaveLesson = async () => {
                         </span>
                       </div>
 
-                      <p className="mt-2 text-gray-600 text-sm line-clamp-2">
-                        {course.description || "Không có mô tả"}
+                      <p className="mt-2 text-gray-600 text-sm">
+                        {course.description ? (course.description.length > 150 ? course.description.substring(0, 150) + '...' : course.description) : "Không có mô tả"}
                       </p>
 
                       <div className="mt-4 grid grid-cols-2 gap-2 text-sm text-gray-500">
@@ -1057,8 +1054,8 @@ const handleSaveLesson = async () => {
 
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                      </svg>
-                      Thêm bài học
+                        </svg>
+                        Thêm bài học
                       </button>
                     </div>
                   ) : (
@@ -1073,8 +1070,8 @@ const handleSaveLesson = async () => {
                               </div>
                             </div>
 
-                            <p className="mt-2 text-gray-600 text-sm line-clamp-2">
-                              {lesson.content || "Không có mô tả"}
+                            <p className="mt-2 text-gray-600 text-sm">
+                              {lesson.content ? (lesson.content.length > 150 ? lesson.content.substring(0, 150) + '...' : lesson.content) : "Không có mô tả"}
                             </p>
 
                             <div className="mt-4 flex flex-wrap gap-2 text-sm text-gray-500">
@@ -1144,7 +1141,7 @@ const handleSaveLesson = async () => {
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                    </svg>
+                      </svg>
                       Thêm câu hỏi mới
                     </button>
                   </div>
@@ -1182,7 +1179,7 @@ const handleSaveLesson = async () => {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                                                </svg>
+                        </svg>
                         Thêm câu hỏi mới
                       </button>
                     </div>
@@ -1272,7 +1269,7 @@ const handleSaveLesson = async () => {
                             </svg>
                             Thêm câu hỏi
                           </button>
-                          
+
                           <button
                             className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center"
                             onClick={() => handleSaveQuiz()}
@@ -1332,9 +1329,10 @@ const handleSaveLesson = async () => {
                 <label className="block text-sm font-medium text-gray-700">Nội dung</label>
                 <textarea
                   className="mt-1 block w-full border rounded px-3 py-2"
-                  rows="6"
+                  rows="12" // Tăng số dòng hiển thị
                   value={currentLesson.content}
                   onChange={(e) => setCurrentLesson({ ...currentLesson, content: e.target.value })}
+                  placeholder="Nhập nội dung bài học không giới hạn ký tự..."
                 />
               </div>
 
@@ -1414,7 +1412,7 @@ const handleSaveLesson = async () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Các đáp án <span className="text-red-500">*</span></label>
                 <p className="text-xs text-gray-500 mb-2">Chọn ít nhất một đáp án đúng</p>
-                
+
                 {currentQuestion.options.map((option, index) => (
                   <div key={index} className="flex items-center mb-2">
                     <input

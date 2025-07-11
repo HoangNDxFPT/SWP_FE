@@ -351,7 +351,7 @@ function AboutUs() {
               của bạn.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <a href="/servey">
+              <a href="/assessment">
                 <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
                   Thực hiện khảo sát
                 </button>

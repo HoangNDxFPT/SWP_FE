@@ -1,9 +1,34 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import { toast } from 'react-toastify';
 
 function AssessmentPage() {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    // Kiểm tra xem người dùng đã đăng nhập chưa
+    const token = localStorage.getItem('token');
+    setIsLoggedIn(!!token);
+  }, []);
+
+  const handleStartAssessment = (type) => {
+    if (!isLoggedIn) {
+      toast.warning("Vui lòng đăng nhập để thực hiện bài đánh giá");
+      setTimeout(() => navigate('/login', { state: { from: `/assessment-${type}` } }), 1500);
+      return;
+    }
+    
+    // Chuyển đến các trang riêng biệt
+    if (type === 'assist') {
+      navigate('/assessment-assist');
+    } else if (type === 'crafft') {
+      navigate('/assessment-crafft');
+    }
+  };
+
   return (
     <div className="bg-white min-h-screen">
       <Header />
@@ -51,12 +76,12 @@ function AssessmentPage() {
                   <span className="text-gray-700">8 câu hỏi chính</span>
                 </div>
               </div>
-              <Link 
-                to="/assessment/assist" 
+              <button 
+                onClick={() => handleStartAssessment('assist')}
                 className="inline-block w-full py-3 px-6 text-center font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition shadow-md"
               >
                 Bắt đầu bài kiểm tra ASSIST
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -85,17 +110,60 @@ function AssessmentPage() {
                   <span className="text-gray-700">6 câu hỏi chính</span>
                 </div>
               </div>
-              <Link 
-                to="/assessment/crafft" 
+              <button 
+                onClick={() => handleStartAssessment('crafft')}
                 className="inline-block w-full py-3 px-6 text-center font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition shadow-md"
               >
                 Bắt đầu bài kiểm tra CRAFFT
-              </Link>
+              </button>
             </div>
           </div>
         </div>
         
-        {/* Information Section */}
+        {/* So sánh hai bài đánh giá */}
+        <div className="max-w-4xl mx-auto mt-12">
+          <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">So sánh hai bài đánh giá</h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-3 border">Tiêu chí</th>
+                  <th className="px-4 py-3 border text-blue-800">ASSIST</th>
+                  <th className="px-4 py-3 border text-green-800">CRAFFT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td className="px-4 py-2 border font-medium">Phù hợp với</td>
+                  <td className="px-4 py-2 border">Người trưởng thành (18+ tuổi)</td>
+                  <td className="px-4 py-2 border">Thanh thiếu niên (12-21 tuổi)</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 border font-medium">Thang điểm rủi ro thấp</td>
+                  <td className="px-4 py-2 border">0-9 điểm</td>
+                  <td className="px-4 py-2 border">0 điểm</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 border font-medium">Thang điểm rủi ro trung bình</td>
+                  <td className="px-4 py-2 border">10-19 điểm</td>
+                  <td className="px-4 py-2 border">1 điểm</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 border font-medium">Thang điểm rủi ro cao</td>
+                  <td className="px-4 py-2 border">20+ điểm</td>
+                  <td className="px-4 py-2 border">2+ điểm</td>
+                </tr>
+                <tr>
+                  <td className="px-4 py-2 border font-medium">Ưu điểm</td>
+                  <td className="px-4 py-2 border">Đánh giá chi tiết về nhiều loại chất khác nhau</td>
+                  <td className="px-4 py-2 border">Ngắn gọn, dễ trả lời, phù hợp với thanh thiếu niên</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        {/* Lợi ích của việc đánh giá */}
         <div className="max-w-4xl mx-auto mt-16">
           <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Tại sao nên thực hiện khảo sát?</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
