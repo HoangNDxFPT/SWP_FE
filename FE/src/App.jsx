@@ -40,7 +40,7 @@ import Program from "./admin/page/Program";
 import ConsultantLayout from "./consultant/ConsultantLayout";
 import ConsultantDashboard from "./consultant/page/Dashboard";
 import AppointmentList from "./consultant/page/AppointmentList";
-import UserCaseList from "./consultant/page/UserCaseList";
+
 import ConsultantProfilePage from "./consultant/page/ProfilePage";
 import ProgramListPage from "./consultant/page/ProgramListPage"; // Added from tri branch
 import CourseListPage from "./consultant/page/CourseListPage"; // Added from tri branch
@@ -171,7 +171,6 @@ const router = createBrowserRouter([
         path: "appointments",
         element: <AppointmentList />,
       },
-      { path: "cases", element: <UserCaseList /> },
       { path: "profile", element: <ConsultantProfilePage /> },
       { path: "courses", element: <CourseListPage /> }, // Added new route
       { path: "programs", element: <ProgramListPage /> }, // Added new route
