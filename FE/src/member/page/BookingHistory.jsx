@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 // SVG Icons thay vì sử dụng Heroicons
 const Icons = {
-  Calendar: (props) => (
+ Calendar: (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
     </svg>
@@ -61,32 +61,54 @@ const TABS = [
     icon: <Icons.XCircle className="w-4 h-4" />, 
     color: 'bg-red-100 text-red-800' 
   },
+  {
+    label: 'Các báo cáo của tôi',
+    value: 'MY_REPORTS',
+    icon: <Icons.ExclamationCircle className="w-4 h-4" />,
+    color: 'bg-blue-100 text-blue-800'
+  },
 ];
 
 function BookingHistory() {
-  const [selectedTab, setSelectedTab] = useState('PENDING');
+   const [selectedTab, setSelectedTab] = useState('PENDING');
   const [appointments, setAppointments] = useState([]);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportData, setReportData] = useState({ appointmentId: null, reason: '', description: '' });
 
-  const fetchAppointments = async (status) => {
+
+
+    const fetchAppointments = async (status) => {
     setLoading(true);
     try {
       const res = await api.get(`appointment/appointments?status=${status}`);
       setAppointments(res.data || []);
     } catch (err) {
-      console.error('Lỗi khi lấy danh sách lịch hẹn:', err);
       toast.error('Không thể tải lịch hẹn. Vui lòng thử lại sau.');
-      setAppointments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMyReports = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get(`/report/member/reports`);
+      setReports(res.data || []);
+    } catch (err) {
+      toast.error('Không thể tải báo cáo. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAppointments(selectedTab);
+    if (selectedTab === 'MY_REPORTS') {
+      fetchMyReports();
+    } else {
+      fetchAppointments(selectedTab);
+    }
   }, [selectedTab]);
 
   const handleOpenReportModal = (id) => {
@@ -100,44 +122,33 @@ function BookingHistory() {
       toast.error('Vui lòng nhập đầy đủ lý do và mô tả!');
       return;
     }
-
     try {
       await api.post(`report?appointmentId=${appointmentId}&reason=${encodeURIComponent(reason)}&description=${encodeURIComponent(description)}`);
       toast.success('Báo cáo thành công!');
       setShowReportModal(false);
     } catch (error) {
-      toast.error('Gửi báo cáo thất bại!');
-      console.error(error);
+      toast.error('Gửi báo cáo thất bại!',);
     }
   };
-  
+
   const handleCancelAppointment = async (appointmentId) => {
     if (!window.confirm('Bạn có chắc muốn hủy cuộc hẹn này không?')) return;
-
     try {
       await api.delete(`appointment/appointments/${appointmentId}`);
       toast.success('Hủy cuộc hẹn thành công!');
-      fetchAppointments(selectedTab); 
+      fetchAppointments(selectedTab);
     } catch (error) {
       toast.error('Hủy cuộc hẹn thất bại!');
-      console.error(error);
     }
   };
 
-  // Function to format date string to a more readable format
   const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    } catch (e) {
-      return dateString;
-    }
+    const date = new Date(dateString);
+    return date.toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  // Get appropriate status badge component
   const StatusBadge = ({ status }) => {
     const tabInfo = TABS.find(tab => tab.value === status) || TABS[0];
-    
     return (
       <span className={`flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tabInfo.color} border border-current`}>
         {tabInfo.icon}
@@ -145,7 +156,6 @@ function BookingHistory() {
       </span>
     );
   };
-
   return (
     <>
       <Header />
@@ -184,6 +194,46 @@ function BookingHistory() {
             <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
               <p className="mt-4 text-gray-500">Đang tải danh sách lịch hẹn...</p>
+            </div>
+          ) : selectedTab === 'MY_REPORTS' ? (
+            <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+              {reports.length === 0 ? (
+                <div className="bg-white rounded-lg shadow p-8 text-center col-span-2">
+                  <Icons.ExclamationCircle className="h-16 w-16 text-gray-300 mx-auto" />
+                  <h3 className="mt-4 text-lg font-medium text-gray-900">Bạn chưa gửi báo cáo nào</h3>
+                  <p className="mt-2 text-gray-500">Các báo cáo về vấn đề của bạn sẽ hiển thị tại đây.</p>
+                </div>
+              ) : (
+                reports.map((report) => (
+                  <div key={report.id} className="bg-white overflow-hidden shadow rounded-lg border border-gray-200 hover:shadow-md transition-shadow duration-300">
+                    <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Icons.ExclamationCircle className="h-5 w-5 text-blue-500 mr-2" />
+                        <h3 className="text-sm font-medium text-gray-700">Báo cáo #{report.id}</h3>
+                      </div>
+                      <span className="text-xs text-gray-500">{new Date(report.createdAt).toLocaleString('vi-VN')}</span>
+                    </div>
+                    <div className="px-4 py-5 sm:p-6">
+                      <div className="mb-2">
+                        <span className="font-medium text-gray-700">Lý do:</span>
+                        <span className="ml-2 text-gray-600">{report.reason}</span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-medium text-gray-700">Chi tiết:</span>
+                        <span className="ml-2 text-gray-600">{report.description}</span>
+                      </div>
+                      <div className="mb-2">
+                        <span className="font-medium text-gray-700">Cuộc hẹn liên quan:</span>
+                        <span className="ml-2 text-gray-600">#{report.appointmentId}</span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-700">Phản hồi từ quản trị viên:</span>
+                        <span className="ml-2 text-gray-600">{report.adminNote || "Chưa có phản hồi"}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           ) : appointments.length === 0 ? (
             <div className="bg-white rounded-lg shadow p-8 text-center">
