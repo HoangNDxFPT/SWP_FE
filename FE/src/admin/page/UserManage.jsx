@@ -13,7 +13,6 @@ const GENDER_OPTIONS = [
 const ROLE_OPTIONS = [
   { value: "", label: "Chọn vai trò" },
   { value: "ADMIN", label: "Quản trị viên" },
-  { value: "STAFF", label: "Nhân viên" },
   { value: "CONSULTANT", label: "Tư vấn viên" },
   { value: "MEMBER", label: "Thành viên" }
 ];
@@ -25,14 +24,6 @@ const ROLE_CONFIG = {
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
         <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-      </svg>
-    )
-  },
-  STAFF: {
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
-        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
       </svg>
     )
   },
@@ -91,7 +82,6 @@ export default function UserManage() {
     total: 0,
     admins: 0,
     consultants: 0,
-    staff: 0,
     members: 0
   });
 
@@ -130,7 +120,6 @@ export default function UserManage() {
           total: transformedUsers.length,
           admins: transformedUsers.filter(u => u.role === 'ADMIN').length,
           consultants: transformedUsers.filter(u => u.role === 'CONSULTANT').length,
-          staff: transformedUsers.filter(u => u.role === 'STAFF').length,
           members: transformedUsers.filter(u => u.role === 'MEMBER').length
         };
         setStats(stats);
@@ -325,7 +314,7 @@ export default function UserManage() {
       {/* Nội dung - Loại bỏ padding dư thừa */}
       <div className="w-full">
         {/* Stats Cards - Điều chỉnh grid để responsive hơn */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
             <div className="flex items-center">
               <div className="p-2 bg-indigo-100 rounded-full mr-4">
@@ -364,20 +353,6 @@ export default function UserManage() {
               <div>
                 <p className="text-sm text-gray-600 font-medium">Tư vấn viên</p>
                 <p className="text-2xl font-bold text-gray-900">{stats.consultants}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-full mr-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 font-medium">Nhân viên</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.staff}</p>
               </div>
             </div>
           </div>
@@ -547,20 +522,22 @@ export default function UserManage() {
                             className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded-md text-sm transition duration-150 ease-in-out border border-blue-200"
                             onClick={() => handleViewEdit(user)}
                           >
-                            Chi tiết
+                            {user.role === 'ADMIN' ? 'Chi tiết' : 'Chi tiết'}
                           </button>
-                          <button
-                            className="bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1 rounded-md text-sm transition duration-150 ease-in-out border border-red-200"
-                            onClick={() => handleDelete(user.id)}
-                            disabled={actionLoading && deleteId === user.id}
-                          >
-                            {actionLoading && deleteId === user.id ? (
-                              <svg className="animate-spin h-4 w-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                            ) : "Xóa"}
-                          </button>
+                          {user.role !== 'ADMIN' && (
+                            <button
+                              className="bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1 rounded-md text-sm transition duration-150 ease-in-out border border-red-200"
+                              onClick={() => handleDelete(user.id)}
+                              disabled={actionLoading && deleteId === user.id}
+                            >
+                              {actionLoading && deleteId === user.id ? (
+                                <svg className="animate-spin h-4 w-4 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                              ) : "Xóa"}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1264,15 +1241,17 @@ export default function UserManage() {
                   >
                     Đóng
                   </button>
-                  <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-150 ease-in-out flex items-center"
-                    onClick={() => setEditMode(true)}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Chỉnh sửa
-                  </button>
+                  {selectedUser?.role !== 'ADMIN' && (
+                    <button
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-150 ease-in-out flex items-center"
+                      onClick={() => setEditMode(true)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                      Chỉnh sửa
+                    </button>
+                  )}
                 </>
               )}
             </div>
