@@ -334,7 +334,6 @@ function CoursesListPage() {
         filtered = filtered.filter(course => courseStatuses[course.id] === 'Cancelled');
         break;
       default:
-        // 'all' - không cần lọc thêm
         break;
     }
 

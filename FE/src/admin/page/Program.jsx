@@ -28,6 +28,7 @@ function Program() {
         type: 'PRE',
         description: '',
         googleFormUrl: '',
+        googleFormUrlEdit: '',
         googleSheetUrl: '',
         program: null
     });
@@ -252,6 +253,7 @@ function Program() {
             description: '',
             googleFormUrl: '',
             googleSheetUrl: '',
+            googleFormUrlEdit: '',
             program: null
         });
     };
@@ -271,6 +273,15 @@ function Program() {
         } catch (_) {
             toast.error('URL Google Form không hợp lệ');
             return false;
+        }
+        // Kiểm tra URL Google Form Edit nếu có
+        if (currentTemplate.googleFormUrlEdit.trim()) {
+            try {
+                new URL(currentTemplate.googleFormUrlEdit);
+            } catch (_) {
+                toast.error('URL Google Form Edit không hợp lệ');
+                return false;
+            }
         }
         // Kiểm tra URL Google Sheet nếu có
         if (currentTemplate.googleSheetUrl.trim()) {
@@ -650,7 +661,7 @@ function Program() {
                                                         title="Xem người tham gia"
                                                     >
                                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.356-1.283.988-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.356-1.283.988-2.386l.548-.547a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                                         </svg>
                                                     </button>
                                                     <button
@@ -757,14 +768,26 @@ function Program() {
                                             <td className="px-6 py-4">
                                                 <div className="text-sm font-medium text-gray-900">{template.name}</div>
                                                 <div className="text-sm text-gray-500 line-clamp-1">{template.description}</div>
-                                                <a
-                                                    href={template.googleFormUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-600 hover:underline"
-                                                >
-                                                    Xem Google Form
-                                                </a>
+                                                <div className="flex gap-2 mt-1">
+                                                    <a
+                                                        href={template.googleFormUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-xs text-blue-600 hover:underline"
+                                                    >
+                                                        Xem Google Form
+                                                    </a>
+                                                    {template.googleFormUrlEdit && (
+                                                        <a
+                                                            href={template.googleFormUrlEdit}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-green-600 hover:underline"
+                                                        >
+                                                            Chỉnh sửa Form
+                                                        </a>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(template.type)}`}>
@@ -1112,6 +1135,20 @@ function Program() {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    URL Google Form Edit
+                                </label>
+                                <input
+                                    type="url"
+                                    name="googleFormUrlEdit"
+                                    value={currentTemplate.googleFormUrlEdit}
+                                    onChange={handleTemplateInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="https://docs.google.com/forms/d/.../edit"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
                                     URL Google Sheet
                                 </label>
                                 <input
@@ -1237,6 +1274,20 @@ function Program() {
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="https://forms.google.com/..."
                                     required
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    URL Google Form Edit
+                                </label>
+                                <input
+                                    type="url"
+                                    name="googleFormUrlEdit"
+                                    value={currentTemplate.googleFormUrlEdit}
+                                    onChange={handleTemplateInputChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="https://docs.google.com/forms/d/.../edit"
                                 />
                             </div>
 
