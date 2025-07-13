@@ -23,24 +23,27 @@ function QuizHistory() {
         if (response.status === 200 && Array.isArray(response.data)) {
           setQuizResults(response.data);
           
-          // Group results by course
+          // Group results by course name (since course object is not available)
           const grouped = response.data.reduce((acc, result) => {
-            const courseId = result.course?.id;
-            if (courseId) {
-              if (!acc[courseId]) {
-                acc[courseId] = {
-                  courseInfo: result.course,
+            const courseName = result.courseName;
+            if (courseName) {
+              if (!acc[courseName]) {
+                acc[courseName] = {
+                  courseInfo: { 
+                    name: courseName,
+                    id: courseName // Use courseName as ID since we don't have course ID
+                  },
                   results: []
                 };
               }
-              acc[courseId].results.push(result);
+              acc[courseName].results.push(result);
             }
             return acc;
           }, {});
           
           // Sort each course's results by submission date (newest first)
-          Object.keys(grouped).forEach(courseId => {
-            grouped[courseId].results.sort((a, b) => 
+          Object.keys(grouped).forEach(courseName => {
+            grouped[courseName].results.sort((a, b) => 
               new Date(b.submittedAt) - new Date(a.submittedAt)
             );
           });
@@ -149,12 +152,24 @@ function QuizHistory() {
   };
 
   // Filtered courses based on search term
-  const filteredCourses = Object.entries(groupedResults).filter(([_, courseData]) => {
+  const filteredCourses = Object.entries(groupedResults).filter(([courseName, courseData]) => {
     if (!searchTerm.trim()) return true;
     
-    const courseName = courseData.courseInfo.name.toLowerCase();
-    return courseName.includes(searchTerm.toLowerCase());
+    return courseName.toLowerCase().includes(searchTerm.toLowerCase());
   });
+
+  // Get course ID for navigation (this needs to be fetched or stored differently)
+  const getCourseIdForQuiz = async (courseName) => {
+    try {
+      // Try to get course ID from course list API
+      const response = await api.get('/courses');
+      const course = response.data.find(c => c.name === courseName);
+      return course ? course.id : null;
+    } catch (error) {
+      console.error('Error fetching course ID:', error);
+      return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -214,7 +229,7 @@ function QuizHistory() {
             </div>
           ) : (
             <>
-              {filteredCourses.length === 0 && (
+              {filteredCourses.length === 0 && searchTerm && (
                 <div className="bg-yellow-50 border border-yellow-100 rounded-lg p-4 mb-6">
                   <div className="flex">
                     <div className="flex-shrink-0">
@@ -233,18 +248,18 @@ function QuizHistory() {
               
               {/* Course Selection Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {filteredCourses.map(([courseId, courseData]) => {
+                {filteredCourses.map(([courseName, courseData]) => {
                   const metrics = calculateCourseMetrics(courseData.results);
                   return (
                     <div 
-                      key={courseId}
+                      key={courseName}
                       className={`bg-white rounded-xl shadow-md overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
-                        selectedCourse === courseId ? 'border-blue-500 ring-2 ring-blue-200' : 'border-transparent hover:border-blue-300'
+                        selectedCourse === courseName ? 'border-blue-500 ring-2 ring-blue-200' : 'border-transparent hover:border-blue-300'
                       }`}
-                      onClick={() => setSelectedCourse(selectedCourse === courseId ? null : courseId)}
+                      onClick={() => setSelectedCourse(selectedCourse === courseName ? null : courseName)}
                     >
                       <div className="p-6">
-                        <h3 className="text-lg font-semibold text-gray-800 mb-3 line-clamp-2">{courseData.courseInfo.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3 line-clamp-2">{courseName}</h3>
                         
                         <div className="flex items-center justify-between mb-4">
                           <div className="flex items-center">
@@ -270,8 +285,8 @@ function QuizHistory() {
                           <div className="text-sm text-gray-500">
                             Lần cuối: {metrics.latestResult ? formatDate(metrics.latestResult.submittedAt).split(',')[0] : 'N/A'}
                           </div>
-                          <div className={`text-sm font-medium ${selectedCourse === courseId ? 'text-blue-600' : 'text-gray-600'}`}>
-                            {selectedCourse === courseId ? 'Đang xem' : 'Nhấn để xem chi tiết'}
+                          <div className={`text-sm font-medium ${selectedCourse === courseName ? 'text-blue-600' : 'text-gray-600'}`}>
+                            {selectedCourse === courseName ? 'Đang xem' : 'Nhấn để xem chi tiết'}
                           </div>
                         </div>
                       </div>
@@ -284,7 +299,7 @@ function QuizHistory() {
               {selectedCourse && groupedResults[selectedCourse] && (
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
                   <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 text-white">
-                    <h2 className="text-xl font-bold">{groupedResults[selectedCourse].courseInfo.name}</h2>
+                    <h2 className="text-xl font-bold">{selectedCourse}</h2>
                     <p className="opacity-90 text-sm">
                       {groupedResults[selectedCourse].results.length} lần làm bài kiểm tra
                     </p>
@@ -397,17 +412,12 @@ function QuizHistory() {
                       </div>
                     </div>
                     
-                    {/* Attempt Again Button */}
-                    <div className="mt-6 flex justify-end">
-                      <Link
-                        to={`/quiz/${selectedCourse}`}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
-                        Làm lại bài kiểm tra
-                      </Link>
+                    {/* Note about retaking quiz */}
+                    <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600">
+                        <FaInfoCircle className="inline mr-2 text-blue-500" />
+                        Để làm lại bài kiểm tra, vui lòng truy cập vào khóa học tương ứng từ danh sách khóa học.
+                      </p>
                     </div>
                   </div>
                 </div>

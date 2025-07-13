@@ -10,8 +10,7 @@ function QuizResult() {
   const { id } = useParams(); 
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState(null);
-  const [quizQuestions, setQuizQuestions] = useState([]);
-  const [userAnswers, setUserAnswers] = useState({});
+  const [resultDetails, setResultDetails] = useState([]);
   const [course, setCourse] = useState(null);
   const [showAllAnswers, setShowAllAnswers] = useState(false);
 
@@ -21,48 +20,55 @@ function QuizResult() {
       try {
         setLoading(true);
         
-        // Lấy thông tin kết quả bài kiểm tra
+        // Lấy thông tin kết quả bài kiểm tra bằng ID
         const resultRes = await api.get(`/quiz-result/${id}`);
         if (resultRes.status === 200) {
           setResult(resultRes.data);
           
           // Lấy thông tin khóa học
           if (resultRes.data.course?.id) {
-            const courseRes = await api.get(`/courses/${resultRes.data.course.id}`);
-            if (courseRes.status === 200) {
-              setCourse(courseRes.data);
-            }
-            
-            // Lấy danh sách câu hỏi của khóa học
-            const quizRes = await api.get(`/quiz/course/${resultRes.data.course.id}`);
-            if (quizRes.status === 200 && Array.isArray(quizRes.data)) {
-              const parsedQuizzes = quizRes.data.map(q => ({
-                ...q,
-                answer: Array.isArray(q.answer) ? q.answer : JSON.parse(q.answer || '[]'),
-              }));
-              setQuizQuestions(parsedQuizzes);
+            try {
+              const courseRes = await api.get(`/courses/${resultRes.data.course.id}`);
+              if (courseRes.status === 200) {
+                setCourse(courseRes.data);
+              }
+            } catch (courseErr) {
+              console.warn('Không thể tải thông tin khóa học:', courseErr);
+              // Sử dụng thông tin course từ result
+              setCourse(resultRes.data.course);
             }
           }
 
-          // Lấy thông tin câu trả lời của người dùng
-          const answersRes = await api.get(`/quiz/result/${id}`);
-          if (answersRes.status === 200 && Array.isArray(answersRes.data)) {
-            const answersMap = {};
-            answersRes.data.forEach(answer => {
-              answersMap[answer.questionId] = answer.selectedAnswer;
-            });
-            setUserAnswers(answersMap);
+          // Lấy chi tiết kết quả từ result.details hoặc API riêng
+          if (resultRes.data.details && Array.isArray(resultRes.data.details)) {
+            setResultDetails(resultRes.data.details);
+          } else {
+            // Nếu không có details trong result, thử lấy từ API khác
+            try {
+              const detailsRes = await api.get('/quiz-result/my-details');
+              if (detailsRes.status === 200 && Array.isArray(detailsRes.data)) {
+                setResultDetails(detailsRes.data);
+              }
+            } catch (detailsErr) {
+              console.warn('Không thể tải chi tiết kết quả:', detailsErr);
+            }
           }
         }
       } catch (error) {
         console.error('Lỗi khi tải kết quả bài kiểm tra:', error);
-        toast.error('Không thể tải kết quả bài kiểm tra');
+        if (error.response?.status === 404) {
+          toast.error('Không tìm thấy kết quả bài kiểm tra');
+        } else {
+          toast.error('Không thể tải kết quả bài kiểm tra');
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    fetchQuizResult();
+    if (id) {
+      fetchQuizResult();
+    }
   }, [id]);
 
   // Tính điểm phần trăm
@@ -214,7 +220,6 @@ function QuizResult() {
                       Quay lại khóa học
                     </Link>
                     
-                    
                     {!isPassed() && (
                       <Link
                         to={`/quiz/${course?.id}`}
@@ -229,79 +234,86 @@ function QuizResult() {
               </div>
               
               {/* Detailed Results */}
-              <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-                <div className="border-b border-gray-200 p-6">
-                  <div className="flex flex-wrap justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800">Chi tiết kết quả</h2>
-                    <button
-                      onClick={() => setShowAllAnswers(!showAllAnswers)}
-                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    >
-                      {showAllAnswers ? 'Ẩn đáp án' : 'Hiển thị tất cả đáp án'}
-                    </button>
+              {resultDetails.length > 0 && (
+                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                  <div className="border-b border-gray-200 p-6">
+                    <div className="flex flex-wrap justify-between items-center">
+                      <h2 className="text-xl font-bold text-gray-800">Chi tiết kết quả</h2>
+                      <button
+                        onClick={() => setShowAllAnswers(!showAllAnswers)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                      >
+                        {showAllAnswers ? 'Ẩn đáp án' : 'Hiển thị tất cả đáp án'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="divide-y divide-gray-200">
-                  {quizQuestions.map((question, index) => {
-                    const userAnswerIndex = userAnswers[question.id];
-                    const isCorrect = userAnswerIndex === question.correct;
-                    
-                    return (
-                      <div key={question.id} className="p-6">
-                        <div className="flex items-start mb-4">
-                          <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-1 ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                            {isCorrect ? (
-                              <FaCheckCircle />
-                            ) : (
-                              <FaTimesCircle />
-                            )}
-                          </div>
-                          <div className="flex-grow">
-                            <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                              {index + 1}. {question.question}
-                            </h3>
-                            
-                            <div className="space-y-3 mt-4">
-                              {question.answer.map((ans, idx) => (
-                                <div 
-                                  key={idx} 
-                                  className={`p-3 rounded-lg border ${
-                                    showAllAnswers && idx === question.correct
-                                      ? 'bg-green-50 border-green-300'
-                                      : userAnswerIndex === idx 
-                                        ? (isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300')
-                                        : 'border-gray-200'
-                                  }`}
-                                >
-                                  <div className="flex items-center">
-                                    <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
-                                    <span className="text-gray-800">{ans}</span>
-                                    
-                                    {showAllAnswers && idx === question.correct && (
-                                      <span className="ml-auto text-green-600 text-sm font-medium">Đáp án đúng</span>
-                                    )}
-                                    
-                                    {userAnswerIndex === idx && (
-                                      <span className="ml-auto text-sm font-medium">
-                                        {isCorrect ? (
-                                          <span className="text-green-600">Bạn đã chọn đúng</span>
-                                        ) : (
-                                          <span className="text-red-600">Bạn đã chọn sai</span>
+                  
+                  <div className="divide-y divide-gray-200">
+                    {resultDetails.map((detail, index) => {
+                      const options = detail.options ? JSON.parse(detail.options) : [];
+                      const isCorrect = detail.correct;
+                      
+                      return (
+                        <div key={index} className="p-6">
+                          <div className="flex items-start mb-4">
+                            <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-1 ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                              {isCorrect ? (
+                                <FaCheckCircle />
+                              ) : (
+                                <FaTimesCircle />
+                              )}
+                            </div>
+                            <div className="flex-grow">
+                              <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                                {index + 1}. {detail.question}
+                              </h3>
+                              
+                              <div className="space-y-3 mt-4">
+                                {options.map((option, idx) => {
+                                  const isStudentAnswer = detail.studentAnswer === option;
+                                  const isCorrectAnswer = detail.correctAnswer === option;
+                                  
+                                  return (
+                                    <div 
+                                      key={idx} 
+                                      className={`p-3 rounded-lg border ${
+                                        showAllAnswers && isCorrectAnswer
+                                          ? 'bg-green-50 border-green-300'
+                                          : isStudentAnswer 
+                                            ? (isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300')
+                                            : 'border-gray-200'
+                                      }`}
+                                    >
+                                      <div className="flex items-center">
+                                        <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
+                                        <span className="text-gray-800">{option}</span>
+                                        
+                                        {showAllAnswers && isCorrectAnswer && (
+                                          <span className="ml-auto text-green-600 text-sm font-medium">Đáp án đúng</span>
                                         )}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              ))}
+                                        
+                                        {isStudentAnswer && (
+                                          <span className="ml-auto text-sm font-medium">
+                                            {isCorrect ? (
+                                              <span className="text-green-600">Bạn đã chọn đúng</span>
+                                            ) : (
+                                              <span className="text-red-600">Bạn đã chọn sai</span>
+                                            )}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
               
               {/* Result Summary Bottom */}
               <div className="bg-white rounded-lg shadow-md overflow-hidden p-6 text-center">
@@ -336,7 +348,7 @@ function QuizResult() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                     Khám phá các khóa học khác
-                  </Link > 
+                  </Link>
                 </div>
               </div>
             </>

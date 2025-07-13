@@ -119,39 +119,31 @@ function CourseQuiz() {
         return selected[quiz.id] === quiz.correct ? acc + 1 : acc;
       }, 0);
 
-      // Lấy token xác thực từ localStorage
-      const token = localStorage.getItem('token');
-      
-      // Lấy thông tin người dùng từ API riêng biệt
-      const userRes = await api.get('profile');
-      const userId = userRes.data?.userId;
+      // Tạo answers array với chi tiết từng câu trả lời
+      const answers = quizList.map(quiz => {
+        const studentAnswerIndex = selected[quiz.id];
+        const studentAnswer = studentAnswerIndex !== undefined ? quiz.answer[studentAnswerIndex] : "";
+        const correctAnswer = quiz.answer[quiz.correct];
+        
+        return {
+          question: quiz.question,
+          options: JSON.stringify(quiz.answer), // Chuyển array thành string
+          correctAnswer: correctAnswer,
+          studentAnswer: studentAnswer
+        };
+      });
 
-      if (!userId) {
-        toast.error("Không thể xác định thông tin người dùng.");
-        return;
-      }
-
-      // Cấu trúc payload khác - dạng flat
+      // Sử dụng API submit endpoint mới
       const payload = {
-        score: correctCount,
-        totalQuestions: quizList.length,
-        user: {
-          id: userId
-        },
-        course: {
-          id: Number(id)
-        }
+        courseId: Number(id),
+        score: correctCount / quizList.length, // Score dạng phần trăm (0.0 - 1.0)
+        answers: answers
       };
 
-      console.log("Submitting quiz with nested payload:", payload);
+      console.log("Submitting quiz with payload:", payload);
 
-      // Gọi API với payload đúng cấu trúc
-      const resultRes = await api.post('/quiz-result', payload, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      // Gọi API endpoint mới
+      const resultRes = await api.post('/quiz-result/submit', payload);
       
       const resultId = resultRes.data?.id;
 
@@ -176,7 +168,7 @@ function CourseQuiz() {
           return;
         }
         
-        toast.error(`Lỗi: ${err.response.data || 'Không thể nộp bài kiểm tra'}`);
+        toast.error(`Lỗi: ${err.response.data?.message || err.response.data || 'Không thể nộp bài kiểm tra'}`);
       } else {
         toast.error("Đã xảy ra lỗi khi nộp bài kiểm tra. Vui lòng thử lại.");
       }
