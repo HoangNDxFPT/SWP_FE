@@ -58,6 +58,11 @@ function CourseDetailForConsultant() {
                     <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">
                       Kết thúc: {new Date(course.endDate).toLocaleDateString('vi-VN')}
                     </span>
+                    {course.durationInMinutes > 0 && (
+                      <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                        Thời gian: {course.durationInMinutes} phút
+                      </span>
+                    )}
                   </div>
                   <div className="mb-6">
                     <h2 className="text-lg font-bold mb-2 text-blue-700">Danh sách bài học</h2>
