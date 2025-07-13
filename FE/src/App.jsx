@@ -46,6 +46,8 @@ import QuizHistory from "./member/page/QuizHistory";
 import Crafft from "./member/page/Crafft";
 import AssistAssessment from "./member/page/AssistAssessment";
 import CourseDetailForConsultant from "./consultant/components/CourseDetailForConsultant";
+import Terms from "./member/page/Terms";
+import Privacy from "./member/page/Privacy";
 import Dashboard from "./admin/page/Dashboard";
 import ConsultantManagement from "./admin/page/ConsultantManagement";
 
@@ -151,6 +153,14 @@ const router = createBrowserRouter([
   {
     path: "/com-program",
     element: <ProgramList />,
+  },
+    {
+    path: "/terms",
+    element: <Terms />,
+  },
+      {
+    path: "/privacy",
+    element: <Privacy />,
   },
   {
     path: "/admin",
