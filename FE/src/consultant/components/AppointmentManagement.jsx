@@ -539,25 +539,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       },
     },
     
-    {
-      title: "Google Meet",
-      dataIndex: "googleMeetLink",
-      key: "googleMeetLink",
-      render: (link) =>
-        link ? (
-          <Button
-            type="link"
-            icon={<Video className="w-4 h-4" />}
-            href={link}
-            target="_blank"
-            className="p-0"
-          >
-            Tham gia
-          </Button>
-        ) : (
-          <span className="text-gray-400">Chưa có</span>
-        ),
-    },
+    
     {
       title: "Ngày tạo",
       dataIndex: "createAt",
@@ -706,6 +688,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
               options={searchOptions}
               onSearch={handleSearchMembers}
               onSelect={handleSelectMember}
+              onChange={(value) => setSearchValue(value)}
               className="w-full"
               size="large"
               loading={searchLoading}
