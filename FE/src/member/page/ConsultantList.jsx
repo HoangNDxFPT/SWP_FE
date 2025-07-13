@@ -336,21 +336,59 @@ function ConsultantList() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Header />
 
-      {/* Hero Section with Updated Design */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-              Tư vấn tâm lý chuyên nghiệp
-            </h1>
-            <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-90">
-              Kết nối với các chuyên gia tâm lý hàng đầu, đồng hành cùng bạn trong hành trình phát triển bản thân
-            </p>
+      {/* Modern Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-800"></div>
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative py-20 lg:py-28">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-4xl mx-auto">
+              <div className="mb-6">
+                <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/20 text-white/90 backdrop-blur-sm">
+                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Chuyên viên được chứng nhận
+                </span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                Tư vấn tâm lý 
+                <span className="bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
+                  {" "}chuyên nghiệp
+                </span>
+              </h1>
+              <p className="text-xl md:text-2xl text-white/90 mb-8 leading-relaxed">
+                Kết nối với các chuyên gia tâm lý hàng đầu, đồng hành cùng bạn trong hành trình phát triển bản thân và cải thiện sức khỏe tinh thần
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <div className="flex items-center text-white/80 text-sm">
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Tư vấn online 24/7
+                </div>
+                <div className="flex items-center text-white/80 text-sm">
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Bảo mật thông tin tuyệt đối
+                </div>
+                <div className="flex items-center text-white/80 text-sm">
+                  <svg className="w-5 h-5 mr-2 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  Đội ngũ chuyên gia giàu kinh nghiệm
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+        {/* Decorative elements */}
+        <div className="absolute top-0 left-0 w-40 h-40 bg-white/10 rounded-full -translate-x-20 -translate-y-20"></div>
+        <div className="absolute bottom-0 right-0 w-60 h-60 bg-white/5 rounded-full translate-x-20 translate-y-20"></div>
       </div>
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
@@ -522,6 +560,9 @@ function ConsultantList() {
                       {formatDate(filters.date)}
                       {filters.time && ` | Khung giờ: ${filters.time} - ${getEndTimeDisplay(filters.time)}`}
                     </p>
+                    <p className="text-xs text-blue-600 mt-1.5 italic">
+                      💡 Khi bạn click vào tư vấn viên, thông tin ngày giờ này sẽ được tự động điền sẵn
+                    </p>
                   </div>
                 </div>
               )}
@@ -673,10 +714,19 @@ function ConsultantList() {
                       )}
 
                       <Link
-                        to={`/consultantDetail/${consultant.consultantId}`}
+                        to={`/consultantDetail/${consultant.consultantId}${
+                          filters.date || filters.time 
+                            ? `?${new URLSearchParams({
+                                ...(filters.date && { date: filters.date }),
+                                ...(filters.time && { time: filters.time })
+                              }).toString()}`
+                            : ''
+                        }`}
                         className="inline-block w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-center rounded-lg transition shadow-sm hover:shadow font-medium mt-3"
                       >
-                        Xem hồ sơ và đặt lịch
+                        {filters.date || filters.time 
+                          ? 'Đặt lịch với thông tin đã chọn' 
+                          : 'Xem hồ sơ và đặt lịch'}
                       </Link>
                     </div>
                   </div>
