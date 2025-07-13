@@ -11,8 +11,11 @@ export default function CourseManage() {
     description: "",
     startDate: "",
     endDate: "",
+    durationInMinutes: 0,
     targetAgeGroup: "",
-    url: ""
+    url: "",
+    isDeleted: false,
+    deleted: false
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [editMode, setEditMode] = useState(false);
@@ -80,7 +83,22 @@ export default function CourseManage() {
       toast.error("Invalid date format");
       return;
     }
-    const payload = { ...newCourse };
+    
+    // Tạo payload với durationInMinutes đảm bảo là số nguyên
+    const payload = {
+      ...newCourse,
+      durationInMinutes: parseInt(newCourse.durationInMinutes) || 0, // Đảm bảo là số nguyên
+      isDeleted: Boolean(newCourse.isDeleted), // Đảm bảo là boolean
+      deleted: Boolean(newCourse.deleted) // Đảm bảo là boolean
+    };
+    
+    console.log("POST Request Payload:", payload);
+    console.log("Payload data types:", {
+      durationInMinutes: typeof payload.durationInMinutes,
+      isDeleted: typeof payload.isDeleted,
+      deleted: typeof payload.deleted
+    });
+    
     try {
       setLoading(true);
       await api.post("/courses", payload);
@@ -91,8 +109,11 @@ export default function CourseManage() {
         description: "",
         startDate: "",
         endDate: "",
+        durationInMinutes: 0,
         targetAgeGroup: "",
-        url: ""
+        url: "",
+        isDeleted: false,
+        deleted: false
       });
       fetchCourses();
     } catch (err) {
@@ -134,28 +155,88 @@ export default function CourseManage() {
       toast.error("Định dạng ngày không hợp lệ");
       return;
     }
-    const payload = { ...editCourse };
+    
+    // Tạo payload theo đúng API specification
+    const payload = {
+      id: parseInt(editCourse.id), // Đảm bảo ID là số nguyên
+      name: editCourse.name,
+      description: editCourse.description || "",
+      startDate: editCourse.startDate,
+      endDate: editCourse.endDate,
+      durationInMinutes: parseInt(editCourse.durationInMinutes) || 0, // Đảm bảo là số nguyên
+      targetAgeGroup: editCourse.targetAgeGroup || "Teenagers",
+      url: editCourse.url || ""
+      // Không gửi isDeleted vì API không hỗ trợ, chỉ có deleted
+    };
+    
+    console.log("PUT Request Payload:", payload);
+    console.log("PUT Request URL:", `/courses/${editCourse.id}`);
+    console.log("Payload data types:", {
+      id: typeof payload.id,
+      durationInMinutes: typeof payload.durationInMinutes
+    });
+    
     try {
       setLoading(true);
-      await api.put(`/courses/${editCourse.id}`, payload);
+      
+      // Thêm validation để đảm bảo dữ liệu hợp lệ
+      if (!payload.id) {
+        throw new Error("Course ID is required");
+      }
+      
+      console.log("Sending PUT request...");
+      const response = await api.put(`/courses/${editCourse.id}`, payload);
+      console.log("PUT Response:", response);
+      console.log("Response Status:", response.status);
+      console.log("Response Data:", response.data);
+      
+      // Coi như thành công nếu không có lỗi throw
       toast.success("Cập nhật khóa học thành công!");
 
-      // Cập nhật state courses ngay lập tức để thấy thay đổi
-      setCourses(prevCourses =>
-        prevCourses.map(course =>
-          course.id === editCourse.id ? { ...editCourse } : course
-        )
-      );
+      // Cập nhật state courses ngay lập tức với dữ liệu từ response
+      console.log('Updating course state with response data:', {
+        editCourseId: editCourse.id,
+        editCourseIdType: typeof editCourse.id,
+        responseData: response.data
+      });
+      
+      setCourses(prevCourses => {
+        const updatedCourses = prevCourses.map(course => {
+          console.log('Comparing:', {
+            courseId: course.id,
+            courseIdType: typeof course.id,
+            editCourseId: editCourse.id,
+            editCourseIdType: typeof editCourse.id,
+            isMatch: parseInt(course.id) === parseInt(editCourse.id)
+          });
+          return parseInt(course.id) === parseInt(editCourse.id) ? response.data : course;
+        });
+        console.log('Updated courses state:', updatedCourses);
+        return updatedCourses;
+      });
 
       setEditMode(false);
       setEditCourse(null);
 
-      // Gọi API để lấy dữ liệu mới nhất
-      fetchCourses();
+      // Refresh dữ liệu từ server để đảm bảo đồng bộ
+      await fetchCourses();
     } catch (err) {
-      toast.error("Cập nhật khóa học thất bại!");
+      console.error("PUT Request Error:", err);
+      
       if (err.response) {
-        console.error("Lỗi cập nhật:", err.response.data);
+        console.error("Error Response Status:", err.response.status);
+        console.error("Error Response Data:", err.response.data);
+        console.error("Error Response Headers:", err.response.headers);
+        
+        // Hiển thị lỗi chi tiết từ backend
+        const errorMessage = err.response.data?.message || err.response.data?.error || "Cập nhật khóa học thất bại!";
+        toast.error(`Lỗi ${err.response.status}: ${errorMessage}`);
+      } else if (err.request) {
+        console.error("Error Request:", err.request);
+        toast.error("Không thể kết nối đến server!");
+      } else {
+        console.error("Error Message:", err.message);
+        toast.error("Có lỗi xảy ra khi cập nhật khóa học!");
       }
     } finally {
       setLoading(false);
@@ -189,7 +270,7 @@ export default function CourseManage() {
         try {
           options = JSON.parse(item.answer);
           if (!Array.isArray(options)) options = [item.answer];
-        } catch (e) {
+        } catch {
           options = [item.answer];
         }
 
@@ -643,6 +724,14 @@ export default function CourseManage() {
                           </svg>
                           Kết thúc: {course.endDate}
                         </div>
+                        {course.durationInMinutes > 0 && (
+                          <div className="flex items-center col-span-2">
+                            <svg className="h-4 w-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Thời gian: {course.durationInMinutes} phút
+                          </div>
+                        )}
                       </div>
 
                       {course.url && (
@@ -783,6 +872,67 @@ export default function CourseManage() {
                   onChange={e => setNewCourse({ ...newCourse, url: e.target.value })}
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
+                
+                {/* Quick Select Options */}
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[30, 60, 90, 120].map(duration => (
+                    <button
+                      key={duration}
+                      type="button"
+                      className={`px-3 py-2 text-sm rounded border ${
+                        newCourse.durationInMinutes === duration 
+                          ? 'bg-blue-500 text-white border-blue-500' 
+                          : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                      }`}
+                      onClick={() => setNewCourse({ ...newCourse, durationInMinutes: duration })}
+                    >
+                      {duration}p
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Input with Controls */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                    onClick={() => setNewCourse({ 
+                      ...newCourse, 
+                      durationInMinutes: Math.max(0, (newCourse.durationInMinutes || 0) - 15) 
+                    })}
+                  >
+                    -15
+                  </button>
+                  
+                  <input
+                    type="number"
+                    className="flex-1 border rounded px-3 py-2 text-center"
+                    placeholder="0"
+                    min="0"
+                    step="5"
+                    value={newCourse.durationInMinutes}
+                    onChange={e => setNewCourse({ ...newCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
+                  />
+                  
+                  <button
+                    type="button"
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                    onClick={() => setNewCourse({ 
+                      ...newCourse, 
+                      durationInMinutes: (newCourse.durationInMinutes || 0) + 15 
+                    })}
+                  >
+                    +15
+                  </button>
+                </div>
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Chọn nhanh hoặc nhập số phút tùy chỉnh
+                </p>
+              </div>
             </form>
 
             <div className="flex justify-end gap-2 mt-6">
@@ -896,6 +1046,67 @@ export default function CourseManage() {
                   value={editCourse.url}
                   onChange={e => setEditCourse({ ...editCourse, url: e.target.value })}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
+                
+                {/* Quick Select Options */}
+                <div className="grid grid-cols-4 gap-2 mb-3">
+                  {[30, 60, 90, 120].map(duration => (
+                    <button
+                      key={duration}
+                      type="button"
+                      className={`px-3 py-2 text-sm rounded border ${
+                        (editCourse.durationInMinutes || 0) === duration 
+                          ? 'bg-blue-500 text-white border-blue-500' 
+                          : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                      }`}
+                      onClick={() => setEditCourse({ ...editCourse, durationInMinutes: duration })}
+                    >
+                      {duration}p
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Input with Controls */}
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                    onClick={() => setEditCourse({ 
+                      ...editCourse, 
+                      durationInMinutes: Math.max(0, (editCourse.durationInMinutes || 0) - 15) 
+                    })}
+                  >
+                    -15
+                  </button>
+                  
+                  <input
+                    type="number"
+                    className="flex-1 border rounded px-3 py-2 text-center"
+                    placeholder="0"
+                    min="0"
+                    step="5"
+                    value={editCourse.durationInMinutes || 0}
+                    onChange={e => setEditCourse({ ...editCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
+                  />
+                  
+                  <button
+                    type="button"
+                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                    onClick={() => setEditCourse({ 
+                      ...editCourse, 
+                      durationInMinutes: (editCourse.durationInMinutes || 0) + 15 
+                    })}
+                  >
+                    +15
+                  </button>
+                </div>
+                
+                <p className="text-xs text-gray-500 mt-1">
+                  Chọn nhanh hoặc nhập số phút tùy chỉnh
+                </p>
               </div>
             </form>
 

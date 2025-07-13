@@ -359,6 +359,11 @@ function CoursesListPage() {
                           <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
                             Kết thúc: {formatDate(course.endDate)}
                           </span>
+                          {course.durationInMinutes > 0 && (
+                            <span className="inline-block px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                              Thời gian: {course.durationInMinutes} phút
+                            </span>
+                          )}
                         </div>
                         <h3 className="text-lg md:text-xl font-bold text-blue-700 mb-2">
                           {course.name}
