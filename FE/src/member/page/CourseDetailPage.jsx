@@ -247,9 +247,10 @@ function CourseDetailPage() {
         const response = await api.get('/quiz-result/my-results');
 
         if (response.status === 200 && Array.isArray(response.data)) {
-          // Filter results for the current course
+          // Filter results for the current course by courseName
+          // Since API doesn't return course ID, we need to match by course name
           const courseResults = response.data.filter(
-            result => result.course && result.course.id === parseInt(id)
+            result => result.courseName === course?.name
           );
 
           // Sort by submission date (newest first)
@@ -267,8 +268,11 @@ function CourseDetailPage() {
       }
     };
 
-    fetchQuizHistory();
-  }, [id, activeTab, user]);
+    // Only fetch when we have course data
+    if (course && course.name) {
+      fetchQuizHistory();
+    }
+  }, [id, activeTab, user, course]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -712,7 +716,7 @@ function CourseDetailPage() {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span>Số câu hỏi: {quizResults[0]?.totalQuestions || '?'}</span>
+                                    <span>Số câu hỏi: {quizResults.length > 0 ? quizResults[0].totalQuestions : '?'}</span>
                                   </div>
                                 </div>
                               </div>
@@ -732,7 +736,7 @@ function CourseDetailPage() {
                       ) : (
                         <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                           <p className="text-gray-600 mb-2">Chưa có bài kiểm tra cho khóa học này</p>
                           <p className="text-gray-500 text-sm">Hãy hoàn thành các bài học trước khi làm bài kiểm tra.</p>
