@@ -99,6 +99,7 @@ export default function UserManage() {
   const [activeHistoryTab, setActiveHistoryTab] = useState('profile');
   const [userPrograms, setUserPrograms] = useState([]);
   const [userAssessments, setUserAssessments] = useState([]);
+  const [userAppointments, setUserAppointments] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [userCourses, setUserCourses] = useState([]);
 
@@ -271,8 +272,18 @@ export default function UserManage() {
       const assessmentsRes = await api.get(`/assessment-results/user/${userId}`);
       setUserAssessments(assessmentsRes.data || []);
 
+      // Lấy lịch sử khóa học
       const coursesRes = await api.get(`/enrollments/user/${userId}`);
       setUserCourses(coursesRes.data || []);
+
+      // Lấy lịch sử cuộc hẹn
+      try {
+        const appointmentsRes = await api.get(`/appointment/appointments/admin/member/${userId}`);
+        setUserAppointments(appointmentsRes.data || []);
+      } catch (appointmentErr) {
+        console.warn("Could not fetch appointments:", appointmentErr);
+        setUserAppointments([]);
+      }
     } catch (err) {
       console.error("Error fetching user history:", err);
       toast.error("Không thể tải lịch sử hoạt động của người dùng");
@@ -794,13 +805,23 @@ export default function UserManage() {
                 </button>
                 <button
                   onClick={() => setActiveHistoryTab('assessments')}
-                  className={`py-2 px-4 -mb-px whitespace-nowrap ${
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
                     activeHistoryTab === 'assessments'
                       ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Lịch sử đánh giá
+                </button>
+                <button
+                  onClick={() => setActiveHistoryTab('appointments')}
+                  className={`py-2 px-4 -mb-px whitespace-nowrap ${
+                    activeHistoryTab === 'appointments'
+                      ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Lịch sử cuộc hẹn
                 </button>
               </div>
             )}
@@ -1119,6 +1140,85 @@ export default function UserManage() {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Appointments History Tab */}
+            {!editMode && activeHistoryTab === 'appointments' && (
+              <div>
+                {loadingHistory ? (
+                  <div className="text-center py-12">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                    <p className="mt-2 text-gray-500">Đang tải lịch sử cuộc hẹn...</p>
+                  </div>
+                ) : userAppointments.length === 0 ? (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 8h6M7 21a2 2 0 01-2-2v-6a2 2 0 012-2h10a2 2 0 012 2v6a2 2 0 01-2 2H7z" />
+                    </svg>
+                    <p className="mt-4 text-gray-600 text-lg font-medium">Chưa có cuộc hẹn nào</p>
+                    <p className="text-gray-500">Người dùng này chưa đặt lịch hẹn tư vấn nào trong hệ thống</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {userAppointments.map((appointment, index) => (
+                      <div key={appointment.id || index} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="text-lg font-medium text-gray-900">
+                                Cuộc hẹn #{appointment.id}
+                              </h3>
+                              <p className="text-sm text-gray-500">
+                                Tư vấn viên: {appointment.consultantName}
+                              </p>
+                            </div>
+                            <div className="flex items-center">
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                                appointment.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {appointment.status === 'COMPLETED' ? 'Hoàn thành' :
+                                 appointment.status === 'PENDING' ? 'Chờ xác nhận' :
+                                 appointment.status === 'CANCELLED' ? 'Đã hủy' :
+                                 appointment.status || 'Không xác định'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="px-6 py-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Thông tin cuộc hẹn:</h4>
+                              <div className="space-y-1 text-sm text-gray-600">
+                                <p><span className="font-medium">Ngày hẹn:</span> {new Date(appointment.date).toLocaleDateString('vi-VN', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}</p>
+                                <p><span className="font-medium">Thời gian:</span> {appointment.startTime} - {appointment.endTime}</p>
+                                <p><span className="font-medium">Thành viên:</span> {appointment.memberName}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-700 mb-2">Chi tiết đặt lịch:</h4>
+                              <div className="space-y-1 text-sm text-gray-600">
+                                <p><span className="font-medium">Ngày tạo:</span> {new Date(appointment.createAt).toLocaleDateString('vi-VN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}</p>
+                                <p><span className="font-medium">Mã cuộc hẹn:</span> #{appointment.id}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

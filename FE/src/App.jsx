@@ -50,6 +50,7 @@ import Terms from "./member/page/Terms";
 import Privacy from "./member/page/Privacy";
 import Dashboard from "./admin/page/Dashboard";
 import ConsultantManagement from "./admin/page/ConsultantManagement";
+import ReportAppointment from "./admin/page/Report&Appointment";
 
 
 function RequireAdmin({ children }) {
@@ -179,6 +180,7 @@ const router = createBrowserRouter([
       { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
       { path: "program", element: <Program /> },
+      { path: "report-appointment", element: <ReportAppointment /> },
     ],
   },
   {
