@@ -3,7 +3,7 @@ import api from "../../config/axios";
 import { Bar, Pie } from "react-chartjs-2";
 import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
-import { Tag, Spin, Modal, Button } from "antd";
+import { Tag, Spin, Modal, Button, Select } from "antd";
 
 const consultantId = JSON.parse(
   localStorage.getItem("user") || "{}"
@@ -247,21 +247,23 @@ export default function ConsultationCases() {
           </h2>
         </div>
         <div className="flex items-center gap-3">
-          <select
-            className="w-full border border-gray-300 rounded-lg px-4 py-3 mb-0 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 appearance-none bg-white"
-            value={selectedUser || ""}
-            onChange={(e) => setSelectedUser(e.target.value)}
-            disabled={loading}
-          >
-            <option key="empty-option" value="">
-              -- Chọn khách hàng --
-            </option>
-            {users.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.fullName} ({u.email})
-              </option>
-            ))}
-          </select>
+          <Select
+            showSearch
+            className="w-full"
+            value={selectedUser || undefined}
+            onChange={(value) => setSelectedUser(value)}
+            placeholder="-- Chọn khách hàng --"
+            optionFilterProp="label"
+            filterOption={(input, option) =>
+              option.label.toLowerCase().includes(input.toLowerCase())
+            }
+            loading={loading}
+            allowClear
+            options={users.map((u) => ({
+              value: u.id,
+              label: `${u.fullName} (${u.email})`,
+            }))}
+          />
           {/* Nút xóa user đang chọn */}
           {selectedUser && (
             <button
@@ -529,7 +531,6 @@ export default function ConsultationCases() {
                       <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">
                         Địa điểm
                       </th>
-                      
                     </tr>
                   </thead>
                   <tbody>
@@ -546,7 +547,6 @@ export default function ConsultationCases() {
                           {formatShortDate(program.end_date)}
                         </td>
                         <td className="px-4 py-2">{program.location}</td>
-                        
                       </tr>
                     ))}
                   </tbody>

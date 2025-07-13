@@ -61,6 +61,7 @@ function AppointmentList() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          style={{ position: "relative", zIndex: 1 }}
         >
           <AppointmentManagement
             appointments={appointments}
@@ -82,6 +83,7 @@ function AppointmentList() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          style={{ position: "relative", zIndex: 1 }}
         >
           <ConsultationCases />
         </motion.div>
@@ -100,6 +102,7 @@ function AppointmentList() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
+          style={{ position: "relative", zIndex: 1 }}
         >
           <div className="flex justify-end mb-6">
             <Button
@@ -153,7 +156,7 @@ function AppointmentList() {
 
         <AnimatedCard className="p-6">
           <Tabs
-            defaultActiveKey="schedules" // ✅ Đổi default về schedules vì nó đã hoàn thiện
+            defaultActiveKey="appointments" // ✅ Đổi default về schedules vì nó đã hoàn thiện
             items={tabItems}
             className="modern-tabs"
             size="large"
@@ -173,13 +176,18 @@ function AppointmentList() {
         }
 
         .modern-tabs .ant-tabs-tab {
-          border: none;
-          border-radius: 8px;
-          margin: 0 4px;
-          padding: 12px 20px;
-          font-weight: 500;
-          transition: all 0.3s ease;
-        }
+  border: none;
+  border-radius: 8px;
+  margin: 0 4px;
+  /* Tăng padding cho rộng rãi */
+  padding: 14px 32px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  min-width: 120px; /* Chữ ngắn cũng sẽ vẫn rộng */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
         .modern-tabs .ant-tabs-tab:hover {
           background: rgba(59, 130, 246, 0.1);
@@ -190,6 +198,7 @@ function AppointmentList() {
           background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
           color: white !important;
           box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          padding: 16px 40px;
         }
 
         .modern-tabs .ant-tabs-tab-active:hover {
@@ -202,6 +211,17 @@ function AppointmentList() {
 
         .modern-tabs .ant-tabs-ink-bar {
           display: none;
+        }
+
+        .modern-tabs .ant-tabs-tab-active svg {
+          color: #fff !important;
+          stroke: #fff !important;
+        }
+        .modern-tabs .ant-tabs-tab-active,
+        .modern-tabs .ant-tabs-tab-active span,
+        .modern-tabs .ant-tabs-tab-active div,
+        .modern-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #fff !important;
         }
       `}</style>
     </div>

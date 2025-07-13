@@ -74,7 +74,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
     }
   };
 
-  // ✅ Fetch all members when component mounts
+  // fetch tất cả members khi component mount
   useEffect(() => {
     fetchAllMembers();
   }, []);
@@ -406,7 +406,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       render: (status) => {
         const statusConfig = {
           PENDING: { color: "orange", text: "Chờ xác nhận" },
-          CANCELLED: { color: "red", text: "Đã hủy" },
+          
           COMPLETED: { color: "green", text: "Hoàn thành" },
         };
 
@@ -426,12 +426,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         if (record.status !== "PENDING") return null;
         return (
           <div className="flex gap-2">
-            <Button
-              danger
-              onClick={() => updateAppointmentStatus(record.id, "CANCELLED")}
-            >
-              Hủy
-            </Button>
+            
             <Button
               type="primary"
               onClick={() => updateAppointmentStatus(record.id, "COMPLETED")}
@@ -529,7 +524,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       key: "status",
       render: (status) => {
         const statusConfig = {
-          PENDING: { color: "orange", text: "Chờ xác nhận" },
+          
           CANCELLED: { color: "red", text: "Đã hủy" },
           COMPLETED: { color: "green", text: "Hoàn thành" },
         };
