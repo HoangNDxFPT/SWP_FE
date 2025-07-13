@@ -20,6 +20,8 @@ function CoursesListPage() {
   const [courseStatuses, setCourseStatuses] = useState({});
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [courseToBeCancelled, setCourseToBeCancelled] = useState(null);
+  // Thêm state để lưu quiz results
+  const [quizResults, setQuizResults] = useState([]);
 
   // Lấy thông tin user và các khóa học đã đăng ký
   useEffect(() => {
@@ -32,24 +34,63 @@ function CoursesListPage() {
 
           if (res.data.userId) {
             try {
-              // Lấy danh sách khóa học đã đăng ký và trạng thái
+              // Lấy danh sách khóa học đã đăng ký
               const enrolledRes = await api.get(`/enrollments/user/${res.data.userId}`);
+              
+              // Lấy kết quả quiz để tính trạng thái completed
+              const quizResultsRes = await api.get('/quiz-result/my-results');
 
               if (Array.isArray(enrolledRes.data)) {
                 const enrolledIds = [];
                 const statuses = {};
                 const completed = [];
 
-                // Xử lý dữ liệu từ API
+                // Xử lý dữ liệu từ API enrollments
                 enrolledRes.data.forEach(item => {
                   enrolledIds.push(item.courseId);
                   statuses[item.courseId] = item.status;
 
-                  // Nếu khóa học đã hoàn thành, thêm vào danh sách completed
+                  // Nếu khóa học đã hoàn thành theo enrollment, thêm vào danh sách completed
                   if (item.status === "Completed") {
                     completed.push(item.courseId);
                   }
                 });
+
+                // Kiểm tra quiz results để cập nhật trạng thái completed
+                if (Array.isArray(quizResultsRes.data)) {
+                  setQuizResults(quizResultsRes.data);
+                  
+                  // Group quiz results by course name
+                  const courseQuizResults = {};
+                  quizResultsRes.data.forEach(result => {
+                    if (!courseQuizResults[result.courseName]) {
+                      courseQuizResults[result.courseName] = [];
+                    }
+                    courseQuizResults[result.courseName].push(result);
+                  });
+
+                  // Kiểm tra từng khóa học đã enroll xem có pass quiz không
+                  courses.forEach(course => {
+                    if (enrolledIds.includes(course.id)) {
+                      const courseResults = courseQuizResults[course.name];
+                      
+                      if (courseResults && courseResults.length > 0) {
+                        // Tìm kết quả tốt nhất
+                        const bestResult = Math.max(
+                          ...courseResults.map(r => (r.score / r.totalQuestions) * 100)
+                        );
+                        
+                        // Nếu đạt 80% trở lên và chưa có status Completed, cập nhật
+                        if (bestResult >= 80 && statuses[course.id] !== 'Completed') {
+                          statuses[course.id] = 'Completed';
+                          if (!completed.includes(course.id)) {
+                            completed.push(course.id);
+                          }
+                        }
+                      }
+                    }
+                  });
+                }
 
                 setEnrolledCourses(enrolledIds);
                 setCourseStatuses(statuses);
@@ -76,7 +117,7 @@ function CoursesListPage() {
     };
 
     fetchUser();
-  }, []);
+  }, [courses]); // Thêm courses vào dependency để re-run khi courses load xong
 
   // 1. Fetch tất cả khóa học khi component mount
   useEffect(() => {
@@ -324,8 +365,19 @@ function CoursesListPage() {
 
   // Get status label in Vietnamese
   const getStatusLabel = (course) => {
-    const status = courseStatuses[course.id];
+    // Kiểm tra quiz results trước
+    const courseResults = quizResults.filter(r => r.courseName === course.name);
+    if (courseResults.length > 0) {
+      const bestResult = Math.max(
+        ...courseResults.map(r => (r.score / r.totalQuestions) * 100)
+      );
+      if (bestResult >= 80) {
+        return 'Đã hoàn thành';
+      }
+    }
 
+    // Fallback về status từ enrollment
+    const status = courseStatuses[course.id];
     if (status === 'Completed' || completedCourses.includes(course.id)) {
       return 'Đã hoàn thành';
     } else if (status === 'InProgress') {
@@ -337,10 +389,21 @@ function CoursesListPage() {
     }
   };
 
-  // Get status color class
+  // Cập nhật hàm getStatusColorClass tương tự
   const getStatusColorClass = (course) => {
-    const status = courseStatuses[course.id];
+    // Kiểm tra quiz results trước
+    const courseResults = quizResults.filter(r => r.courseName === course.name);
+    if (courseResults.length > 0) {
+      const bestResult = Math.max(
+        ...courseResults.map(r => (r.score / r.totalQuestions) * 100)
+      );
+      if (bestResult >= 80) {
+        return 'bg-green-100 text-green-800';
+      }
+    }
 
+    // Fallback về status từ enrollment
+    const status = courseStatuses[course.id];
     if (status === 'Completed' || completedCourses.includes(course.id)) {
       return 'bg-green-100 text-green-800';
     } else if (status === 'InProgress') {
@@ -349,6 +412,76 @@ function CoursesListPage() {
       return 'bg-red-100 text-red-800';
     } else {
       return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Thêm hàm để refresh trạng thái khi quay lại từ trang khác
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user?.userId) {
+        // Refresh quiz results khi user quay lại trang
+        refreshCourseStatuses();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user]);
+
+  // Hàm refresh trạng thái khóa học
+  const refreshCourseStatuses = async () => {
+    if (!user?.userId) return;
+
+    try {
+      const quizResultsRes = await api.get('/quiz-result/my-results');
+      
+      if (Array.isArray(quizResultsRes.data)) {
+        setQuizResults(quizResultsRes.data);
+        
+        // Cập nhật trạng thái completed dựa trên quiz results
+        const updatedStatuses = { ...courseStatuses };
+        const updatedCompleted = [...completedCourses];
+        
+        const courseQuizResults = {};
+        quizResultsRes.data.forEach(result => {
+          if (!courseQuizResults[result.courseName]) {
+            courseQuizResults[result.courseName] = [];
+          }
+          courseQuizResults[result.courseName].push(result);
+        });
+
+        courses.forEach(course => {
+          if (enrolledCourses.includes(course.id)) {
+            const courseResults = courseQuizResults[course.name];
+            
+            if (courseResults && courseResults.length > 0) {
+              const bestResult = Math.max(
+                ...courseResults.map(r => (r.score / r.totalQuestions) * 100)
+              );
+              
+              if (bestResult >= 80 && updatedStatuses[course.id] !== 'Completed') {
+                updatedStatuses[course.id] = 'Completed';
+                if (!updatedCompleted.includes(course.id)) {
+                  updatedCompleted.push(course.id);
+                }
+              }
+            }
+          }
+        });
+
+        setCourseStatuses(updatedStatuses);
+        setCompletedCourses(updatedCompleted);
+        
+        console.log('Đã refresh trạng thái khóa học:', {
+          updatedStatuses,
+          updatedCompleted
+        });
+      }
+    } catch (error) {
+      console.error('Error refreshing course statuses:', error);
     }
   };
 

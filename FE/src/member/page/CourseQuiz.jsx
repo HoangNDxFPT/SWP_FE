@@ -17,54 +17,25 @@ function CourseQuiz() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [timeLeft, setTimeLeft] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [user, setUser] = useState(null);
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // Lấy courseId từ URL params thay vì localStorage
-    const courseId = id;
-    if (!courseId) {
-      toast.error("Không tìm thấy thông tin khóa học");
-      navigate('/courses');
-      return;
-    }
-
-    const fetchData = async () => {
+    const fetchUser = async () => {
       try {
-        setLoading(true);
-        
-        // Lấy thông tin khóa học
-        const courseRes = await api.get(`courses/${courseId}`);
-        setCourse(courseRes.data);
-        
-        // Lấy danh sách câu hỏi
-        const quizRes = await api.get(`quiz/course/${courseId}`);
-        
-        // Xử lý dữ liệu quiz
-        const parsedQuizzes = quizRes.data.map(q => ({
-          ...q,
-          answer: Array.isArray(q.answer) ? q.answer : JSON.parse(q.answer || '[]'),
-        }));
-        
-        setQuizList(parsedQuizzes);
-        
-        // Thiết lập timer (30 phút)
-        setTimeLeft(30 * 60); // 30 phút tính bằng giây
+        const res = await api.get('/profile');
+        if (res.status === 200 && res.data) {
+          setUser(res.data);
+        }
       } catch (err) {
-        console.error('Lỗi khi tải dữ liệu:', err);
-        toast.error("Không thể tải bài kiểm tra. Vui lòng thử lại sau.");
-        navigate(`/course/${courseId}`);
-      } finally {
-        setLoading(false);
+        console.error('Failed to fetch user profile:', err);
+        toast.error('Không thể lấy thông tin người dùng');
+        navigate('/login');
       }
     };
 
-    fetchData();
-
-    // Cleanup function
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [id, navigate]);
+    fetchUser();
+  }, [navigate]);
 
   // Khởi động timer khi quizList được tải
   useEffect(() => {
@@ -119,49 +90,88 @@ function CourseQuiz() {
         return selected[quiz.id] === quiz.correct ? acc + 1 : acc;
       }, 0);
 
-      // Tạo answers array với chi tiết từng câu trả lời
+      // Tạo answers array theo format API
       const answers = quizList.map(quiz => {
         const studentAnswerIndex = selected[quiz.id];
         const studentAnswer = studentAnswerIndex !== undefined ? quiz.answer[studentAnswerIndex] : "";
         const correctAnswer = quiz.answer[quiz.correct];
         
+        const formattedOptions = quiz.answer.map((option, idx) => 
+          `${String.fromCharCode(65 + idx)}. ${option}`
+        ).join('; ');
+        
         return {
           question: quiz.question,
-          options: JSON.stringify(quiz.answer), // Chuyển array thành string
+          options: formattedOptions,
           correctAnswer: correctAnswer,
           studentAnswer: studentAnswer
         };
       });
 
-      // Sử dụng API submit endpoint mới
       const payload = {
         courseId: Number(id),
-        score: correctCount / quizList.length, // Score dạng phần trăm (0.0 - 1.0)
+        score: correctCount,
         answers: answers
       };
 
       console.log("Submitting quiz with payload:", payload);
 
-      // Gọi API endpoint mới
+      // Gọi API POST /quiz-result/submit
       const resultRes = await api.post('/quiz-result/submit', payload);
       
-      const resultId = resultRes.data?.id;
+      console.log("Submit response:", resultRes.data);
 
-      if (resultId) {
-        toast.success("Nộp bài kiểm tra thành công!");
-        navigate(`/quiz-result/${resultId}`);
-      } else {
-        toast.warning("Bài kiểm tra đã được nộp nhưng không nhận được ID kết quả.");
+      toast.success("Nộp bài kiểm tra thành công!");
+      
+      // Lưu mapping courseId -> course name cho sau này
+      const courseMapping = JSON.parse(localStorage.getItem('courseMapping') || '{}');
+      courseMapping[id] = course?.name;
+      localStorage.setItem('courseMapping', JSON.stringify(courseMapping));
+      
+      // Sau khi submit thành công, lấy kết quả mới nhất
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const historyRes = await api.get('/quiz-result/my-results');
+        
+        if (historyRes.status === 200 && Array.isArray(historyRes.data)) {
+          const courseResults = historyRes.data.filter(
+            result => result.courseName === course?.name
+          );
+          
+          if (courseResults.length > 0) {
+            const latestResult = courseResults.sort((a, b) => 
+              new Date(b.submittedAt) - new Date(a.submittedAt)
+            )[0];
+            
+            // Lưu mapping result ID -> course ID
+            const resultCourseMapping = JSON.parse(localStorage.getItem('resultCourseMapping') || '{}');
+            resultCourseMapping[latestResult.id] = Number(id);
+            localStorage.setItem('resultCourseMapping', JSON.stringify(resultCourseMapping));
+            
+            console.log("Found latest result:", latestResult);
+            console.log("Saved mapping:", latestResult.id, "->", id);
+            
+            navigate(`/quiz-result/${latestResult.id}`);
+          } else {
+            console.log("No results found for course, redirecting to course page");
+            navigate(`/course/${id}`);
+          }
+        } else {
+          console.log("Failed to fetch results, redirecting to course page");
+          navigate(`/course/${id}`);
+        }
+      } catch (historyErr) {
+        console.error('Error fetching quiz history:', historyErr);
         navigate(`/course/${id}`);
       }
+
     } catch (err) {
       console.error('Lỗi khi nộp bài kiểm tra:', err);
       
-      // Hiển thị thông tin lỗi chi tiết hơn
       if (err.response) {
         console.error('Server response:', err.response.data);
         
-        // Kiểm tra nếu token hết hạn hoặc không hợp lệ
         if (err.response.status === 401 || err.response.status === 403) {
           toast.error("Phiên làm việc hết hạn, vui lòng đăng nhập lại");
           navigate('/login');
@@ -184,6 +194,56 @@ function CourseQuiz() {
     
     return selected[questionId] !== undefined ? 'answered' : 'unanswered';
   };
+
+  useEffect(() => {
+    // Lấy courseId từ URL params thay vì localStorage
+    const courseId = id;
+    if (!courseId) {
+      toast.error("Không tìm thấy thông tin khóa học");
+      navigate('/courses');
+      return;
+    }
+
+    // Chỉ fetch data khi đã có user
+    if (!user) return;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Lấy thông tin khóa học
+        const courseRes = await api.get(`courses/${courseId}`);
+        setCourse(courseRes.data);
+        
+        // Lấy danh sách câu hỏi
+        const quizRes = await api.get(`quiz/course/${courseId}`);
+        
+        // Xử lý dữ liệu quiz
+        const parsedQuizzes = quizRes.data.map(q => ({
+          ...q,
+          answer: Array.isArray(q.answer) ? q.answer : JSON.parse(q.answer || '[]'),
+        }));
+        
+        setQuizList(parsedQuizzes);
+        
+        // Thiết lập timer (30 phút)
+        setTimeLeft(30 * 60); // 30 phút tính bằng giây
+      } catch (err) {
+        console.error('Lỗi khi tải dữ liệu:', err);
+        toast.error("Không thể tải bài kiểm tra. Vui lòng thử lại sau.");
+        navigate(`/course/${courseId}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // Cleanup function
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [id, navigate, user]); // Thêm user vào dependencies
 
   if (loading) {
     return (
@@ -256,19 +316,19 @@ function CourseQuiz() {
                 <ul className="text-sm text-blue-700 space-y-2">
                   <li className="flex items-start">
                     <svg className="h-5 w-5 text-blue-500 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-2 5a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
                     </svg>
                     <span>Đã trả lời: Nền xanh lá</span>
                   </li>
                   <li className="flex items-start">
                     <svg className="h-5 w-5 text-blue-500 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-2 5a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
                     </svg>
                     <span>Chưa trả lời: Nền xám</span>
                   </li>
                   <li className="flex items-start">
                     <svg className="h-5 w-5 text-blue-500 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zm-2 5a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
                     </svg>
                     <span>Câu hiện tại: Nền xanh dương</span>
                   </li>

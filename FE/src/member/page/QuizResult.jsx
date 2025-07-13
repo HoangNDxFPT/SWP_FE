@@ -12,7 +12,6 @@ function QuizResult() {
   const [result, setResult] = useState(null);
   const [resultDetails, setResultDetails] = useState([]);
   const [course, setCourse] = useState(null);
-  const [showAllAnswers, setShowAllAnswers] = useState(false);
 
   // Lấy dữ liệu kết quả khi component mount
   useEffect(() => {
@@ -20,47 +19,47 @@ function QuizResult() {
       try {
         setLoading(true);
         
-        // Lấy thông tin kết quả bài kiểm tra bằng ID
-        const resultRes = await api.get(`/quiz-result/${id}`);
-        if (resultRes.status === 200) {
-          setResult(resultRes.data);
+        // Lấy kết quả theo ID
+        const resultsRes = await api.get('/quiz-result/my-results');
+        
+        if (resultsRes.status === 200 && Array.isArray(resultsRes.data)) {
+          const foundResult = resultsRes.data.find(r => r.id === parseInt(id));
           
-          // Lấy thông tin khóa học
-          if (resultRes.data.course?.id) {
+          if (foundResult) {
+            setResult(foundResult);
+            
+            // Lấy chi tiết kết quả
             try {
-              const courseRes = await api.get(`/courses/${resultRes.data.course.id}`);
-              if (courseRes.status === 200) {
-                setCourse(courseRes.data);
-              }
-            } catch (courseErr) {
-              console.warn('Không thể tải thông tin khóa học:', courseErr);
-              // Sử dụng thông tin course từ result
-              setCourse(resultRes.data.course);
-            }
-          }
-
-          // Lấy chi tiết kết quả từ result.details hoặc API riêng
-          if (resultRes.data.details && Array.isArray(resultRes.data.details)) {
-            setResultDetails(resultRes.data.details);
-          } else {
-            // Nếu không có details trong result, thử lấy từ API khác
-            try {
-              const detailsRes = await api.get('/quiz-result/my-details');
+              const detailsRes = await api.get(`/quiz-result/my-details?resultId=${id}`);
               if (detailsRes.status === 200 && Array.isArray(detailsRes.data)) {
                 setResultDetails(detailsRes.data);
               }
             } catch (detailsErr) {
               console.warn('Không thể tải chi tiết kết quả:', detailsErr);
             }
+            
+            // Lấy thông tin khóa học
+            try {
+              if (foundResult.courseId) {
+                const courseRes = await api.get(`/courses/${foundResult.courseId}`);
+                if (courseRes.status === 200) {
+                  setCourse(courseRes.data);
+                }
+              }
+            } catch (courseErr) {
+              console.warn('Không thể tải thông tin khóa học:', courseErr);
+              setCourse({
+                id: null,
+                name: foundResult.courseName
+              });
+            }
+          } else {
+            toast.error('Không tìm thấy kết quả bài kiểm tra');
           }
         }
       } catch (error) {
         console.error('Lỗi khi tải kết quả bài kiểm tra:', error);
-        if (error.response?.status === 404) {
-          toast.error('Không tìm thấy kết quả bài kiểm tra');
-        } else {
-          toast.error('Không thể tải kết quả bài kiểm tra');
-        }
+        toast.error('Không thể tải kết quả bài kiểm tra');
       } finally {
         setLoading(false);
       }
@@ -79,8 +78,7 @@ function QuizResult() {
 
   // Xác định trạng thái đậu/rớt
   const isPassed = () => {
-    const percentage = calculatePercentage();
-    return percentage >= 80; // Đậu nếu đạt từ 80% trở lên
+    return calculatePercentage() >= 80;
   };
 
   if (loading) {
@@ -98,282 +96,218 @@ function QuizResult() {
     );
   }
 
+  if (!result) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-md p-8 text-center max-w-md">
+            <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h3 className="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy kết quả</h3>
+            <p className="text-gray-500 mb-4">Kết quả bài kiểm tra không tồn tại hoặc đã bị xóa.</p>
+            <Link to="/courseList" className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+              <FaArrowLeft className="mr-2" />
+              Quay lại danh sách khóa học
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
       
       <main className="flex-grow py-8 px-4">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-4xl mx-auto">
+          
           {/* Breadcrumb */}
-          <nav className="mb-6 flex" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-3">
-              <li className="inline-flex items-center">
-                <Link to="/dashboard" className="text-gray-700 hover:text-blue-600 inline-flex items-center">
-                  <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
-                  </svg>
-                  Trang chủ
-                </Link>
-              </li>
-              <li>
-                <div className="flex items-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
-                  </svg>
-                  <Link to="/courseList" className="ml-1 text-gray-700 hover:text-blue-600 md:ml-2">
-                    Khóa học
-                  </Link>
-                </div>
-              </li>
-              {course && (
-                <li>
-                  <div className="flex items-center">
-                    <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
-                    </svg>
-                    <Link to={`/course/${course.id}`} className="ml-1 text-gray-700 hover:text-blue-600 md:ml-2">
-                      {course.name}
-                    </Link>
-                  </div>
-                </li>
+          <nav className="mb-6">
+            <ol className="flex items-center space-x-2 text-sm">
+              <li><Link to="/dashboard" className="text-blue-600 hover:text-blue-800">Trang chủ</Link></li>
+              <li className="text-gray-400">/</li>
+              <li><Link to="/courseList" className="text-blue-600 hover:text-blue-800">Khóa học</Link></li>
+              {course?.id && (
+                <>
+                  <li className="text-gray-400">/</li>
+                  <li><Link to={`/course/${course.id}`} className="text-blue-600 hover:text-blue-800">{course.name}</Link></li>
+                </>
               )}
-              <li aria-current="page">
-                <div className="flex items-center">
-                  <svg className="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd"></path>
-                  </svg>
-                  <span className="ml-1 text-gray-500 md:ml-2 font-medium">Kết quả kiểm tra</span>
-                </div>
-              </li>
+              <li className="text-gray-400">/</li>
+              <li className="text-gray-600">Kết quả kiểm tra</li>
             </ol>
           </nav>
-          
-          {result && (
-            <>
-              {/* Result Summary */}
-              <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-                <div className={`p-6 text-white ${isPassed() ? 'bg-gradient-to-r from-green-600 to-green-800' : 'bg-gradient-to-r from-yellow-500 to-red-600'}`}>
-                  <div className="flex flex-col md:flex-row justify-between items-center">
-                    <div>
-                      <h1 className="text-3xl font-bold mb-2">
-                        {isPassed() ? 'Chúc mừng!' : 'Kết quả bài kiểm tra'}
-                      </h1>
-                      <p className="opacity-90 mb-4">
-                        {isPassed() 
-                          ? 'Bạn đã hoàn thành xuất sắc bài kiểm tra.' 
-                          : 'Bạn đã hoàn thành bài kiểm tra, nhưng chưa đạt điểm đậu.'}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <div className="bg-white bg-opacity-20 rounded-full px-3 py-1">
-                          Khóa học: {course?.name || 'N/A'}
-                        </div>
-                        <div className="bg-white bg-opacity-20 rounded-full px-3 py-1">
-                          Ngày làm bài: {result?.submittedAt 
-                            ? new Date(result.submittedAt).toLocaleDateString('vi-VN', {
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })
-                            : 'N/A'
-                          }
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-6 md:mt-0 flex items-center">
-                      <div className="flex flex-col items-center">
-                        <div className="text-5xl font-bold">
-                          {calculatePercentage()}%
-                        </div>
-                        <div className="text-sm opacity-90 mt-1">
-                          {result.score}/{result.totalQuestions} câu đúng
-                        </div>
-                        
-                        {isPassed() && (
-                          <div className="mt-4 flex items-center bg-white text-green-700 px-3 py-1 rounded-full text-sm">
-                            <FaCheckCircle className="mr-2" />
-                            <span>Đạt yêu cầu</span>
-                          </div>
-                        )}
-                        
-                        {!isPassed() && (
-                          <div className="mt-4 flex items-center bg-white text-red-600 px-3 py-1 rounded-full text-sm">
-                            <FaTimesCircle className="mr-2" />
-                            <span>Chưa đạt yêu cầu</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+
+          {/* Kết quả tổng quan */}
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-6">
+            <div className={`p-8 text-white ${isPassed() ? 'bg-gradient-to-r from-green-500 to-green-700' : 'bg-gradient-to-r from-red-500 to-red-700'}`}>
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="mb-4 md:mb-0">
+                  <h1 className="text-3xl font-bold mb-2">
+                    {isPassed() ? 'Chúc mừng! Bạn đã đậu' : 'Chưa đạt yêu cầu'}
+                  </h1>
+                  <p className="opacity-90 mb-3">
+                    Khóa học: {course?.name || 'N/A'}
+                  </p>
+                  <p className="text-sm opacity-80">
+                    Ngày làm bài: {new Date(result.submittedAt).toLocaleString('vi-VN')}
+                  </p>
                 </div>
                 
-                {/* Action buttons */}
-                <div className="p-6 flex flex-wrap gap-4 justify-between items-center">
-                  <div className="flex flex-wrap gap-3">
-                    <Link
-                      to={`/course/${course?.id}`}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                      <FaArrowLeft className="mr-2" />
-                      Quay lại khóa học
-                    </Link>
-                    
-                    {!isPassed() && (
-                      <Link
-                        to={`/quiz/${course?.id}`}
-                        className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      >
-                        <FaRedo className="mr-2" />
-                        Làm lại bài kiểm tra
-                      </Link>
+                <div className="text-center">
+                  <div className="text-6xl font-bold mb-2">
+                    {calculatePercentage()}%
+                  </div>
+                  <div className="text-lg opacity-90">
+                    {result.score}/{result.totalQuestions} câu đúng
+                  </div>
+                  <div className={`mt-3 px-4 py-2 rounded-full text-sm font-medium ${
+                    isPassed() ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {isPassed() ? (
+                      <><FaCheckCircle className="inline mr-2" />Đạt yêu cầu</>
+                    ) : (
+                      <><FaTimesCircle className="inline mr-2" />Chưa đạt 80%</>
                     )}
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="p-6 bg-gray-50 flex flex-wrap gap-3 justify-between">
+              <div className="flex flex-wrap gap-3">
+                {course?.id ? (
+                  <Link
+                    to={`/course/${course.id}`}
+                    className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    <FaArrowLeft className="mr-2" />
+                    Quay lại khóa học
+                  </Link>
+                ) : (
+                  <Link
+                    to="/courseList"
+                    className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    <FaArrowLeft className="mr-2" />
+                    Danh sách khóa học
+                  </Link>
+                )}
+                
+                {!isPassed() && course?.id && (
+                  <Link
+                    to={`/quiz/${course.id}`}
+                    className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700"
+                  >
+                    <FaRedo className="mr-2" />
+                    Làm lại bài kiểm tra
+                  </Link>
+                )}
+              </div>
+
+              {!isPassed() && (
+                <div className="w-full mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-yellow-800 text-sm">
+                    ⚠️ Bạn cần đạt tối thiểu 80% để hoàn thành khóa học. Hãy ôn tập và thử lại!
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Chi tiết từng câu hỏi */}
+          {resultDetails.length > 0 && (
+            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-200">
+                <h2 className="text-xl font-bold text-gray-800">Chi tiết từng câu hỏi</h2>
+              </div>
               
-              {/* Detailed Results */}
-              {resultDetails.length > 0 && (
-                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
-                  <div className="border-b border-gray-200 p-6">
-                    <div className="flex flex-wrap justify-between items-center">
-                      <h2 className="text-xl font-bold text-gray-800">Chi tiết kết quả</h2>
-                      <button
-                        onClick={() => setShowAllAnswers(!showAllAnswers)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        {showAllAnswers ? 'Ẩn đáp án' : 'Hiển thị tất cả đáp án'}
-                      </button>
-                    </div>
-                  </div>
+              <div className="divide-y divide-gray-200">
+                {resultDetails.map((detail, index) => {
+                  const optionsText = detail.options || "";
+                  const optionParts = optionsText.split(';').map(part => part.trim());
+                  const options = optionParts.map(part => {
+                    const match = part.match(/^[A-Z]\.\s*(.+)$/);
+                    return match ? match[1].trim() : part;
+                  });
                   
-                  <div className="divide-y divide-gray-200">
-                    {resultDetails.map((detail, index) => {
-                      const options = detail.options ? JSON.parse(detail.options) : [];
-                      const isCorrect = detail.correct;
-                      
-                      return (
-                        <div key={index} className="p-6">
-                          <div className="flex items-start mb-4">
-                            <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center mr-3 mt-1 ${isCorrect ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                              {isCorrect ? (
-                                <FaCheckCircle />
-                              ) : (
-                                <FaTimesCircle />
-                              )}
-                            </div>
-                            <div className="flex-grow">
-                              <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                                {index + 1}. {detail.question}
-                              </h3>
+                  return (
+                    <div key={index} className="p-6">
+                      <div className="flex items-start">
+                        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center mr-4 ${
+                          detail.correct ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                        }`}>
+                          {detail.correct ? <FaCheckCircle /> : <FaTimesCircle />}
+                        </div>
+                        
+                        <div className="flex-grow">
+                          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                            Câu {index + 1}: {detail.question}
+                          </h3>
+                          
+                          <div className="space-y-2 mb-4">
+                            {options.map((option, idx) => {
+                              const isStudentAnswer = detail.studentAnswer?.trim() === option?.trim();
+                              const isCorrectAnswer = detail.correctAnswer?.trim() === option?.trim();
                               
-                              <div className="space-y-3 mt-4">
-                                {options.map((option, idx) => {
-                                  const isStudentAnswer = detail.studentAnswer === option;
-                                  const isCorrectAnswer = detail.correctAnswer === option;
-                                  
-                                  return (
-                                    <div 
-                                      key={idx} 
-                                      className={`p-3 rounded-lg border ${
-                                        showAllAnswers && isCorrectAnswer
-                                          ? 'bg-green-50 border-green-300'
-                                          : isStudentAnswer 
-                                            ? (isCorrect ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300')
-                                            : 'border-gray-200'
-                                      }`}
-                                    >
-                                      <div className="flex items-center">
-                                        <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
-                                        <span className="text-gray-800">{option}</span>
-                                        
-                                        {showAllAnswers && isCorrectAnswer && (
-                                          <span className="ml-auto text-green-600 text-sm font-medium">Đáp án đúng</span>
-                                        )}
-                                        
-                                        {isStudentAnswer && (
-                                          <span className="ml-auto text-sm font-medium">
-                                            {isCorrect ? (
-                                              <span className="text-green-600">Bạn đã chọn đúng</span>
-                                            ) : (
-                                              <span className="text-red-600">Bạn đã chọn sai</span>
-                                            )}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                              return (
+                                <div 
+                                  key={idx} 
+                                  className={`p-3 rounded-lg border ${
+                                    isCorrectAnswer
+                                      ? 'bg-green-50 border-green-300'
+                                      : isStudentAnswer 
+                                        ? 'bg-red-50 border-red-300'
+                                        : 'bg-gray-50 border-gray-200'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span>
+                                      <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
+                                      {option}
+                                    </span>
+                                    
+                                    {isCorrectAnswer && (
+                                      <span className="text-green-600 text-sm font-medium">✓ Đáp án đúng</span>
+                                    )}
+                                    
+                                    {isStudentAnswer && !isCorrectAnswer && (
+                                      <span className="text-red-600 text-sm font-medium">✗ Bạn đã chọn</span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          
+                          <div className="p-3 bg-gray-100 rounded-lg text-sm">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div>
+                                <span className="font-medium">Đáp án đúng: </span>
+                                <span className="text-green-600">{detail.correctAnswer}</span>
+                              </div>
+                              <div>
+                                <span className="font-medium">Bạn đã chọn: </span>
+                                <span className={detail.correct ? 'text-green-600' : 'text-red-600'}>
+                                  {detail.studentAnswer || 'Không chọn'}
+                                </span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-              
-              {/* Result Summary Bottom */}
-              <div className="bg-white rounded-lg shadow-md overflow-hidden p-6 text-center">
-                <h3 className="text-xl font-bold text-gray-800 mb-4">
-                  {isPassed() 
-                    ? 'Chúc mừng bạn đã hoàn thành bài kiểm tra!' 
-                    : 'Bạn cần học kỹ hơn để đạt điểm cao hơn.'}
-                </h3>
-                
-                <p className="text-gray-600 mb-6">
-                  {isPassed() 
-                    ? 'Bạn đã hiểu rõ nội dung bài học và đạt kết quả tốt. Hãy tiếp tục phát huy!' 
-                    : 'Đừng lo lắng, bạn có thể ôn tập lại bài học và thử lại bài kiểm tra để đạt kết quả tốt hơn.'}
-                </p>
-                
-                <div className="flex flex-wrap gap-4 justify-center">
-                  <Link
-                    to={`/course/${course?.id}`}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                    Quay lại khóa học
-                  </Link>
-                  
-                  <Link
-                    to="/courseList"
-                    className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                    Khám phá các khóa học khác
-                  </Link>
-                </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </>
-          )}
-          
-          {!result && !loading && (
-            <div className="bg-white rounded-lg shadow-md p-8 text-center">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <h3 className="text-xl font-semibold text-gray-700 mb-2">Không tìm thấy kết quả bài kiểm tra</h3>
-              <p className="text-gray-500 mb-4">
-                Kết quả bài kiểm tra bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.
-              </p>
-              <Link
-                to="/courseList"
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Quay lại danh sách khóa học
-              </Link>
             </div>
           )}
+
         </div>
       </main>
       
