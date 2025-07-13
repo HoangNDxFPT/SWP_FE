@@ -30,7 +30,6 @@ import AdminProfilePage from "./admin/page/AdminProfilePage";
 import UserManage from "./admin/page/UserManage";
 import CourseManage from "./admin/page/CourseManage";
 import AssessmentManage from "./admin/page/AssessmentManage";
-import ConsultantScheduleManage from "./admin/page/ConsultantScheduleManage";
 import CourseEnrollmentManage from "./admin/page/CourseEnrollmentManage";
 import AssessmentResultManage from "./admin/page/AssessmentResultManage";
 import Program from "./admin/page/Program";
@@ -49,6 +48,8 @@ import AssistAssessment from "./member/page/AssistAssessment";
 import CourseDetailForConsultant from "./consultant/components/CourseDetailForConsultant";
 import Terms from "./member/page/Terms";
 import Privacy from "./member/page/Privacy";
+import Dashboard from "./admin/page/Dashboard";
+import ConsultantManagement from "./admin/page/ConsultantManagement";
 
 
 function RequireAdmin({ children }) {
@@ -169,10 +170,11 @@ const router = createBrowserRouter([
       </RequireAdmin>
     ),
     children: [
+      { path: "dashboard", element: <Dashboard /> },
       { path: "profile", element: <AdminProfilePage /> },
       { path: "users", element: <UserManage /> },
       { path: "courses", element: <CourseManage /> },
-      { path: "schedule", element: <ConsultantScheduleManage /> },
+      { path: "schedule", element: <ConsultantManagement /> },
       { path: "assessment", element: <AssessmentManage /> },
       { path: "assessment-result", element: <AssessmentResultManage /> },
       { path: "course-enrollment", element: <CourseEnrollmentManage /> },
