@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout, login } from '../../redux/features/userSlice';
 import api from '../../config/axios';
@@ -137,8 +137,8 @@ function Header() {
                 
                 {showDropdown && (
                   <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-100 ring-1 ring-black ring-opacity-5">
-                    <a 
-                      href="/profile" 
+                    <Link 
+                      to="/profile" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 group"
                     >
                       <div className="flex items-center gap-3">
@@ -147,9 +147,9 @@ function Header() {
                         </svg>
                         <span className="font-medium group-hover:text-blue-600">Hồ sơ cá nhân</span>
                       </div>
-                    </a>
-                    <a 
-                      href="/assessment-history" 
+                    </Link>
+                    <Link 
+                      to="/assessment-history" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 group"
                     >
                       <div className="flex items-center gap-3">
@@ -158,9 +158,9 @@ function Header() {
                         </svg>
                         <span className="font-medium group-hover:text-blue-600">Lịch sử đánh giá</span>
                       </div>
-                    </a>
-                    <a 
-                      href="/booking-history" 
+                    </Link>
+                    <Link 
+                      to="/booking-history" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 group"
                     >
                       <div className="flex items-center gap-3">
@@ -169,9 +169,9 @@ function Header() {
                         </svg>
                         <span className="font-medium group-hover:text-blue-600">Lịch sử đặt lịch hẹn</span>
                       </div>
-                    </a>
-                    <a 
-                      href="/quiz-history" 
+                    </Link>
+                    <Link 
+                      to="/quiz-history" 
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 group"
                     >
                       <div className="flex items-center gap-3">
@@ -181,7 +181,7 @@ function Header() {
                         </svg>
                         <span className="font-medium group-hover:text-blue-600">Lịch sử bài kiểm tra</span>
                       </div>
-                    </a>
+                    </Link>
                     <div className="border-t border-gray-100 my-1"></div>
                     <button 
                       onClick={handleLogout}
