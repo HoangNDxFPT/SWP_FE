@@ -95,22 +95,21 @@ function Header() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
             {menuItems.map(item => (
-              <a
+              <button
                 key={item.label}
-                href={display_name ? item.path : "/login"}
-                onClick={e => {
-                  if (!display_name && item.path !== "/login" && item.path !== "/register") {
-                    e.preventDefault();
+                type="button"
+                onClick={() => {
+                  if (display_name) {
+                    navigate(item.path);
+                  } else {
                     navigate("/login");
                   }
-                  if (item.path === '#') {
-                    e.preventDefault();
-                  }
                 }}
-                className="text-gray-700 hover:text-blue-600 px-2 py-1 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-50"
+                className="text-gray-700 hover:text-blue-600 px-2 py-1 text-sm font-medium rounded-md transition-colors duration-200 hover:bg-blue-50 bg-transparent"
+                style={{ border: "none", background: "none" }}
               >
                 {item.label}
-              </a>
+              </button>
             ))}
           </nav>
 
@@ -200,12 +199,20 @@ function Header() {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <a href="/register">
-                  <button className="border border-blue-500 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200 text-sm font-medium">Đăng ký</button>
-                </a>
-                <a href="/login">
-                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 shadow-sm text-sm font-medium">Đăng nhập</button>
-                </a>
+                <button
+                  type="button"
+                  onClick={() => navigate("/register")}
+                  className="border border-blue-500 text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition duration-200 text-sm font-medium bg-transparent"
+                >
+                  Đăng ký
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200 shadow-sm text-sm font-medium"
+                >
+                  Đăng nhập
+                </button>
               </div>
             )}
 
@@ -236,35 +243,48 @@ function Header() {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               {menuItems.map((item) => (
-                <a
+                <button
                   key={item.label}
-                  href={display_name ? item.path : "/login"}
-                  onClick={e => {
-                    if (!display_name && item.path !== "/login" && item.path !== "/register") {
-                      e.preventDefault();
+                  type="button"
+                  onClick={() => {
+                    if (display_name) {
+                      navigate(item.path);
+                    } else {
                       navigate("/login");
-                    }
-                    if (item.path === '#') {
-                      e.preventDefault();
                     }
                     setMobileMenuOpen(false);
                   }}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-blue-50 bg-transparent"
+                  style={{ border: "none", background: "none" }}
                 >
                   {item.label}
-                </a>
+                </button>
               ))}
               
               {/* Mobile auth buttons */}
               {!display_name && (
                 <div className="pt-4 pb-3 border-t border-gray-200">
                   <div className="flex flex-col space-y-2">
-                    <a href="/login" className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate("/login");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white text-center"
+                    >
                       Đăng nhập
-                    </a>
-                    <a href="/register" className="block px-3 py-2 rounded-md text-base font-medium border border-blue-500 text-blue-600 text-center">
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigate("/register");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="block px-3 py-2 rounded-md text-base font-medium border border-blue-500 text-blue-600 text-center"
+                    >
                       Đăng ký
-                    </a>
+                    </button>
                   </div>
                 </div>
               )}
