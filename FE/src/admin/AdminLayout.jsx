@@ -257,7 +257,7 @@ export default function AdminLayout() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
-                Logout
+                Đăng xuất
               </button>
             ) : (
               <button
@@ -331,7 +331,7 @@ export default function AdminLayout() {
                       <p className="text-sm font-medium text-gray-800">
                         {loading ? "Loading..." : fullName}
                       </p>
-                      <p className="text-xs text-gray-500">Administrator</p>
+                      <p className="text-xs text-gray-500">Quản trị viên</p>
                     </div>
                     <svg className="hidden md:block w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -341,7 +341,7 @@ export default function AdminLayout() {
                   {openMenu && (
                     <div className="absolute right-0 top-full mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 z-50 transition transform origin-top-right">
                       <div className="px-4 py-3">
-                        <p className="text-sm text-gray-900">Signed in as</p>
+                        <p className="text-sm text-gray-900">Đăng nhập bởi</p>
                         <p className="text-sm font-medium text-gray-700 truncate">{fullName}</p>
                       </div>
                       <div className="py-1">
@@ -353,7 +353,7 @@ export default function AdminLayout() {
                           <svg className="w-5 h-5 mr-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          Profile
+                          Hồ sơ của tôi
                         </Link>
                         {/* <Link
                           to="/admin/settings"
@@ -378,7 +378,7 @@ export default function AdminLayout() {
                           <svg className="w-5 h-5 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                           </svg>
-                          Sign out
+                          Đăng xuất
                         </button>
                       </div>
                     </div>

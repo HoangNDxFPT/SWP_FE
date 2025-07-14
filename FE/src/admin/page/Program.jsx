@@ -417,13 +417,6 @@ function Program() {
             setLoadingEnrollments(false);
         }
     };
-
-    // const filteredEnrollments = enrollments.filter(enrollment =>
-    //     enrollment.programName?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase()) ||
-    //     enrollment.userFullName?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase()) ||
-    //     enrollment.userEmail?.toLowerCase().includes(searchEnrollmentQuery.toLowerCase())
-    // );
-
     // Format functions
     const formatDate = (dateString) => {
         try {

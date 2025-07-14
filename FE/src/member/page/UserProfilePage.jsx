@@ -185,7 +185,7 @@ function UserProfilePage() {
 
                 {activeTab === 'profile' && (
                     <div className="flex flex-col gap-4">
-                        <label className="font-semibold">Full Name</label>
+                        <label className="font-semibold">Họ và Tên</label>
                         <input
                             type="text"
                             name="fullName"
@@ -195,7 +195,7 @@ function UserProfilePage() {
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
 
-                        <label className="font-semibold">Phone Number</label>
+                        <label className="font-semibold">Số Điện Thoại</label>
                         <input
                             type="text"
                             name="phoneNumber"
@@ -205,7 +205,7 @@ function UserProfilePage() {
                             className="p-2 border rounded bg-gray-200 cursor-not-allowed"
                         />
 
-                        <label className="font-semibold">Address</label>
+                        <label className="font-semibold">Địa Chỉ</label>
                         <input
                             type="text"
                             name="address"
@@ -215,7 +215,7 @@ function UserProfilePage() {
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
 
-                        <label className="font-semibold">Date of Birth</label>
+                        <label className="font-semibold">Ngày Sinh</label>
                         <input
                             type="date"
                             name="dateOfBirth"
@@ -225,7 +225,7 @@ function UserProfilePage() {
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         />
 
-                        <label className="font-semibold">Gender</label>
+                        <label className="font-semibold">Giới Tính</label>
                         <select
                             name="gender"
                             value={user.gender}
@@ -233,10 +233,10 @@ function UserProfilePage() {
                             disabled={!editMode}
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                         >
-                            <option value="">Select</option>
-                            <option value="MALE">Male</option>
-                            <option value="FEMALE">Female</option>
-                            <option value="OTHER">Other</option>
+                            <option value="">Chọn</option>
+                            <option value="MALE">Nam</option>
+                            <option value="FEMALE">Nữ</option>
+                            <option value="OTHER">Khác</option>
                         </select>
 
                         <div className="flex gap-4 mt-6 justify-center">
@@ -246,13 +246,13 @@ function UserProfilePage() {
                                         onClick={handleSave}
                                         className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
                                     >
-                                        Save
+                                        Lưu
                                     </button>
                                     <button
                                         onClick={() => setEditMode(false)}
                                         className="border border-gray-400 text-gray-700 px-6 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors duration-200"
                                     >
-                                        Cancel
+                                        Hủy
                                     </button>
                                 </>
                             ) : (
@@ -260,7 +260,7 @@ function UserProfilePage() {
                                     onClick={() => setEditMode(true)}
                                     className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
                                 >
-                                    Edit Profile
+                                    Chỉnh Sửa Hồ Sơ
                                 </button>
                             )}
                         </div>

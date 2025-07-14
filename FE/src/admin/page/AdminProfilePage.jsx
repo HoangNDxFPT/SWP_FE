@@ -34,11 +34,11 @@ function AdminProfilePage() {
                         gender: response.data.gender || ''
                     });
                 } else {
-                    throw new Error('Could not fetch profile information.');
+                    throw new Error('Không thể tải thông tin hồ sơ.');
                 }
             } catch (err) {
                 setError(err);
-                toast.error('Failed to load profile: ' + (err.response?.data?.message || err.message));
+                toast.error('Tải hồ sơ thất bại: ' + (err.response?.data?.message || err.message));
                 console.error('Error fetching profile:', err);
             } finally {
                 setLoading(false);
@@ -67,12 +67,12 @@ function AdminProfilePage() {
             
             if (response.status === 200) {
                 setEditMode(false);
-                toast.success('Profile updated successfully!');
+                toast.success('Cập nhật hồ sơ thành công!');
             } else {
-                toast.error('Failed to update profile!');
+                toast.error('Cập nhật hồ sơ thất bại!');
             }
         } catch (err) {
-            toast.error('Failed to update profile: ' + (err.response?.data?.message || err.message));
+            toast.error('Cập nhật hồ sơ thất bại: ' + (err.response?.data?.message || err.message));
             console.error('Error updating profile:', err);
         }
     };
@@ -87,17 +87,17 @@ function AdminProfilePage() {
         
         // Validation with toast notifications
         if (!pwForm.oldPassword || !pwForm.newPassword || !pwForm.confirmPassword) {
-            toast.warning('Please fill in all password fields');
+            toast.warning('Vui lòng điền đầy đủ tất cả các trường mật khẩu');
             return;
         }
         
         if (pwForm.newPassword.length < 6) {
-            toast.warning('New password must be at least 6 characters');
+            toast.warning('Mật khẩu mới phải có ít nhất 6 ký tự');
             return;
         }
         
         if (pwForm.newPassword !== pwForm.confirmPassword) {
-            toast.error('Password confirmation does not match');
+            toast.error('Xác nhận mật khẩu không khớp');
             return;
         }
         
@@ -110,7 +110,7 @@ function AdminProfilePage() {
             });
             
             // Hiển thị thông báo thành công
-            toast.success('Password changed successfully!');
+            toast.success('Đổi mật khẩu thành công!');
             
             // Reset form sau khi đổi mật khẩu thành công
             setPwForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -118,9 +118,9 @@ function AdminProfilePage() {
         } catch (err) {
             // Hiển thị thông báo lỗi cụ thể
             if (err.response?.status === 401) {
-                toast.error('Old password is incorrect');
+                toast.error('Mật khẩu cũ không đúng');
             } else {
-                const msg = err.response?.data?.message || err.message || 'Failed to change password';
+                const msg = err.response?.data?.message || err.message || 'Đổi mật khẩu thất bại';
                 toast.error(msg);
             }
             console.error('Error changing password:', err);
@@ -132,7 +132,7 @@ function AdminProfilePage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                <p className="ml-3">Loading profile...</p>
+                <p className="ml-3">Đang tải hồ sơ ......</p>
             </div>
         );
     }
@@ -141,8 +141,8 @@ function AdminProfilePage() {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 max-w-xl w-full">
-                    <p className="font-bold">Error</p>
-                    <p>Could not load profile: {error.message}. Please try again later.</p>
+                    <p className="font-bold">Lỗi</p>
+                    <p>Không thể tải hồ sơ: {error.message}. Vui lòng thử lại sau.</p>
                 </div>
             </div>
         );
@@ -164,26 +164,26 @@ function AdminProfilePage() {
             />
             
             <div className="max-w-xl mx-auto bg-white rounded shadow p-8 mt-10 mb-10">
-                <h2 className="text-2xl font-bold mb-6 text-center">Admin Profile</h2>
+                <h2 className="text-2xl font-bold mb-6 text-center">Hồ Sơ Quản Trị Viên</h2>
                 
                 <div className="flex border-b mb-8">
                     <button
                         className={`flex-1 py-2 font-semibold ${activeTab === 'profile' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
                         onClick={() => setActiveTab('profile')}
                     >
-                        Personal Information
+                        Thông Tin Cá Nhân
                     </button>
                     <button
                         className={`flex-1 py-2 font-semibold ${activeTab === 'password' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
                         onClick={() => setActiveTab('password')}
                     >
-                        Change Password
+                        Đổi Mật Khẩu
                     </button>
                 </div>
 
                 {activeTab === 'profile' && (
                     <div className="flex flex-col gap-4">
-                        <label className="font-semibold">Full Name</label>
+                        <label className="font-semibold">Họ và Tên</label>
                         <input
                             type="text"
                             name="fullName"
@@ -193,7 +193,7 @@ function AdminProfilePage() {
                             className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                         />
 
-                        <label className="font-semibold">Phone Number</label>
+                        <label className="font-semibold">Số Điện Thoại</label>
                         <input
                             type="text"
                             name="phoneNumber"
@@ -203,7 +203,7 @@ function AdminProfilePage() {
                             className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                         />
 
-                        <label className="font-semibold">Address</label>
+                        <label className="font-semibold">Địa Chỉ</label>
                         <input
                             type="text"
                             name="address"
@@ -213,7 +213,7 @@ function AdminProfilePage() {
                             className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                         />
 
-                        <label className="font-semibold">Date of Birth</label>
+                        <label className="font-semibold">Ngày Sinh</label>
                         <input
                             type="date"
                             name="dateOfBirth"
@@ -223,7 +223,7 @@ function AdminProfilePage() {
                             className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                         />
 
-                        <label className="font-semibold">Gender</label>
+                        <label className="font-semibold">Giới Tính</label>
                         <select
                             name="gender"
                             value={user.gender || ''}
@@ -231,9 +231,9 @@ function AdminProfilePage() {
                             disabled={!editMode}
                             className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
                         >
-                            <option value="">Select</option>
-                            <option value="MALE">Male</option>
-                            <option value="FEMALE">Female</option>
+                            <option value="">Chọn</option>
+                            <option value="MALE">Nam</option>
+                            <option value="FEMALE">Nữ</option>
                         </select>
 
                         <div className="flex gap-4 mt-6 justify-center">
@@ -243,13 +243,13 @@ function AdminProfilePage() {
                                         onClick={handleSave}
                                         className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
                                     >
-                                        Save
+                                        Lưu
                                     </button>
                                     <button
                                         onClick={() => setEditMode(false)}
                                         className="border border-gray-400 text-gray-700 px-6 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors duration-200"
                                     >
-                                        Cancel
+                                        Hủy
                                     </button>
                                 </>
                             ) : (
@@ -257,7 +257,7 @@ function AdminProfilePage() {
                                     onClick={() => setEditMode(true)}
                                     className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
                                 >
-                                    Edit Profile
+                                    Chỉnh Sửa Hồ Sơ
                                 </button>
                             )}
                         </div>
@@ -266,7 +266,7 @@ function AdminProfilePage() {
 
                 {activeTab === 'password' && (
                     <form className="flex flex-col gap-4" onSubmit={handleChangePassword}>
-                        <label className="font-semibold">Old Password</label>
+                        <label className="font-semibold">Mật Khẩu Cũ</label>
                         <input
                             type="password"
                             name="oldPassword"
@@ -276,7 +276,7 @@ function AdminProfilePage() {
                             required
                         />
 
-                        <label className="font-semibold">New Password</label>
+                        <label className="font-semibold">Mật Khẩu Mới</label>
                         <input
                             type="password"
                             name="newPassword"
@@ -286,7 +286,7 @@ function AdminProfilePage() {
                             required
                         />
 
-                        <label className="font-semibold">Confirm New Password</label>
+                        <label className="font-semibold">Xác Nhận Mật Khẩu Mới</label>
                         <input
                             type="password"
                             name="confirmPassword"
@@ -297,7 +297,7 @@ function AdminProfilePage() {
                         />
 
                         <a href="/forgot-password"
-                            className="text-blue-600 hover:underline font-semibold">Forgot password?</a>
+                            className="text-blue-600 hover:underline font-semibold">Quên mật khẩu?</a>
                         <button
                             type="submit"
                             disabled={changePwLoading}
@@ -306,9 +306,9 @@ function AdminProfilePage() {
                             {changePwLoading ? (
                                 <>
                                     <span className="inline-block animate-spin mr-2">⟳</span> 
-                                    Changing password...
+                                    Đang đổi mật khẩu...
                                 </>
-                            ) : 'Change Password'}
+                            ) : 'Đổi Mật Khẩu'}
                         </button>
                     </form>
                 )}
