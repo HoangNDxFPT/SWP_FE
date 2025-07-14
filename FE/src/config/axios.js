@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://druguseprevention.onrender.com/api",
+    baseURL: "https://swp-be-c3dj.onrender.com/api",
 });
 api.interceptors.request.use(
   function (config) {
