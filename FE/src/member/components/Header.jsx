@@ -94,7 +94,7 @@ function Header() {
                 key={item.label}
                 href={display_name ? item.path : "/login"}
                 onClick={e => {
-                  if (!display_name) {
+                  if (!display_name && item.path !== "/login" && item.path !== "/register") {
                     e.preventDefault();
                     navigate("/login");
                   }
@@ -235,7 +235,7 @@ function Header() {
                   key={item.label}
                   href={display_name ? item.path : "/login"}
                   onClick={e => {
-                    if (!display_name) {
+                    if (!display_name && item.path !== "/login" && item.path !== "/register") {
                       e.preventDefault();
                       navigate("/login");
                     }
@@ -249,6 +249,20 @@ function Header() {
                   {item.label}
                 </a>
               ))}
+              
+              {/* Mobile auth buttons */}
+              {!display_name && (
+                <div className="pt-4 pb-3 border-t border-gray-200">
+                  <div className="flex flex-col space-y-2">
+                    <a href="/login" className="block px-3 py-2 rounded-md text-base font-medium bg-blue-600 text-white text-center">
+                      Đăng nhập
+                    </a>
+                    <a href="/register" className="block px-3 py-2 rounded-md text-base font-medium border border-blue-500 text-blue-600 text-center">
+                      Đăng ký
+                    </a>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
