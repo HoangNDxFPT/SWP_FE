@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../config/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { Link } from 'react-router-dom';
 
 function AdminProfilePage() {
     const [user, setUser] = useState(null);
@@ -296,8 +297,12 @@ function AdminProfilePage() {
                             required
                         />
 
-                        <a href="/forgot-password"
-                            className="text-blue-600 hover:underline font-semibold">Quên mật khẩu?</a>
+                        <Link
+                            to="/forgot-password"
+                            className="text-blue-600 hover:underline font-semibold"
+                        >
+                            Quên mật khẩu?
+                        </Link>
                         <button
                             type="submit"
                             disabled={changePwLoading}
