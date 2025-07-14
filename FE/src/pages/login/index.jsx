@@ -22,7 +22,7 @@ function LoginPage() {
   const onFinish = async (values) => {
     try {
       setLoading(true);
-      const response = await api.post("login", values);
+      const response = await api.post("/login", values);
 
       let userData = response.data.user || response.data;
       // Nếu không có id, cố gắng lấy từ trường khác
