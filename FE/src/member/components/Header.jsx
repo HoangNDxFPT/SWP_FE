@@ -37,14 +37,19 @@ function Header() {
       if (token) {
         const fetchUserProfile = async () => {
           try {
-            const response = await api.get('profile');
+            const response = await api.get('/profile');
             dispatch(login(response.data));
           } catch (error) {
             console.error("Lỗi khi lấy thông tin hồ sơ người dùng:", error);
 
-            if (error.response?.status === 401 || error.response?.status === 403) {
+            // Log chi tiết lỗi để debug
+            if (error.response?.status === 404) {
+              console.error("API endpoint không tồn tại:", error.config?.url);
+              toast.error("Không tìm thấy API endpoint. Vui lòng kiểm tra server.");
+            } else if (error.response?.status === 401 || error.response?.status === 403) {
               toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
             } else {
+              console.error("Chi tiết lỗi:", error.response?.data);
               toast.error("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
             }
             localStorage.removeItem('token');
