@@ -344,7 +344,6 @@ function ReportAppointment() {
                             <option value="">Tất cả trạng thái</option>
                             {activeTab === "reports" ? (
                                 <>
-                                    <option value="UNPROCESSED">Chưa xử lý</option>
                                     <option value="PENDING">Đang xử lý</option>
                                     <option value="RESOLVED">Đã giải quyết</option>
                                     <option value="REJECTED">Đã từ chối</option>

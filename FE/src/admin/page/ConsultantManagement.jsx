@@ -118,7 +118,27 @@ function ConsultantManagement() {
 
     const updateConsultant = async (consultantData) => {
         try {
-            await api.put("/consultant/profile", consultantData);
+            console.log("Updating consultant with data:", consultantData);
+            
+            // Prepare payload according to new API schema
+            const payload = {
+                consultantId: consultantData.consultantId || consultantData.id,
+                fullName: consultantData.fullName || consultantData.name,
+                phoneNumber: consultantData.phoneNumber || consultantData.phone,
+                address: consultantData.address || "",
+                degree: consultantData.degree || "",
+                information: consultantData.information || consultantData.description || "",
+                certifiedDegree: consultantData.certifiedDegree || "",
+                certifiedDegreeImage: consultantData.certifiedDegreeImage || "",
+                googleMeetLink: consultantData.googleMeetLink || ""
+            };
+
+            console.log("API payload:", payload);
+            
+            // Use new API endpoint with consultantId
+            const consultantId = payload.consultantId;
+            await api.put(`/consultant/admin/profile/${consultantId}`, payload);
+            
             toast.success("Cập nhật thông tin tư vấn viên thành công");
             fetchConsultants();
             setIsEditing(false);
@@ -126,6 +146,7 @@ function ConsultantManagement() {
         } catch (err) {
             toast.error("Không thể cập nhật thông tin tư vấn viên");
             console.error("Failed to update consultant:", err);
+            console.error("Error response:", err.response?.data);
         }
     };
 
@@ -586,6 +607,21 @@ function ConsultantManagement() {
                                             <p className="text-lg font-semibold text-gray-900">{currentConsultant.fullName}</p>
                                         )}
                                     </div>
+
+                                    <div className="mb-4">
+                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Số điện thoại</h4>
+                                        {isEditing ? (
+                                            <input
+                                                type="tel"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                value={editingConsultant.phoneNumber || ""}
+                                                onChange={(e) => handleEditChange("phoneNumber", e.target.value)}
+                                                placeholder="0123456789"
+                                            />
+                                        ) : (
+                                            <p className="text-gray-800">{currentConsultant.phoneNumber}</p>
+                                        )}
+                                    </div>
                                     
                                     <div className="mb-4">
                                         <h4 className="text-sm font-medium text-gray-500 mb-1">Bằng cấp</h4>
@@ -600,6 +636,21 @@ function ConsultantManagement() {
                                             <p className="text-gray-800">{currentConsultant.degree}</p>
                                         )}
                                     </div>
+
+                                    <div className="mb-4">
+                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Chứng chỉ</h4>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                value={editingConsultant.certifiedDegree || ""}
+                                                onChange={(e) => handleEditChange("certifiedDegree", e.target.value)}
+                                                placeholder="Tên chứng chỉ"
+                                            />
+                                        ) : (
+                                            <p className="text-gray-800">{currentConsultant.certifiedDegree}</p>
+                                        )}
+                                    </div>
                                     
                                     <div className="mb-4">
                                         <h4 className="text-sm font-medium text-gray-500 mb-1">Địa chỉ</h4>
@@ -612,6 +663,30 @@ function ConsultantManagement() {
                                             />
                                         ) : (
                                             <p className="text-gray-800">{currentConsultant.address}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Google Meet Link</h4>
+                                        {isEditing ? (
+                                            <input
+                                                type="url"
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                value={editingConsultant.googleMeetLink || ""}
+                                                onChange={(e) => handleEditChange("googleMeetLink", e.target.value)}
+                                                placeholder="https://meet.google.com/..."
+                                            />
+                                        ) : (
+                                            <p className="text-gray-800">
+                                                {currentConsultant.googleMeetLink ? (
+                                                    <a href={currentConsultant.googleMeetLink} target="_blank" rel="noopener noreferrer" 
+                                                       className="text-blue-600 hover:text-blue-800 underline">
+                                                        {currentConsultant.googleMeetLink}
+                                                    </a>
+                                                ) : (
+                                                    "Chưa có link"
+                                                )}
+                                            </p>
                                         )}
                                     </div>
 

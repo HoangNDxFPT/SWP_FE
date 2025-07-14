@@ -96,13 +96,9 @@ function CourseQuiz() {
         const studentAnswer = studentAnswerIndex !== undefined ? quiz.answer[studentAnswerIndex] : "";
         const correctAnswer = quiz.answer[quiz.correct];
         
-        const formattedOptions = quiz.answer.map((option, idx) => 
-          `${String.fromCharCode(65 + idx)}. ${option}`
-        ).join('; ');
-        
         return {
           question: quiz.question,
-          options: formattedOptions,
+          options: quiz.answer, // Đây đã là mảng string đơn giản như ["Chất kích thích", "Chất ma túy", "Vitamin", "Chất dinh dưỡng"]
           correctAnswer: correctAnswer,
           studentAnswer: studentAnswer
         };
@@ -116,56 +112,36 @@ function CourseQuiz() {
 
       console.log("Submitting quiz with payload:", payload);
 
-      // Gọi API POST /quiz-result/submit
-      const resultRes = await api.post('/quiz-result/submit', payload);
+      // Gọi API POST /api/quiz-result/api/quiz-result-submit/
+      const resultRes = await api.post('/quiz-result/api/quiz-result-submit/', payload);
       
       console.log("Submit response:", resultRes.data);
 
       toast.success("Nộp bài kiểm tra thành công!");
       
-      // Lưu mapping courseId -> course name cho sau này
-      const courseMapping = JSON.parse(localStorage.getItem('courseMapping') || '{}');
-      courseMapping[id] = course?.name;
-      localStorage.setItem('courseMapping', JSON.stringify(courseMapping));
+      // Sử dụng kết quả trả về trực tiếp từ API submit
+      const submitResult = resultRes.data;
       
-      // Sau khi submit thành công, lấy kết quả mới nhất
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
+      if (submitResult && submitResult.id) {
+        // Lưu mapping courseId -> course name cho sau này
+        const courseMapping = JSON.parse(localStorage.getItem('courseMapping') || '{}');
+        courseMapping[id] = course?.name;
+        localStorage.setItem('courseMapping', JSON.stringify(courseMapping));
         
-        const historyRes = await api.get('/quiz-result/my-results');
+        // Lưu mapping result ID -> course ID
+        const resultCourseMapping = JSON.parse(localStorage.getItem('resultCourseMapping') || '{}');
+        resultCourseMapping[submitResult.id] = Number(id);
+        localStorage.setItem('resultCourseMapping', JSON.stringify(resultCourseMapping));
         
-        if (historyRes.status === 200 && Array.isArray(historyRes.data)) {
-          const courseResults = historyRes.data.filter(
-            result => result.courseName === course?.name
-          );
-          
-          if (courseResults.length > 0) {
-            const latestResult = courseResults.sort((a, b) => 
-              new Date(b.submittedAt) - new Date(a.submittedAt)
-            )[0];
-            
-            // Lưu mapping result ID -> course ID
-            const resultCourseMapping = JSON.parse(localStorage.getItem('resultCourseMapping') || '{}');
-            resultCourseMapping[latestResult.id] = Number(id);
-            localStorage.setItem('resultCourseMapping', JSON.stringify(resultCourseMapping));
-            
-            console.log("Found latest result:", latestResult);
-            console.log("Saved mapping:", latestResult.id, "->", id);
-            
-            navigate(`/quiz-result/${latestResult.id}`);
-          } else {
-            console.log("No results found for course, redirecting to course page");
-            navigate(`/course/${id}`);
-          }
-        } else {
-          console.log("Failed to fetch results, redirecting to course page");
-          navigate(`/course/${id}`);
-        }
-      } catch (historyErr) {
-        console.error('Error fetching quiz history:', historyErr);
+        console.log("Submit result:", submitResult);
+        console.log("Saved mapping:", submitResult.id, "->", id);
+        
+        // Chuyển hướng đến trang kết quả với ID từ response
+        navigate(`/quiz-result/${submitResult.id}`);
+      } else {
+        console.log("No result ID returned, redirecting to course page");
         navigate(`/course/${id}`);
       }
-
     } catch (err) {
       console.error('Lỗi khi nộp bài kiểm tra:', err);
       
