@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -351,16 +352,16 @@ function AboutUs() {
               của bạn.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <a href="/assessment">
+              <Link to="/assessment">
                 <button className="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
                   Thực hiện khảo sát
                 </button>
-              </a>
-              <a href="/consultantList">
+              </Link>
+              <Link to="/consultantList">
                 <button className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition">
                   Kết nối chuyên gia
                 </button>
-              </a>
+              </Link>
             </div>
           </div>
         </section>

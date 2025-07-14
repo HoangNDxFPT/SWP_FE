@@ -64,9 +64,9 @@ function HomePage() {
               Đánh giá nguy cơ, nhận tư vấn chuyên nghiệp và tự định hướng để xây dựng lối sống lành mạnh
             </p>
             <div className="flex flex-wrap gap-4">
-              <a href="/assessment" className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-semibold shadow-lg transition hover:shadow-xl">
+              <Link to="/assessment" className="bg-yellow-500 hover:bg-yellow-400 text-blue-900 px-6 py-3 rounded-lg font-semibold shadow-lg transition hover:shadow-xl">
                 Bắt đầu khảo sát
-              </a>
+              </Link>
               <a href="#how-it-works" className="bg-transparent border-2 border-white text-white px-6 py-3 rounded-lg font-semibold hover:bg-white/10 transition">
                 Tìm hiểu thêm
               </a>
@@ -151,12 +151,12 @@ function HomePage() {
               <p className="text-gray-600 mb-4">
                 Cung cấp tài liệu và khóa học miễn phí về phòng ngừa ma túy, phù hợp cho từng nhóm tuổi.
               </p>
-              <a href="/courseList" className="text-blue-600 hover:underline inline-flex items-center">
+              <Link to="/courseList" className="text-blue-600 hover:underline inline-flex items-center">
                 Khám phá tài liệu
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </a>
+              </Link>
             </div>
 
             <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition">
@@ -167,12 +167,12 @@ function HomePage() {
               <p className="text-gray-600 mb-4">
                 Sử dụng các công cụ khảo sát như ASSIST, CRAFFT để xác định mức độ rủi ro cá nhân và nhận được khuyến nghị phù hợp.
               </p>
-              <a href="/assessment" className="text-blue-600 hover:underline inline-flex items-center">
+              <Link to="/assessment" className="text-blue-600 hover:underline inline-flex items-center">
                 Bắt đầu khảo sát
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </a>
+              </Link>
             </div>
 
             <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition">
@@ -183,12 +183,12 @@ function HomePage() {
               <p className="text-gray-600 mb-4">
                 Đặt lịch hẹn tư vấn với các chuyên gia tâm lý, bác sĩ hoặc nhân viên xã hội có kinh nghiệm.
               </p>
-              <a href="/consultantList" className="text-blue-600 hover:underline inline-flex items-center">
+              <Link to="/consultantList" className="text-blue-600 hover:underline inline-flex items-center">
                 Tìm chuyên gia
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
-              </a>
+              </Link>
             </div>
           </div>
         </section>
@@ -266,12 +266,12 @@ function HomePage() {
                 <p className="mb-6 opacity-90">
                   Mỗi cá nhân đều có thể tạo nên sự khác biệt trong cuộc chiến này - từ việc nâng cao nhận thức đến hỗ trợ người đang gặp khó khăn.
                 </p>
-                <a href="/about-us" className="inline-flex items-center bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
+                <Link to="/about-us" className="inline-flex items-center bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold hover:bg-blue-50 transition">
                   Tìm hiểu thêm
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 ml-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
-                </a>
+                </Link>
               </div>
               
               <div className="flex-1 min-w-[300px] bg-white/10 rounded-lg p-8 backdrop-blur-sm">
@@ -315,16 +315,16 @@ function HomePage() {
               Dù bạn là nhà giáo dục, phụ huynh hay học sinh/sinh viên, chúng tôi luôn sẵn sàng hỗ trợ
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <a href="/servey">
+              <Link to="/servey">
                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-md transition">
                   Thực hiện khảo sát
                 </button>
-              </a>
-              <a href="/consultantList">
+              </Link>
+              <Link to="/consultantList">
                 <button className="bg-gray-100 hover:bg-gray-200 text-blue-600 px-8 py-3 rounded-lg font-semibold transition">
                   Tìm chuyên gia tư vấn
                 </button>
-              </a>
+              </Link>
             </div>
           </div>
         </section>

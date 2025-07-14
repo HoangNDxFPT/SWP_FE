@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../config/axios';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -240,9 +240,9 @@ function AssessmentResult() {
         <div className={`${riskInfo.bgColor} py-8 mb-8`}>
           <div className="max-w-4xl mx-auto px-4">
             <div className="flex items-center gap-2 text-sm mb-2">
-              <a href="/" className={`${riskInfo.textDark} hover:underline`}>Trang chủ</a>
+              <Link to="/" className={`${riskInfo.textDark} hover:underline`}>Trang chủ</Link>
               <span className="text-gray-500">›</span>
-              <a href="/assessment" className={`${riskInfo.textDark} hover:underline`}>Đánh giá</a>
+              <Link to="/assessment" className={`${riskInfo.textDark} hover:underline`}>Đánh giá</Link>
               <span className="text-gray-500">›</span>
               <span className={`font-medium ${riskInfo.textDark}`}>Kết quả</span>
             </div>
@@ -470,7 +470,7 @@ function AssessmentResult() {
               ) : (
                 <div className="bg-white rounded-lg shadow-sm p-6 text-center mb-8">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                   <h4 className="text-lg font-medium text-gray-700 mb-2">Chưa có khóa học được khuyến nghị</h4>
                   <p className="text-gray-500 mb-4">

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 
 function BlogFeed() {
@@ -46,12 +47,12 @@ function BlogFeed() {
               <p className="text-gray-800 mb-4 line-clamp-3">
                 {post.content}
               </p>
-              <a
-                href={`/blog/${post.id}`}
+              <Link
+                to={`/blog/${post.id}`}
                 className="text-blue-500 hover:underline font-medium"
               >
                 Read more
-              </a>
+              </Link>
             </div>
           </div>
         ))

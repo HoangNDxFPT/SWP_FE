@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Form, Input } from 'antd';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
 import api from '../../config/axios';
 
 function ForgotPassword() {
@@ -63,7 +64,7 @@ function ForgotPassword() {
               </Button>
             </Form.Item>
             <Form.Item className="text-center">
-              <a href="/login" className="text-blue-500 hover:underline">Quay lại đăng nhập</a>
+              <Link to="/login" className="text-blue-500 hover:underline">Quay lại đăng nhập</Link>
             </Form.Item>
           </Form>
         )}
