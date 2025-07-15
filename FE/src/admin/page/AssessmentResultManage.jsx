@@ -359,7 +359,7 @@ export default function AssessmentResultManage() {
               <div className="h-8 w-1 bg-green-500 rounded mr-3"></div>
               <h3 className="font-semibold text-gray-800">Phân bố mức độ rủi ro</h3>
             </div>
-            <div className="h-64">
+            <div className="flex justify-center items-center" style={{ height: 220 }}>
               <Pie 
                 data={{
                   labels: ['Thấp', 'Trung bình', 'Cao'],
@@ -374,7 +374,11 @@ export default function AssessmentResultManage() {
                     borderWidth: 2
                   }]
                 }}
+                width={220}
+                height={220}
                 options={{
+                  maintainAspectRatio: false,
+                  responsive: false,
                   plugins: {
                     legend: {
                       position: 'bottom',
