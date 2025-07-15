@@ -28,7 +28,7 @@ function Header() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [dropdownRef]);
 
   useEffect(() => {
     if (!currentUser || !currentUser.fullName) {
@@ -77,7 +77,8 @@ function Header() {
   ];
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    // <header className="shadow-md sticky top-0 z-50" style={{ backgroundColor: '#F7F7F7' }}>
+    <header className="bg-neutral-100 shadow-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -86,7 +87,7 @@ function Header() {
               <img
                 src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824738/z6621531660497_00c45b7532add5b3a49055fb93d63a53_ewd8xj.jpg"
                 alt="Logo"
-                className="h-10 w-auto"
+                className="h-12 w-auto" 
               />
               <span className="ml-2 text-lg font-semibold text-gray-900 hidden md:block">HeartSync</span>
             </a>
