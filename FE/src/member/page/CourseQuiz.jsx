@@ -28,9 +28,13 @@ function CourseQuiz() {
           setUser(res.data);
         }
       } catch (err) {
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+          navigate('/login');
+          return;
+        }
         console.error('Failed to fetch user profile:', err);
         toast.error('Không thể lấy thông tin người dùng');
-        navigate('/login');
       }
     };
 
@@ -116,7 +120,7 @@ function CourseQuiz() {
       console.log("Submitting quiz with payload:", payload);
 
       // Gọi API POST /api/quiz-result/api/quiz-result-submit/
-      const resultRes = await api.post('/quiz-result/api/quiz-result-submit/', payload);
+      const resultRes = await api.post('/quiz-result/submit', payload);
       
       console.log("Submit response:", resultRes.data);
 
@@ -146,6 +150,11 @@ function CourseQuiz() {
         navigate(`/course/${id}`);
       }
     } catch (err) {
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        toast.error("Phiên làm việc hết hạn, vui lòng đăng nhập lại");
+        navigate('/login');
+        return;
+      }
       console.error('Lỗi khi nộp bài kiểm tra:', err);
       
       if (err.response) {
@@ -208,6 +217,11 @@ function CourseQuiz() {
         // Thiết lập timer (30 phút)
         setTimeLeft(30 * 60); // 30 phút tính bằng giây
       } catch (err) {
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
+          navigate('/login');
+          return;
+        }
         console.error('Lỗi khi tải dữ liệu:', err);
         toast.error("Không thể tải bài kiểm tra. Vui lòng thử lại sau.");
         navigate(`/course/${courseId}`);
