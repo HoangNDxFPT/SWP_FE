@@ -14,6 +14,7 @@ function CoursesListPage() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [ageGroupFilter, setAgeGroupFilter] = useState('all'); // State cho filter độ tuổi
   const navigate = useNavigate();
   const COURSES_PER_PAGE = 5; // Sửa lại thành 5 khóa học mỗi trang
   const [enrolledCourses, setEnrolledCourses] = useState([]);
@@ -301,7 +302,7 @@ function CoursesListPage() {
 
   const userAgeGroup = getUserAgeGroup();
 
-  // 3. Thay đổi hàm lọc để bao gồm cả lọc theo tên (search)
+  // 3. Thay đổi hàm lọc để bao gồm cả lọc theo tên (search) và độ tuổi
   const getFilteredCourses = () => {
     let filtered = [...courses];
 
@@ -312,6 +313,11 @@ function CoursesListPage() {
         course.name.toLowerCase().includes(searchTerm) ||
         (course.description && course.description.toLowerCase().includes(searchTerm))
       );
+    }
+
+    // Lọc theo độ tuổi nếu chọn
+    if (ageGroupFilter !== 'all') {
+      filtered = filtered.filter(course => course.targetAgeGroup === ageGroupFilter);
     }
 
     // Lọc theo trạng thái khóa học
@@ -523,26 +529,18 @@ function CoursesListPage() {
               <h2 className="text-2xl font-bold text-gray-800">Danh sách khóa học</h2>
 
               {/* Filter buttons - Container tối ưu hơn, tự động điều chỉnh kích thước */}
-              <div className="inline-flex items-center flex-wrap justify-center sm:justify-end border border-gray-200 rounded-full bg-gray-100 p-1.5 shadow-sm w-full sm:w-auto">
+              <div className="inline-flex items-center flex-wrap justify-center sm:justify-end border border-gray-200 rounded-full bg-gray-100 p-2 shadow-sm w-full sm:w-auto">
                 <button
                   onClick={() => { setActiveFilter('all'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'all'
+                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'all'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
                   Tất cả
                 </button>
                 <button
-                  onClick={() => { setActiveFilter('recommended'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'recommended'
-                    ? 'bg-blue-600 text-white shadow'
-                    : 'text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Phù hợp
-                </button>
-                <button
                   onClick={() => { setActiveFilter('completed'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'completed'
+                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'completed'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -550,7 +548,7 @@ function CoursesListPage() {
                 </button>
                 <button
                   onClick={() => { setActiveFilter('enrolled'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'enrolled'
+                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'enrolled'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -558,7 +556,7 @@ function CoursesListPage() {
                 </button>
                 <button
                   onClick={() => { setActiveFilter('cancelled'); setCurrentPage(1); }}
-                  className={`px-3 py-1 text-xs font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'cancelled'
+                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'cancelled'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -567,9 +565,9 @@ function CoursesListPage() {
               </div>
             </div>
 
-            {/* Search bar */}
-            <div className="mb-6">
-              <div className="relative">
+            {/* Search bar + Age group filter */}
+            <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+              <div className="relative w-full md:w-2/3">
                 <input
                   type="text"
                   placeholder="Tìm kiếm khóa học..."
@@ -590,6 +588,17 @@ function CoursesListPage() {
                     </svg>
                   </button>
                 )}
+              </div>
+              <div className="w-full md:w-1/3">
+                <select
+                  value={ageGroupFilter}
+                  onChange={e => setAgeGroupFilter(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="all">Tất cả độ tuổi</option>
+                  <option value="Teenagers">Thanh thiếu niên</option>
+                  <option value="Adults">Người trưởng thành</option>
+                </select>
               </div>
             </div>
 
