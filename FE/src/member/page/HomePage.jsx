@@ -27,9 +27,11 @@ function HomePage() {
       try {
         setLoading(true);
         const response = await api.get("/consultant/public");
-        setConsultants(response.data);
+        // Đảm bảo response.data là mảng
+        setConsultants(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách chuyên viên tư vấn:", error);
+        setConsultants([]); // Đảm bảo luôn là mảng khi lỗi
       } finally {
         setLoading(false);
       }
