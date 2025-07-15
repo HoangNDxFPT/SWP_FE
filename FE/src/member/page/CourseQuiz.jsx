@@ -95,10 +95,13 @@ function CourseQuiz() {
         const studentAnswerIndex = selected[quiz.id];
         const studentAnswer = studentAnswerIndex !== undefined ? quiz.answer[studentAnswerIndex] : "";
         const correctAnswer = quiz.answer[quiz.correct];
+        const formattedOptions = quiz.answer.map((option, idx) => 
+          `${String.fromCharCode(65 + idx)}. ${option}`
+        ).join('; ');
         
         return {
           question: quiz.question,
-          options: quiz.answer, // Đây đã là mảng string đơn giản như ["Chất kích thích", "Chất ma túy", "Vitamin", "Chất dinh dưỡng"]
+          options: formattedOptions, // Đây đã là mảng string đơn giản như ["Chất kích thích", "Chất ma túy", "Vitamin", "Chất dinh dưỡng"]
           correctAnswer: correctAnswer,
           studentAnswer: studentAnswer
         };
