@@ -83,13 +83,15 @@ function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <a href='/' className="flex items-center">
+            <a href='/' className="flex items-center gap-3">
               <img
                 src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824738/z6621531660497_00c45b7532add5b3a49055fb93d63a53_ewd8xj.jpg"
                 alt="Logo"
-                className="h-12 w-auto" 
+                className="h-12 w-auto rounded-lg shadow"
               />
-              <span className="ml-2 text-lg font-semibold text-gray-900 hidden md:block">HeartSync</span>
+              <div className="flex flex-col">
+                <span className="text-lg font-bold text-blue-900 leading-tight">Drug Prevention</span>
+              </div>
             </a>
           </div>
 
