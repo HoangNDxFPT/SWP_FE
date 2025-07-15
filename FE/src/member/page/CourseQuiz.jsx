@@ -28,13 +28,9 @@ function CourseQuiz() {
           setUser(res.data);
         }
       } catch (err) {
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
-          navigate('/login');
-          return;
-        }
         console.error('Failed to fetch user profile:', err);
         toast.error('Không thể lấy thông tin người dùng');
+        navigate('/login');
       }
     };
 
@@ -99,13 +95,10 @@ function CourseQuiz() {
         const studentAnswerIndex = selected[quiz.id];
         const studentAnswer = studentAnswerIndex !== undefined ? quiz.answer[studentAnswerIndex] : "";
         const correctAnswer = quiz.answer[quiz.correct];
-        const formattedOptions = quiz.answer.map((option, idx) => 
-          `${String.fromCharCode(65 + idx)}. ${option}`
-        ).join('; ');
         
         return {
           question: quiz.question,
-          options: formattedOptions, // Đây đã là mảng string đơn giản như ["Chất kích thích", "Chất ma túy", "Vitamin", "Chất dinh dưỡng"]
+          options: quiz.answer, // Đây đã là mảng string đơn giản như ["Chất kích thích", "Chất ma túy", "Vitamin", "Chất dinh dưỡng"]
           correctAnswer: correctAnswer,
           studentAnswer: studentAnswer
         };
@@ -150,11 +143,6 @@ function CourseQuiz() {
         navigate(`/course/${id}`);
       }
     } catch (err) {
-      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-        toast.error("Phiên làm việc hết hạn, vui lòng đăng nhập lại");
-        navigate('/login');
-        return;
-      }
       console.error('Lỗi khi nộp bài kiểm tra:', err);
       
       if (err.response) {
@@ -217,11 +205,6 @@ function CourseQuiz() {
         // Thiết lập timer (30 phút)
         setTimeLeft(30 * 60); // 30 phút tính bằng giây
       } catch (err) {
-        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          toast.error('Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại');
-          navigate('/login');
-          return;
-        }
         console.error('Lỗi khi tải dữ liệu:', err);
         toast.error("Không thể tải bài kiểm tra. Vui lòng thử lại sau.");
         navigate(`/course/${courseId}`);
