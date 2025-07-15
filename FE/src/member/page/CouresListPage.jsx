@@ -37,7 +37,7 @@ function CoursesListPage() {
             try {
               // Lấy danh sách khóa học đã đăng ký
               const enrolledRes = await api.get(`/enrollments/user/${res.data.userId}`);
-              
+
               // Lấy kết quả quiz để tính trạng thái completed
               const quizResultsRes = await api.get('/quiz-result/my-results');
 
@@ -60,7 +60,7 @@ function CoursesListPage() {
                 // Kiểm tra quiz results để cập nhật trạng thái completed
                 if (Array.isArray(quizResultsRes.data)) {
                   setQuizResults(quizResultsRes.data);
-                  
+
                   // Group quiz results by course name
                   const courseQuizResults = {};
                   quizResultsRes.data.forEach(result => {
@@ -74,13 +74,13 @@ function CoursesListPage() {
                   courses.forEach(course => {
                     if (enrolledIds.includes(course.id)) {
                       const courseResults = courseQuizResults[course.name];
-                      
+
                       if (courseResults && courseResults.length > 0) {
                         // Tìm kết quả tốt nhất
                         const bestResult = Math.max(
                           ...courseResults.map(r => (r.score / r.totalQuestions) * 100)
                         );
-                        
+
                         // Nếu đạt 80% trở lên và chưa có status Completed, cập nhật
                         if (bestResult >= 80 && statuses[course.id] !== 'Completed') {
                           statuses[course.id] = 'Completed';
@@ -430,7 +430,7 @@ function CoursesListPage() {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -442,14 +442,14 @@ function CoursesListPage() {
 
     try {
       const quizResultsRes = await api.get('/quiz-result/my-results');
-      
+
       if (Array.isArray(quizResultsRes.data)) {
         setQuizResults(quizResultsRes.data);
-        
+
         // Cập nhật trạng thái completed dựa trên quiz results
         const updatedStatuses = { ...courseStatuses };
         const updatedCompleted = [...completedCourses];
-        
+
         const courseQuizResults = {};
         quizResultsRes.data.forEach(result => {
           if (!courseQuizResults[result.courseName]) {
@@ -461,12 +461,12 @@ function CoursesListPage() {
         courses.forEach(course => {
           if (enrolledCourses.includes(course.id)) {
             const courseResults = courseQuizResults[course.name];
-            
+
             if (courseResults && courseResults.length > 0) {
               const bestResult = Math.max(
                 ...courseResults.map(r => (r.score / r.totalQuestions) * 100)
               );
-              
+
               if (bestResult >= 80 && updatedStatuses[course.id] !== 'Completed') {
                 updatedStatuses[course.id] = 'Completed';
                 if (!updatedCompleted.includes(course.id)) {
@@ -479,7 +479,7 @@ function CoursesListPage() {
 
         setCourseStatuses(updatedStatuses);
         setCompletedCourses(updatedCompleted);
-        
+
         console.log('Đã refresh trạng thái khóa học:', {
           updatedStatuses,
           updatedCompleted
@@ -529,10 +529,10 @@ function CoursesListPage() {
               <h2 className="text-2xl font-bold text-gray-800">Danh sách khóa học</h2>
 
               {/* Filter buttons - Container tối ưu hơn, tự động điều chỉnh kích thước */}
-              <div className="inline-flex items-center flex-wrap justify-center sm:justify-end border border-gray-200 rounded-full bg-gray-100 p-2 shadow-sm w-full sm:w-auto">
+              <div className="inline-flex items-center flex-wrap justify-center sm:justify-end border border-gray-200 rounded-full bg-gray-100 p-1.5 shadow-sm w-full sm:w-auto">
                 <button
                   onClick={() => { setActiveFilter('all'); setCurrentPage(1); }}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'all'
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'all'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -540,7 +540,7 @@ function CoursesListPage() {
                 </button>
                 <button
                   onClick={() => { setActiveFilter('completed'); setCurrentPage(1); }}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'completed'
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'completed'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -548,7 +548,7 @@ function CoursesListPage() {
                 </button>
                 <button
                   onClick={() => { setActiveFilter('enrolled'); setCurrentPage(1); }}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'enrolled'
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'enrolled'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
@@ -556,7 +556,7 @@ function CoursesListPage() {
                 </button>
                 <button
                   onClick={() => { setActiveFilter('cancelled'); setCurrentPage(1); }}
-                  className={`px-6 py-3 text-base font-semibold rounded-full transition-colors m-1 ${activeFilter === 'cancelled'
+                  className={`px-4 py-2 text-sm font-medium rounded-full transition-colors m-0.5 ${activeFilter === 'cancelled'
                     ? 'bg-blue-600 text-white shadow'
                     : 'text-gray-700 hover:bg-gray-200'}`}
                 >
