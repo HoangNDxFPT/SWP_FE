@@ -229,12 +229,18 @@ function QuizResult() {
               
               <div className="divide-y divide-gray-200">
                 {resultDetails.map((detail, index) => {
-                  const optionsText = detail.options || "";
-                  const optionParts = optionsText.split(';').map(part => part.trim());
-                  const options = optionParts.map(part => {
-                    const match = part.match(/^[A-Z]\.\s*(.+)$/);
-                    return match ? match[1].trim() : part;
-                  });
+                  // Xử lý options: hỗ trợ cả dạng chuỗi và mảng
+                  let options = [];
+                  if (Array.isArray(detail.options)) {
+                    options = detail.options;
+                  } else if (typeof detail.options === 'string') {
+                    const optionsText = detail.options || "";
+                    const optionParts = optionsText.split(';').map(part => part.trim()).filter(Boolean);
+                    options = optionParts.map(part => {
+                      const match = part.match(/^[A-Z]\.\s*(.+)$/);
+                      return match ? match[1].trim() : part;
+                    }).filter(Boolean);
+                  }
                   
                   return (
                     <div key={index} className="p-6">
