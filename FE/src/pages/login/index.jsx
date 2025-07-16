@@ -44,7 +44,7 @@ function LoginPage() {
         navigate("/");
       }
     } catch (e) {
-      toast.error(`Lỗi đăng nhập: ${e.response?.data?.message || e.message}`);
+      toast.error(`Username or Password not valid!`);
     } finally {
       setLoading(false);
     }
