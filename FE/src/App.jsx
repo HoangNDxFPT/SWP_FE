@@ -49,6 +49,7 @@ import CourseDetailForConsultant from "./consultant/components/CourseDetailForCo
 import Dashboard from "./admin/page/Dashboard";
 import ConsultantManagement from "./admin/page/ConsultantManagement";
 import ReportAppointment from "./admin/page/Report&Appointment";
+import OAuth2RedirectHandler from "./pages/login/OAuth2RedirectHandler";
 
 
 function RequireAdmin({ children }) {
@@ -79,6 +80,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/login/success",
+    element: <OAuth2RedirectHandler />,
   },
   {
     path: "/register",
