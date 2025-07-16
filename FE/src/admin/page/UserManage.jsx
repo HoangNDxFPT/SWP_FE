@@ -450,13 +450,13 @@ export default function UserManage() {
         <div className="bg-white overflow-hidden shadow rounded-lg mb-6">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Người dùng</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tài khoản</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vai trò</th>
-                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Thao tác</th>
+              <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
+                <tr>
+                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Người dùng</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Tài khoản</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Vai trò</th>
+                  <th scope="col" className="px-6 py-3.5 text-center text-xs font-semibold text-white uppercase tracking-wider">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -486,7 +486,7 @@ export default function UserManage() {
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-150 ease-in-out">
+                    <tr key={user.id} className="hover:bg-blue-50 transition-colors duration-150 ease-in-out">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
@@ -494,7 +494,7 @@ export default function UserManage() {
                           </div>
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">{user.fullName || "Chưa cập nhật"}</div>
-                            <div className="text-sm text-gray-500">ID: {user.id}</div>
+                            <div className="text-sm text-gray-200">ID: {user.id}</div>
                           </div>
                         </div>
                       </td>
@@ -752,51 +752,46 @@ export default function UserManage() {
               <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
                 <button
                   onClick={() => setActiveHistoryTab('profile')}
-                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
-                    activeHistoryTab === 'profile'
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${activeHistoryTab === 'profile'
                       ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Thông tin cá nhân
                 </button>
                 <button
                   onClick={() => setActiveHistoryTab('programs')}
-                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
-                    activeHistoryTab === 'programs'
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${activeHistoryTab === 'programs'
                       ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Chương trình đã tham gia
                 </button>
                 <button
                   onClick={() => setActiveHistoryTab('courses')}
-                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
-                    activeHistoryTab === 'courses'
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${activeHistoryTab === 'courses'
                       ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Khóa học đã đăng ký
                 </button>
                 <button
                   onClick={() => setActiveHistoryTab('assessments')}
-                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${
-                    activeHistoryTab === 'assessments'
+                  className={`py-2 px-4 mr-2 -mb-px whitespace-nowrap ${activeHistoryTab === 'assessments'
                       ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Lịch sử đánh giá
                 </button>
                 <button
                   onClick={() => setActiveHistoryTab('appointments')}
-                  className={`py-2 px-4 -mb-px whitespace-nowrap ${
-                    activeHistoryTab === 'appointments'
+                  className={`py-2 px-4 -mb-px whitespace-nowrap ${activeHistoryTab === 'appointments'
                       ? 'border-b-2 border-blue-500 text-blue-600 font-medium'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Lịch sử cuộc hẹn
                 </button>
@@ -1092,14 +1087,13 @@ export default function UserManage() {
                               <div className="text-xs text-gray-500">ID khóa học: {course.courseId}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                course.status === "Completed" ? "bg-green-100 text-green-800 border border-green-200" :
-                                course.status === "InProgress" ? "bg-blue-100 text-blue-800 border border-blue-200" :
-                                "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                              }`}>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${course.status === "Completed" ? "bg-green-100 text-green-800 border border-green-200" :
+                                  course.status === "InProgress" ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                                    "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                                }`}>
                                 {course.status === "Completed" ? "Đã hoàn thành" :
-                                 course.status === "InProgress" ? "Đang học" :
-                                 "Đã đăng ký"}
+                                  course.status === "InProgress" ? "Đang học" :
+                                    "Đã đăng ký"}
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -1153,16 +1147,15 @@ export default function UserManage() {
                               </p>
                             </div>
                             <div className="flex items-center">
-                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                appointment.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
+                              <span className={`px-3 py-1 rounded-full text-sm font-medium ${appointment.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                                  appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                    appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                      'bg-gray-100 text-gray-800'
+                                }`}>
                                 {appointment.status === 'COMPLETED' ? 'Hoàn thành' :
-                                 appointment.status === 'PENDING' ? 'Chờ xác nhận' :
-                                 appointment.status === 'CANCELLED' ? 'Đã hủy' :
-                                 appointment.status || 'Không xác định'}
+                                  appointment.status === 'PENDING' ? 'Chờ xác nhận' :
+                                    appointment.status === 'CANCELLED' ? 'Đã hủy' :
+                                      appointment.status || 'Không xác định'}
                               </span>
                             </div>
                           </div>
@@ -1396,14 +1389,13 @@ export default function UserManage() {
                                   <div className="text-xs text-gray-500">ID khóa học: {course.courseId}</div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    course.status === "Completed" ? "bg-green-100 text-green-800 border border-green-200" :
-                                    course.status === "InProgress" ? "bg-blue-100 text-blue-800 border border-blue-200" :
-                                    "bg-yellow-100 text-yellow-800 border border-yellow-200"
-                                  }`}>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${course.status === "Completed" ? "bg-green-100 text-green-800 border border-green-200" :
+                                      course.status === "InProgress" ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                                        "bg-yellow-100 text-yellow-800 border border-yellow-200"
+                                    }`}>
                                     {course.status === "Completed" ? "Đã hoàn thành" :
-                                     course.status === "InProgress" ? "Đang học" :
-                                     "Đã đăng ký"}
+                                      course.status === "InProgress" ? "Đang học" :
+                                        "Đã đăng ký"}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
