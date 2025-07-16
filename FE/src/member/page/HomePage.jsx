@@ -8,7 +8,6 @@ function HomePage() {
   const [consultants, setConsultants] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Thêm hàm tạo placeholder image từ tên
   const getPlaceholderImage = (name) => {
     if (!name) return 'https://ui-avatars.com/api/?background=0D8ABC&color=fff&size=150';
     
@@ -27,11 +26,9 @@ function HomePage() {
       try {
         setLoading(true);
         const response = await api.get("/consultant/public");
-        // Đảm bảo response.data là mảng
-        setConsultants(Array.isArray(response.data) ? response.data : []);
+        setConsultants(response.data);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách chuyên viên tư vấn:", error);
-        setConsultants([]); // Đảm bảo luôn là mảng khi lỗi
       } finally {
         setLoading(false);
       }
@@ -45,13 +42,11 @@ function HomePage() {
       <Header />
 
       <div>
-        {/* Hero Section - Đã cải thiện */}
         <section className="relative w-full h-[500px] flex items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800">
           <div className="absolute inset-0 opacity-20">
             <div className="absolute inset-0 bg-pattern"></div>
           </div>
           
-          {/* Thêm dòng chữ nổi bật */}
           <div className="absolute right-0 bottom-0 w-1/2 h-full flex items-center justify-center">
             <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-white opacity-30 tracking-wider rotate-[-8deg]">
               SAY <span className="text-red-500">NO</span> TO DRUGS
@@ -81,7 +76,6 @@ function HomePage() {
           `}</style>
         </section>
         
-        {/* Thống kê */}
         <section className="bg-white py-6 shadow-md relative z-10">
           <div className="container mx-auto px-8 md:px-16">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
@@ -105,7 +99,6 @@ function HomePage() {
           </div>
         </section>
         
-        {/* Cách thức hoạt động */}
         <section id="how-it-works" className="px-8 md:px-16 py-16 bg-white">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">Cách hệ thống hoạt động</h2>
@@ -141,7 +134,6 @@ function HomePage() {
           </div>
         </section>
 
-        {/* Dịch vụ chính */}
         <section className="px-8 md:px-16 py-16 bg-blue-50">
           <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">Dịch vụ của chúng tôi</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -195,7 +187,6 @@ function HomePage() {
           </div>
         </section>
 
-        {/* Đội ngũ chuyên viên tư vấn */}
         <section className="px-8 md:px-16 py-16 bg-white">
           <div className="max-w-6xl mx-auto">
             <h2 className="text-3xl font-bold text-gray-800 mb-2 text-center">Đội Ngũ Chuyên Viên Tư Vấn</h2>
@@ -256,7 +247,6 @@ function HomePage() {
           </div>
         </section>
 
-        {/* Về chúng tôi & Cam kết */}
         <section className="px-8 md:px-16 py-16 bg-blue-600 text-white">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-wrap items-center justify-between gap-12">
@@ -309,7 +299,7 @@ function HomePage() {
           </div>
         </section>
 
-        {/* CTA Final */}
+        
         <section className="py-16 bg-white text-center">
           <div className="max-w-3xl mx-auto px-8">
             <h2 className="text-3xl font-bold text-gray-800 mb-4">Bắt đầu hành trình hỗ trợ ngay hôm nay</h2>
@@ -317,7 +307,7 @@ function HomePage() {
               Dù bạn là nhà giáo dục, phụ huynh hay học sinh/sinh viên, chúng tôi luôn sẵn sàng hỗ trợ
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/servey">
+              <Link to="/assessment">
                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-md transition">
                   Thực hiện khảo sát
                 </button>
