@@ -203,9 +203,9 @@ function HomePage() {
               ) : consultants.length > 0 ? (
                 consultants.slice(0, 4).map((consultant) => (
                   <div key={consultant.consultantId} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-                    <div className="h-48 overflow-hidden">
+                    <div className="h-48 overflow-hidden flex items-center justify-center bg-gray-100">
                       <img 
-                        src={consultant.id || getPlaceholderImage(consultant.fullName)} 
+                        src={consultant.avatarUrl || getPlaceholderImage(consultant.fullName)} 
                         alt={`Chuyên viên ${consultant.fullName}`} 
                         className="w-full h-full object-cover object-center"
                         onError={(e) => {
