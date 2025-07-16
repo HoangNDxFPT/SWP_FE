@@ -510,8 +510,8 @@ function Program() {
                                     <button
                                         onClick={() => setProgramStatusFilter('ALL')}
                                         className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${programStatusFilter === 'ALL'
-                                                ? 'bg-gray-200 text-gray-800'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-gray-200 text-gray-800'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         <div className="flex items-center">
@@ -524,8 +524,8 @@ function Program() {
                                     <button
                                         onClick={() => setProgramStatusFilter('ACTIVE')}
                                         className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${programStatusFilter === 'ACTIVE'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         <div className="flex items-center">
@@ -538,8 +538,8 @@ function Program() {
                                     <button
                                         onClick={() => setProgramStatusFilter('ENDED')}
                                         className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${programStatusFilter === 'ENDED'
-                                                ? 'bg-gray-600 text-white'
-                                                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            ? 'bg-gray-600 text-white'
+                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                                             }`}
                                     >
                                         <div className="flex items-center">
@@ -592,31 +592,31 @@ function Program() {
                     ) : (
                         <div className="overflow-x-auto bg-white rounded-lg shadow">
                             <table className="min-w-full divide-y divide-gray-200">
-                                <thead>
-                                    <tr className="bg-gray-50">
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
+                                    <tr>
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">
                                             Tên chương trình
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">
                                             Địa điểm
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">
                                             Ngày bắt đầu
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">
                                             Ngày kết thúc
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">
                                             Trạng thái
                                         </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">
                                             Thao tác
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
                                     {filteredPrograms.map((program) => (
-                                        <tr key={program.id} className="hover:bg-gray-50">
+                                        <tr key={program.id} className="hover:bg-blue-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="text-sm font-medium text-gray-900">{program.name}</div>
                                                 <div className="text-sm text-gray-500 line-clamp-1">{program.description}</div>

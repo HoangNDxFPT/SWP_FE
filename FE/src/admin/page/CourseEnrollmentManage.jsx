@@ -9,7 +9,7 @@ function CourseEnrollmentManage() {
   const [filteredEnrollments, setFilteredEnrollments] = useState([]);
   const [courses, setCourses] = useState([]);
   const [users, setUsers] = useState([]);
-  
+
   // UI states
   const [loading, setLoading] = useState(true);
   const [filterMode, setFilterMode] = useState('all'); // 'all', 'course', 'user'
@@ -17,7 +17,7 @@ function CourseEnrollmentManage() {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   // Quiz result modal states
   const [showQuizModal, setShowQuizModal] = useState(false);
   const [selectedQuizResult, setSelectedQuizResult] = useState(null);
@@ -30,7 +30,7 @@ function CourseEnrollmentManage() {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch all enrollments, courses, and users in parallel
         const [enrollmentsRes, coursesRes, usersRes] = await Promise.all([
           api.get('/enrollments/all-enrollments'),
@@ -42,11 +42,11 @@ function CourseEnrollmentManage() {
           setAllEnrollments(enrollmentsRes.data);
           setFilteredEnrollments(enrollmentsRes.data);
         }
-        
+
         if (coursesRes.data) {
           setCourses(coursesRes.data);
         }
-        
+
         if (usersRes.data) {
           // Filter to only include MEMBER role users
           const memberUsers = usersRes.data.filter(user => user.role === 'MEMBER');
@@ -59,44 +59,44 @@ function CourseEnrollmentManage() {
         setLoading(false);
       }
     };
-    
+
     fetchInitialData();
   }, []);
 
   // Apply filters whenever filter criteria changes
   useEffect(() => {
     if (!allEnrollments.length) return;
-    
+
     let result = [...allEnrollments];
-    
+
     // Filter by course
     if (selectedCourseId) {
-      result = result.filter(enrollment => 
+      result = result.filter(enrollment =>
         String(enrollment.courseId) === String(selectedCourseId)
       );
     }
-    
+
     // Filter by user
     if (selectedUserId) {
-      result = result.filter(enrollment => 
+      result = result.filter(enrollment =>
         String(enrollment.userId) === String(selectedUserId)
       );
     }
-    
+
     // Filter by status
     if (statusFilter) {
       result = result.filter(enrollment => enrollment.status === statusFilter);
     }
-    
+
     // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      result = result.filter(enrollment => 
+      result = result.filter(enrollment =>
         enrollment.userName?.toLowerCase().includes(query) ||
         enrollment.courseName?.toLowerCase().includes(query)
       );
     }
-    
+
     setFilteredEnrollments(result);
   }, [allEnrollments, selectedCourseId, selectedUserId, statusFilter, searchQuery]);
 
@@ -117,9 +117,9 @@ function CourseEnrollmentManage() {
       default: return 'bg-gray-100 text-gray-800';
     }
   };
-  
+
   const formatStatus = (status) => {
-    switch(status) {
+    switch (status) {
       case 'InProgress': return 'Đang học';
       case 'Completed': return 'Đã hoàn thành';
       case 'Cancelled': return 'Đã hủy';
@@ -136,23 +136,23 @@ function CourseEnrollmentManage() {
   const fetchAllQuizResultsForUserCourse = async (userId, courseId) => {
     try {
       console.log('Fetching quiz results for userId:', userId, 'courseId:', courseId);
-      
+
       // Get all quiz results from API
       const response = await api.get('/quiz-result/all');
       console.log('Quiz results API response:', response.data);
-      
+
       if (response.data && Array.isArray(response.data)) {
         // Lọc theo courseId trước (vì userId không có trong response)
         const courseResults = response.data.filter(result =>
           String(result.courseId) === String(courseId)
         );
-        
+
         console.log('Filtered quiz results by courseId:', courseResults);
-        
+
         if (courseResults.length > 0) {
           // TODO: Backend cần thêm userId vào response để filter được chính xác
           // Hiện tại chỉ filter được theo courseId
-          return courseResults.sort((a, b) => 
+          return courseResults.sort((a, b) =>
             new Date(b.submittedAt) - new Date(a.submittedAt)
           );
         }
@@ -169,12 +169,12 @@ function CourseEnrollmentManage() {
     try {
       const results = await fetchAllQuizResultsForUserCourse(userId, courseId);
       if (results.length === 0) return null;
-      
+
       const latestResult = results[0];
-      const bestResult = results.reduce((best, current) => 
+      const bestResult = results.reduce((best, current) =>
         (current.score / current.totalQuestions) > (best.score / best.totalQuestions) ? current : best
-      , results[0]);
-      
+        , results[0]);
+
       return {
         totalAttempts: results.length,
         latestScore: latestResult.score,
@@ -198,20 +198,20 @@ function CourseEnrollmentManage() {
       setSelectedQuizResult(null);
       setAllQuizResults([]);
       setSelectedEnrollment(enrollment);
-      
+
       console.log('Loading quiz results for enrollment:', enrollment);
-      
+
       const quizResults = await fetchAllQuizResultsForUserCourse(enrollment.userId, enrollment.courseId);
-      
+
       if (quizResults.length > 0) {
         console.log('Found quiz results:', quizResults);
         setAllQuizResults(quizResults);
         setSelectedQuizResult(quizResults[0]); // Set latest result as default
-        
+
         // The new API structure includes details in the quiz result, so we don't need separate calls
         // The quiz questions and answers are now in the details array
         console.log('Quiz result details:', quizResults[0].details);
-        
+
       } else {
         console.log('No quiz results found');
         toast.info('Người dùng chưa làm bài kiểm tra cho khóa học này');
@@ -321,11 +321,11 @@ function CourseEnrollmentManage() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
-      
+
       {/* Page Header - Adjusted for AdminLayout */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Quản lý đăng ký khóa học</h1>
-        
+
         <div className="stats flex flex-wrap gap-2">
           <div className="stat bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-100 flex items-center">
             <span className="text-xs text-gray-500 mr-1">Tổng số:</span>
@@ -345,12 +345,12 @@ function CourseEnrollmentManage() {
           </div>
         </div>
       </div>
-      
+
       {/* Filter Section - Simplified */}
       <div className="bg-white p-4 rounded-lg shadow-sm mb-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-medium">Bộ lọc</h2>
-          
+
           <button
             className="px-3 py-1.5 rounded-lg text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors flex items-center"
             onClick={handleResetFilters}
@@ -361,7 +361,7 @@ function CourseEnrollmentManage() {
             Đặt lại bộ lọc
           </button>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search Box */}
           <div className="relative">
@@ -391,7 +391,7 @@ function CourseEnrollmentManage() {
               )}
             </div>
           </div>
-          
+
           {/* Course Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Khóa học</label>
@@ -408,7 +408,7 @@ function CourseEnrollmentManage() {
               ))}
             </select>
           </div>
-          
+
           {/* User Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Người dùng</label>
@@ -425,7 +425,7 @@ function CourseEnrollmentManage() {
               ))}
             </select>
           </div>
-          
+
           {/* Status Filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
@@ -448,10 +448,10 @@ function CourseEnrollmentManage() {
             <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100">
               <p>
                 Hiển thị <span className="font-medium">{filteredEnrollments.length}</span> trên tổng số <span className="font-medium">{allEnrollments.length}</span> đăng ký
-                {selectedCourseId && courses.find(c => String(c.id) === String(selectedCourseId)) && 
+                {selectedCourseId && courses.find(c => String(c.id) === String(selectedCourseId)) &&
                   <> thuộc khóa học <span className="font-medium">{courses.find(c => String(c.id) === String(selectedCourseId)).name || courses.find(c => String(c.id) === String(selectedCourseId)).title}</span></>
                 }
-                {selectedUserId && users.find(u => String(u.userId) === String(selectedUserId)) && 
+                {selectedUserId && users.find(u => String(u.userId) === String(selectedUserId)) &&
                   <> của người dùng <span className="font-medium">{users.find(u => String(u.userId) === String(selectedUserId)).fullName || users.find(u => String(u.userId) === String(selectedUserId)).userName}</span></>
                 }
                 {statusFilter && <> với trạng thái <span className="font-medium">{formatStatus(statusFilter)}</span></>}
@@ -465,14 +465,14 @@ function CourseEnrollmentManage() {
           )}
         </div>
       </div>
-      
+
       {/* Enrollments Table */}
       {loading ? (
         <div className="flex justify-center py-12 bg-white rounded-lg shadow-sm">
           <div className="flex flex-col items-center">
             <div className="relative">
               <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50"></div>
-              <div className="animate-spin rounded-full h-16 w-16 border-l-4 border-blue-600 absolute top-0 left-0" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+              <div className="animate-spin rounded-full h-16 w-16 border-l-4 border-blue-600 absolute top-0 left-0" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
             </div>
             <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
           </div>
@@ -500,9 +500,8 @@ function CourseEnrollmentManage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gradient-to-r from-blue-600 to-indigo-700">
                 <tr>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">ID người dùng</th>
+                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">UID</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên người dùng</th>
-                  <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">ID khóa học</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Tên khóa học</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Ngày đăng ký</th>
                   <th className="px-6 py-3.5 text-left text-xs font-semibold text-white uppercase tracking-wider">Trạng thái</th>
@@ -514,7 +513,6 @@ function CourseEnrollmentManage() {
                   <tr key={index} className="hover:bg-blue-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{enrollment.userId}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{enrollment.userName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{enrollment.courseId}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{enrollment.courseName}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {new Date(enrollment.enrolledAt).toLocaleDateString('vi-VN')}
@@ -544,19 +542,19 @@ function CourseEnrollmentManage() {
             </svg>
             Tiến độ học tập
           </h2>
-          
+
           <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
             <div className="mb-3">
               <span className="text-gray-700 font-medium">
-                {users.find(u => String(u.userId) === String(selectedUserId))?.fullName || 
-                 users.find(u => String(u.userId) === String(selectedUserId))?.userName ||
-                 'Người dùng'}
+                {users.find(u => String(u.userId) === String(selectedUserId))?.fullName ||
+                  users.find(u => String(u.userId) === String(selectedUserId))?.userName ||
+                  'Người dùng'}
               </span>
               <span className="text-gray-500 ml-2">
                 ({filteredEnrollments.length} khóa học đã đăng ký)
               </span>
             </div>
-            
+
             <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
               <div
                 className="bg-blue-600 h-4 rounded-full transition-all duration-500"
@@ -565,7 +563,7 @@ function CourseEnrollmentManage() {
                 }}
               ></div>
             </div>
-            
+
             <div className="flex justify-between text-sm">
               <div>
                 <span className="text-gray-600">Đã hoàn thành:</span>
@@ -580,7 +578,7 @@ function CourseEnrollmentManage() {
                 </span>
               </div>
             </div>
-            
+
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-green-50 p-3 rounded-lg border border-green-100 text-center">
                 <div className="text-green-700 text-sm mb-1">Đã hoàn thành</div>
@@ -598,7 +596,7 @@ function CourseEnrollmentManage() {
           </div>
         </div>
       )}
-      
+
       {/* Quiz Result Modal */}
       {showQuizModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -622,7 +620,7 @@ function CourseEnrollmentManage() {
                 <div className="flex flex-col items-center justify-center py-12">
                   <div className="relative">
                     <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50"></div>
-                    <div className="animate-spin rounded-full h-16 w-16 border-l-4 border-blue-600 absolute top-0 left-0" style={{animationDirection: 'reverse', animationDuration: '1.5s'}}></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-l-4 border-blue-600 absolute top-0 left-0" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
                   </div>
                   <p className="mt-4 text-gray-600">Đang tải kết quả quiz...</p>
                 </div>
@@ -641,7 +639,7 @@ function CourseEnrollmentManage() {
                       </div>
                     </div>
                   </div>
-                
+
                   {/* Quiz Attempts Navigation */}
                   {allQuizResults.length > 1 && (
                     <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
@@ -656,11 +654,10 @@ function CourseEnrollmentManage() {
                           <button
                             key={result.id}
                             onClick={() => handleSelectQuizAttempt(result)}
-                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                              selectedQuizResult.id === result.id
+                            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${selectedQuizResult.id === result.id
                                 ? 'bg-blue-600 text-white shadow-sm'
                                 : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-                            }`}
+                              }`}
                           >
                             Lần {index + 1}
                             <div className="text-xs mt-1">
@@ -732,9 +729,9 @@ function CourseEnrollmentManage() {
                             console.error('Error parsing options:', error);
                             options = [];
                           }
-                          
+
                           const isCorrect = detail.correct;
-                          
+
                           return (
                             <div key={detail.id || index} className="border rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
                               <div className="flex items-start">
@@ -745,30 +742,29 @@ function CourseEnrollmentManage() {
                                   <h5 className="font-semibold text-gray-800 mb-3 text-lg">
                                     {index + 1}. {detail.question}
                                   </h5>
-                                  
+
                                   {Array.isArray(options) && options.length > 0 && (
                                     <div className="space-y-2.5 mt-4">
                                       {options.map((option, idx) => {
                                         const isStudentAnswer = detail.studentAnswer === option;
                                         const isCorrectAnswer = detail.correctAnswer === option;
-                                        
+
                                         return (
-                                          <div 
-                                            key={idx} 
-                                            className={`p-3 rounded-lg ${
-                                              isCorrectAnswer
+                                          <div
+                                            key={idx}
+                                            className={`p-3 rounded-lg ${isCorrectAnswer
                                                 ? 'bg-green-50 border border-green-200'
                                                 : isStudentAnswer && !isCorrectAnswer
                                                   ? 'bg-red-50 border border-red-200'
                                                   : 'bg-white border border-gray-200'
-                                            }`}
+                                              }`}
                                           >
                                             <div className="flex items-center justify-between">
                                               <span>
                                                 <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
                                                 {option}
                                               </span>
-                                              
+
                                               {isCorrectAnswer && (
                                                 <span className="text-green-600 text-sm font-medium flex items-center">
                                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -777,7 +773,7 @@ function CourseEnrollmentManage() {
                                                   Đáp án đúng
                                                 </span>
                                               )}
-                                              
+
                                               {isStudentAnswer && !isCorrectAnswer && (
                                                 <span className="text-red-600 text-sm font-medium flex items-center">
                                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -792,7 +788,7 @@ function CourseEnrollmentManage() {
                                       })}
                                     </div>
                                   )}
-                                  
+
                                   {/* Show answers when options are not available or not in array format */}
                                   {(!Array.isArray(options) || options.length === 0) && (
                                     <div className="mt-4 space-y-2">
