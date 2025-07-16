@@ -274,6 +274,7 @@ function UserProfilePage() {
                             type="password"
                             name="oldPassword"
                             value={pwForm.oldPassword}
+                            onChange={e => setPwForm({ ...pwForm, oldPassword: e.target.value })}
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             required
                         />
@@ -287,6 +288,7 @@ function UserProfilePage() {
                             type="password"
                             name="newPassword"
                             value={pwForm.newPassword}
+                            onChange={e => setPwForm({ ...pwForm, newPassword: e.target.value })}
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             required
                         />
@@ -296,6 +298,7 @@ function UserProfilePage() {
                             type="password"
                             name="confirmPassword"
                             value={pwForm.confirmPassword}
+                            onChange={e => setPwForm({ ...pwForm, confirmPassword: e.target.value })}
                             className="p-2 border rounded bg-gray-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                             required
                         />
