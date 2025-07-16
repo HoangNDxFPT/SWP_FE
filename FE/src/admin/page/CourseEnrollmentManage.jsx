@@ -138,21 +138,21 @@ function CourseEnrollmentManage() {
       console.log('Fetching quiz results for userId:', userId, 'courseId:', courseId);
       
       // Get all quiz results from API
-      const response = await api.get('/quiz-result');
+      const response = await api.get('/quiz-result/all');
       console.log('Quiz results API response:', response.data);
       
       if (response.data && Array.isArray(response.data)) {
-        // Filter results by userId and courseId using the new API structure
-        const userCourseResults = response.data.filter(result => 
-          result.user && String(result.user.id) === String(userId) && 
-          result.course && String(result.course.id) === String(courseId)
+        // Lọc theo courseId trước (vì userId không có trong response)
+        const courseResults = response.data.filter(result =>
+          String(result.courseId) === String(courseId)
         );
         
-        console.log('Filtered quiz results:', userCourseResults);
+        console.log('Filtered quiz results by courseId:', courseResults);
         
-        if (userCourseResults.length > 0) {
-          // Sort by submittedAt in descending order
-          return userCourseResults.sort((a, b) => 
+        if (courseResults.length > 0) {
+          // TODO: Backend cần thêm userId vào response để filter được chính xác
+          // Hiện tại chỉ filter được theo courseId
+          return courseResults.sort((a, b) => 
             new Date(b.submittedAt) - new Date(a.submittedAt)
           );
         }
