@@ -317,7 +317,7 @@ function HomePage() {
               Dù bạn là nhà giáo dục, phụ huynh hay học sinh/sinh viên, chúng tôi luôn sẵn sàng hỗ trợ
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/servey">
+              <Link to="/assessment">
                 <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold shadow-md transition">
                   Thực hiện khảo sát
                 </button>
