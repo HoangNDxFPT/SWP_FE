@@ -183,7 +183,7 @@ function QuizResult() {
               <div className="flex flex-wrap gap-3">
                 {course?.id ? (
                   <Link
-                    to={`/course/${course.id}`}
+                    to={`/courseList`}
                     className="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                   >
                     <FaArrowLeft className="mr-2" />
