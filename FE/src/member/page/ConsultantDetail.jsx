@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../../config/axios';
 import { toast } from 'react-toastify';
 import Header from '../components/Header';
@@ -9,6 +9,7 @@ import { FaUser, FaCertificate, FaCalendarAlt, FaClock, FaVideo, FaArrowLeft, Fa
 function ConsultantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   // States
   const [loading, setLoading] = useState(true);
@@ -20,6 +21,8 @@ function ConsultantDetail() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [appointmentInfo, setAppointmentInfo] = useState(null);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
 
   // Fetch data
   useEffect(() => {
@@ -46,6 +49,16 @@ function ConsultantDetail() {
 
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    const dateParam = searchParams.get("date");
+    const timeParam = searchParams.get("time");
+    if (dateParam) {
+      setDate(dateParam);
+      setSelectedDate(dateParam); // Thêm dòng này để set ngày cho input
+    }
+    if (timeParam) setTime(timeParam);
+  }, [searchParams]);
 
   // Fetch available slots
   const fetchSlots = async () => {
@@ -133,6 +146,20 @@ function ConsultantDetail() {
       setBookingInProgress(false);
     }
   };
+
+  // Khi đã có slots và có time từ URL, tự động chọn slot phù hợp
+  useEffect(() => {
+    if (slots.length > 0 && time) {
+      const found = slots.find(slot => slot.startTime?.substring(0,5) === time);
+      if (found) setSelectedSlot(found);
+    }
+  }, [slots, time]);
+  
+  useEffect(() => {
+    if (selectedDate) {
+      fetchSlots();
+    }
+  }, [selectedDate]);
 
   // Helper functions
   const getTodayDate = () => new Date().toISOString().split('T')[0];
