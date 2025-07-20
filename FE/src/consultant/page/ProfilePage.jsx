@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Spin } from "antd";
 import { toast, ToastContainer } from "react-toastify";
 import api from "../../config/axios"; // Dùng api thật ở đây!
-import ConsultantHeader from "../components/Header"; 
+import ConsultantHeader from "../components/Header";
 
 import {
   UserCircleIcon,
@@ -20,7 +20,9 @@ import {
 const Header = ({ user }) => (
   <header className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-4 shadow-lg">
     <div className="container mx-auto flex justify-between items-center">
-      <h1 className="text-2xl font-semibold">Drug Use Prevention Support System</h1>
+      <h1 className="text-2xl font-semibold">
+        Drug Use Prevention Support System
+      </h1>
       <nav>
         <ul className="flex space-x-4">
           <li>
@@ -48,7 +50,10 @@ const Header = ({ user }) => (
       {user && (
         <div className="flex items-center space-x-2">
           <img
-            src={user.avatarUrl || "https://placehold.co/40x40/ADD8E6/000000?text=AV"}
+            src={
+              user.avatarUrl ||
+              "https://placehold.co/40x40/ADD8E6/000000?text=AV"
+            }
             alt="User Avatar"
             className="w-10 h-10 rounded-full border-2 border-white"
           />
@@ -126,7 +131,11 @@ export default function ProfilePage() {
       setPwMsg("");
       setPwMsgType("");
 
-      if (!pwForm.oldPassword || !pwForm.newPassword || !pwForm.confirmPassword) {
+      if (
+        !pwForm.oldPassword ||
+        !pwForm.newPassword ||
+        !pwForm.confirmPassword
+      ) {
         setPwMsg("Vui lòng nhập đầy đủ thông tin!");
         setPwMsgType("error");
         return;
@@ -184,6 +193,7 @@ export default function ProfilePage() {
           status: profile?.status || "",
           degree: editProfile.degree || "",
           information: editProfile.information || "",
+           avatarUrl: editProfile.avatarUrl || "",
           certifiedDegree: editProfile.certifiedDegree || "",
           certifiedDegreeImage: editProfile.certifiedDegreeImage || "",
           googleMeetLink: editProfile.googleMeetLink || "",
@@ -225,7 +235,42 @@ export default function ProfilePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="fullName" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="avatarUrl"
+                className="font-semibold text-gray-700 block mb-1"
+              >
+                Ảnh đại diện (URL)
+              </label>
+              <input
+                id="avatarUrl"
+                type="text"
+                name="avatarUrl"
+                value={editProfile.avatarUrl || ""}
+                onChange={(e) =>
+                  setEditProfile({ ...editProfile, avatarUrl: e.target.value })
+                }
+                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
+                placeholder="https://... (link ảnh đại diện)"
+              />
+              {editProfile.avatarUrl && (
+                <img
+                  src={editProfile.avatarUrl}
+                  alt="Avatar preview"
+                  className="mt-2 rounded-full w-20 h-20 border shadow"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src =
+                      "https://placehold.co/80x80/ADD8E6/000000?text=AV";
+                  }}
+                />
+              )}
+            </div>
+
+            <div>
+              <label
+                htmlFor="fullName"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Họ tên
               </label>
               <input
@@ -240,7 +285,10 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label htmlFor="phoneNumber" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="phoneNumber"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Số điện thoại
               </label>
               <input
@@ -249,13 +297,19 @@ export default function ProfilePage() {
                 name="phoneNumber"
                 value={editProfile.phoneNumber || ""}
                 onChange={(e) =>
-                  setEditProfile({ ...editProfile, phoneNumber: e.target.value })
+                  setEditProfile({
+                    ...editProfile,
+                    phoneNumber: e.target.value,
+                  })
                 }
                 className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
               />
             </div>
             <div>
-              <label htmlFor="address" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="address"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Địa chỉ
               </label>
               <input
@@ -270,7 +324,10 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label htmlFor="degree" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="degree"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Học vị
               </label>
               <input
@@ -285,7 +342,10 @@ export default function ProfilePage() {
               />
             </div>
             <div className="md:col-span-2">
-              <label htmlFor="information" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="information"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Thông tin giới thiệu
               </label>
               <textarea
@@ -293,14 +353,20 @@ export default function ProfilePage() {
                 name="information"
                 value={editProfile.information || ""}
                 onChange={(e) =>
-                  setEditProfile({ ...editProfile, information: e.target.value })
+                  setEditProfile({
+                    ...editProfile,
+                    information: e.target.value,
+                  })
                 }
                 rows="4"
                 className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
               />
             </div>
             <div>
-              <label htmlFor="certifiedDegree" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="certifiedDegree"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Chứng nhận
               </label>
               <input
@@ -309,13 +375,19 @@ export default function ProfilePage() {
                 name="certifiedDegree"
                 value={editProfile.certifiedDegree || ""}
                 onChange={(e) =>
-                  setEditProfile({ ...editProfile, certifiedDegree: e.target.value })
+                  setEditProfile({
+                    ...editProfile,
+                    certifiedDegree: e.target.value,
+                  })
                 }
                 className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
               />
             </div>
             <div>
-              <label htmlFor="certifiedDegreeImage" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="certifiedDegreeImage"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Ảnh chứng nhận (URL)
               </label>
               <input
@@ -324,13 +396,19 @@ export default function ProfilePage() {
                 name="certifiedDegreeImage"
                 value={editProfile.certifiedDegreeImage || ""}
                 onChange={(e) =>
-                  setEditProfile({ ...editProfile, certifiedDegreeImage: e.target.value })
+                  setEditProfile({
+                    ...editProfile,
+                    certifiedDegreeImage: e.target.value,
+                  })
                 }
                 className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
               />
             </div>
             <div className="md:col-span-2">
-              <label htmlFor="googleMeetLink" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="googleMeetLink"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Link Google Meet
               </label>
               <input
@@ -339,7 +417,10 @@ export default function ProfilePage() {
                 name="googleMeetLink"
                 value={editProfile.googleMeetLink || ""}
                 onChange={(e) =>
-                  setEditProfile({ ...editProfile, googleMeetLink: e.target.value })
+                  setEditProfile({
+                    ...editProfile,
+                    googleMeetLink: e.target.value,
+                  })
                 }
                 className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
                 placeholder="https://meet.google.com/..."
@@ -365,7 +446,9 @@ export default function ProfilePage() {
         </form>
       ) : (
         <section className="bg-white rounded-xl shadow-lg p-8">
-          <h2 className="text-3xl font-bold mb-4 text-blue-800 border-b pb-3">Hồ sơ cá nhân</h2>
+          <h2 className="text-3xl font-bold mb-4 text-blue-800 border-b pb-3">
+            Hồ sơ cá nhân
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-gray-700">
             <div className="flex items-center gap-3">
               <UserCircleIcon className="w-6 h-6 text-blue-500" />
@@ -390,7 +473,9 @@ export default function ProfilePage() {
             <div className="md:col-span-2 flex items-start gap-3">
               <DocumentTextIcon className="w-6 h-6 text-blue-500 flex-shrink-0 mt-1" />
               <span className="font-semibold">Giới thiệu:</span>{" "}
-              <p className="flex-grow">{profile?.information || "Chưa cập nhật thông tin cá nhân."}</p>
+              <p className="flex-grow">
+                {profile?.information || "Chưa cập nhật thông tin cá nhân."}
+              </p>
             </div>
             <div className="flex items-center gap-3">
               <CalendarDaysIcon className="w-6 h-6 text-blue-500" />
@@ -415,7 +500,9 @@ export default function ProfilePage() {
             </div>
             {profile?.certifiedDegreeImage && (
               <div className="md:col-span-2 flex flex-col items-center mt-4">
-                <span className="font-semibold text-blue-700 mb-2">Ảnh chứng nhận:</span>
+                <span className="font-semibold text-blue-700 mb-2">
+                  Ảnh chứng nhận:
+                </span>
                 <img
                   src={profile.certifiedDegreeImage}
                   alt="Certified Degree"
@@ -475,20 +562,20 @@ export default function ProfilePage() {
               <span>{user?.email || "--"}</span>
             </div>
             {/* Google Meet Link */}
-        {profile?.googleMeetLink && (
-          <div className="flex items-center gap-3 text-lg">
-            <LinkIcon className="w-6 h-6 text-blue-500" />
-            <span className="font-semibold">Google Meet:</span>{" "}
-            <a
-              href={profile.googleMeetLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline break-all"
-            >
-              {profile.googleMeetLink}
-            </a>
-          </div>
-        )}
+            {profile?.googleMeetLink && (
+              <div className="flex items-center gap-3 text-lg">
+                <LinkIcon className="w-6 h-6 text-blue-500" />
+                <span className="font-semibold">Google Meet:</span>{" "}
+                <a
+                  href={profile.googleMeetLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline break-all"
+                >
+                  {profile.googleMeetLink}
+                </a>
+              </div>
+            )}
           </div>
         </section>
       );
@@ -500,7 +587,10 @@ export default function ProfilePage() {
           </h2>
           <form className="flex flex-col gap-5" onSubmit={handleChangePassword}>
             <div>
-              <label htmlFor="oldPassword" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="oldPassword"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Mật khẩu cũ
               </label>
               <input
@@ -514,7 +604,10 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label htmlFor="newPassword" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="newPassword"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Mật khẩu mới
               </label>
               <input
@@ -528,7 +621,10 @@ export default function ProfilePage() {
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="font-semibold text-gray-700 block mb-1">
+              <label
+                htmlFor="confirmPassword"
+                className="font-semibold text-gray-700 block mb-1"
+              >
                 Xác nhận mật khẩu mới
               </label>
               <input
@@ -598,6 +694,7 @@ export default function ProfilePage() {
         <aside className="bg-white rounded-xl shadow-xl p-8 w-full lg:w-80 flex flex-col items-center flex-shrink-0">
           <img
             src={
+              profile?.avatarUrl ||
               user?.avatarUrl ||
               "https://placehold.co/120x120/ADD8E6/000000?text=AVATAR"
             }
