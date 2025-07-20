@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../config/axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
 
 function CoursesListPage() {
   const [courses, setCourses] = useState([]);
@@ -16,6 +15,7 @@ function CoursesListPage() {
   const [activeFilter, setActiveFilter] = useState('all');
   const [ageGroupFilter, setAgeGroupFilter] = useState('all'); // State cho filter độ tuổi
   const navigate = useNavigate();
+  const location = useLocation();
   const COURSES_PER_PAGE = 5; // Sửa lại thành 5 khóa học mỗi trang
   const [enrolledCourses, setEnrolledCourses] = useState([]);
   const [courseStatuses, setCourseStatuses] = useState({});
@@ -489,6 +489,13 @@ function CoursesListPage() {
       console.error('Error refreshing course statuses:', error);
     }
   };
+
+  // Khi vào trang, nếu có state truyền sang thì set filter theo nhóm tuổi
+  useEffect(() => {
+    if (location.state?.targetAgeGroup) {
+      setAgeGroupFilter(location.state.targetAgeGroup);
+    }
+  }, [location.state]);
 
   return (
     <div className="min-h-screen bg-gray-50">

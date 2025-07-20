@@ -40,14 +40,14 @@ function AssessmentResult() {
           show: true,
           text: 'Xem khóa học phòng ngừa',
           color: 'bg-green-500 hover:bg-green-600',
-          action: () => navigate('/courseList')
+          action: () => navigate('/courseList', { state: { targetAgeGroup: userAgeGroup } })
         };
       case 'MEDIUM':
         return {
           show: true,
           text: 'Xem khóa học phù hợp',
           color: 'bg-yellow-500 hover:bg-yellow-600',
-          action: () => navigate('/courseList')
+          action: () => navigate('/courseList', { state: { targetAgeGroup: userAgeGroup } })
         };
       case 'HIGH':
         return {
