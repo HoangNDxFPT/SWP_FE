@@ -22,7 +22,7 @@ function ConsultantHeader() {
       if (token) {
         const fetchUserProfile = async () => {
           try {
-            const response = await api.get("profile");
+            const response = await api.get("/consultant/profile");
             dispatch(login(response.data));
           } catch (error) {
             if (
