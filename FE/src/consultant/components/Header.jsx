@@ -11,14 +11,36 @@ function ConsultantHeader() {
   const userSliceState = useSelector((state) => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
   const avatar =
+    profile?.avatarUrl ||
     currentUser?.avatarUrl ||
     "https://placehold.co/40x40/ADD8E6/000000?text=AV";
-  // Đặt ảnh đại diện mặc định nếu không có
+  const displayName =
+    profile?.fullName || currentUser?.fullName || "Tên người dùng";
+
   const user = currentUser ? currentUser : { fullName: "Tên người dùng" }; // Hiển thị tên người dùng mặc định nếu không có thông tin
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const dropdownRef = React.useRef(null);
 
-  
+  const [profile, setProfile] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      api
+        .get("/consultant/profile")
+        .then((res) => {
+          setProfile(res.data);
+        })
+        .catch(() => {
+          setProfile(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!currentUser || !currentUser.fullName) {
       const token = localStorage.getItem("token");
@@ -100,10 +122,14 @@ function ConsultantHeader() {
           src={avatar}
           alt="avatar"
           className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-md"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "https://placehold.co/40x40/ADD8E6/000000?text=AV";
+          }}
         />
 
         <span className="font-semibold">
-          {user?.fullName || "Tên người dùng"}
+          {user?.fullName || profile?.fullName || "Tên người dùng"}
         </span>
         <button
           className="ml-2 focus:outline-none"
