@@ -130,7 +130,8 @@ function ConsultantManagement() {
                 information: consultantData.information || consultantData.description || "",
                 certifiedDegree: consultantData.certifiedDegree || "",
                 certifiedDegreeImage: consultantData.certifiedDegreeImage || "",
-                googleMeetLink: consultantData.googleMeetLink || ""
+                googleMeetLink: consultantData.googleMeetLink || "",
+                avatarUrl: consultantData.avatarUrl || ""
             };
 
             console.log("API payload:", payload);
@@ -410,6 +411,9 @@ function ConsultantManagement() {
                                         ID
                                     </th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Ảnh đại diện
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Họ tên
                                     </th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -451,6 +455,21 @@ function ConsultantManagement() {
                                         <tr key={consultant.consultantId} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {consultant.consultantId}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                                                {consultant.avatarUrl ? (
+                                                    <img
+                                                        src={consultant.avatarUrl}
+                                                        alt="avatar"
+                                                        className="w-10 h-10 rounded-full object-cover border"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                                        </svg>
+                                                    </div>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                                                 {consultant.fullName}
@@ -594,6 +613,44 @@ function ConsultantManagement() {
                         <div className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
+                                    {/* Avatar tư vấn viên */}
+                                    <div className="flex items-center mb-6">
+                                      {(isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl) ? (
+                                        <img
+                                          src={isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl}
+                                          alt="avatar"
+                                          className="w-20 h-20 rounded-full object-cover border mr-4"
+                                        />
+                                      ) : (
+                                        <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mr-4">
+                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                                          </svg>
+                                        </div>
+                                      )}
+                                      <div>
+                                        <h4 className="text-lg font-semibold text-gray-900">
+                                          {isEditing ? editingConsultant.fullName : currentConsultant.fullName}
+                                        </h4>
+                                        <p className="text-gray-500 text-sm">
+                                          {isEditing ? editingConsultant.degree : currentConsultant.degree}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    {/* Input chỉnh sửa avatarUrl */}
+                                    {isEditing && (
+                                      <div className="mb-4">
+                                        <h4 className="text-sm font-medium text-gray-500 mb-1">URL ảnh đại diện</h4>
+                                        <input
+                                          type="url"
+                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                          value={editingConsultant.avatarUrl || ""}
+                                          onChange={(e) => handleEditChange("avatarUrl", e.target.value)}
+                                          placeholder="https://example.com/avatar.jpg"
+                                        />
+                                      </div>
+                                    )}
+
                                     <div className="mb-4">
                                         <h4 className="text-sm font-medium text-gray-500 mb-1">Họ tên</h4>
                                         {isEditing ? (
