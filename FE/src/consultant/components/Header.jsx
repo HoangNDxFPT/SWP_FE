@@ -10,16 +10,17 @@ function ConsultantHeader() {
   const dispatch = useDispatch();
   const userSliceState = useSelector((state) => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
-  const avatar = currentUser?.avatarUrl || "https://placehold.co/40x40/ADD8E6/000000?text=AV";
+  const avatar =
+    currentUser?.avatarUrl ||
+    "https://placehold.co/40x40/ADD8E6/000000?text=AV";
   // Đặt ảnh đại diện mặc định nếu không có
   const user = currentUser ? currentUser : { fullName: "Tên người dùng" }; // Hiển thị tên người dùng mặc định nếu không có thông tin
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const dropdownRef = React.useRef(null);
 
+  
   useEffect(() => {
     if (!currentUser || !currentUser.fullName) {
-      console.log("CurrentUser in header:", currentUser);
-
       const token = localStorage.getItem("token");
       if (token) {
         const fetchUserProfile = async () => {
@@ -46,6 +47,8 @@ function ConsultantHeader() {
       }
     }
   }, [userSliceState, currentUser, dispatch]);
+  console.log("CurrentUser in header:", currentUser);
+  console.log("link avatar:", avatar);
 
   useEffect(() => {
     function handleClickOutside(event) {
