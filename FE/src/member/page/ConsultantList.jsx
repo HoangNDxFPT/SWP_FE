@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import api from '../../config/axios';
 import { toast } from 'react-toastify';
 
 function ConsultantList() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   // Original states
   const [consultants, setConsultants] = useState([]);
   const [availabilityData, setAvailabilityData] = useState({});
@@ -30,8 +33,6 @@ function ConsultantList() {
   // 1. Thêm state cho modal báo cáo (đặt dưới state khác)
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportData, setReportData] = useState({ appointmentId: null, reason: '', description: '' });
-  
-  const navigate = useNavigate();
   
   // Min date for the date input (today)
   const today = new Date().toISOString().split('T')[0];
@@ -334,6 +335,13 @@ function ConsultantList() {
       console.error(error);
     }
   };
+
+  // Update active tab based on URL state
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -1113,7 +1121,7 @@ function ConsultantList() {
                           ) : (
                             <div className="flex-1 py-2 px-3 flex justify-center items-center rounded-lg text-sm font-medium bg-gray-100 text-gray-400 opacity-60">
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
                               </svg>
                               Link không khả dụng
                             </div>
