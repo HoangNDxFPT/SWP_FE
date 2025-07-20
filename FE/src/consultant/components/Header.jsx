@@ -5,13 +5,13 @@ import { logout, login } from "../../redux/features/userSlice";
 import api from "../../config/axios";
 import { toast } from "react-toastify";
 
-
 function ConsultantHeader() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const userSliceState = useSelector((state) => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
-  const avatar = currentUser ? currentUser.avatar : "/default-avatar.png"; // Đặt ảnh đại diện mặc định nếu không có
+  const avatar = currentUser?.avatarUrl || "https://placehold.co/40x40/ADD8E6/000000?text=AV";
+  // Đặt ảnh đại diện mặc định nếu không có
   const user = currentUser ? currentUser : { fullName: "Tên người dùng" }; // Hiển thị tên người dùng mặc định nếu không có thông tin
   const [openDropdown, setOpenDropdown] = React.useState(false);
   const dropdownRef = React.useRef(null);
@@ -60,13 +60,10 @@ function ConsultantHeader() {
 
   // MENU CHUYÊN VIÊN TƯ VẤN
   const menuItems = [
-    
     { label: "Trang chủ", path: "/consultant/appointments" },
     { label: "Khóa học", path: "/consultant/courses" },
     { label: "Chương trình cộng đồng", path: "/consultant/programs" },
 
-
-    
     // Thêm các mục khác nếu cần
   ];
 
@@ -78,7 +75,6 @@ function ConsultantHeader() {
           src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824738/z6621531660497_00c45b7532add5b3a49055fb93d63a53_ewd8xj.jpg"
           alt="Logo"
           className="w-16 h-16 cursor-pointer rounded-xl object-cover"
-          
         />
         <nav className="hidden md:flex gap-7 font-semibold">
           {menuItems.map((item) => (
@@ -92,15 +88,14 @@ function ConsultantHeader() {
           ))}
         </nav>
       </div>
-      
-
       {/* Avatar & user */}
       <div className="flex items-center gap-2 relative" ref={dropdownRef}>
         <img
           src={avatar}
           alt="avatar"
-          className="w-10 h-10 rounded-full border-2 border-blue-200 object-cover"
+          className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-md"
         />
+
         <span className="font-semibold">
           {user?.fullName || "Tên người dùng"}
         </span>
@@ -143,7 +138,6 @@ function ConsultantHeader() {
             >
               Đăng xuất
             </button>
-            
           </div>
         )}
       </div>
