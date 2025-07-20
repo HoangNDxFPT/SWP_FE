@@ -1,76 +1,30 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { logout, login } from "../../redux/features/userSlice";
+import { useSelector } from "react-redux";
 import api from "../../config/axios";
-import { toast } from "react-toastify";
 
 function ConsultantHeader() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const userSliceState = useSelector((state) => state.user);
   const currentUser = userSliceState ? userSliceState.user : null;
-  const avatar =
-    profile?.avatarUrl ||
-    currentUser?.avatarUrl ||
-    "https://placehold.co/40x40/ADD8E6/000000?text=AV";
-  const displayName =
-    profile?.fullName || currentUser?.fullName || "Tên người dùng";
 
-  const user = currentUser ? currentUser : { fullName: "Tên người dùng" }; // Hiển thị tên người dùng mặc định nếu không có thông tin
-  const [openDropdown, setOpenDropdown] = React.useState(false);
-  const dropdownRef = React.useRef(null);
-
+  // State cho profile riêng
   const [profile, setProfile] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [openDropdown, setOpenDropdown] = React.useState(false);
+  const dropdownRef = React.useRef(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      api
-        .get("/consultant/profile")
-        .then((res) => {
-          setProfile(res.data);
-        })
-        .catch(() => {
-          setProfile(null);
-        })
+      api.get("/consultant/profile")
+        .then(res => setProfile(res.data))
+        .catch(() => setProfile(null))
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    if (!currentUser || !currentUser.fullName) {
-      const token = localStorage.getItem("token");
-      if (token) {
-        const fetchUserProfile = async () => {
-          try {
-            const response = await api.get("/consultant/profile");
-            console.log("Profile API response:", response.data);
-            dispatch(login(response.data));
-          } catch (error) {
-            if (
-              error.response?.status === 401 ||
-              error.response?.status === 403
-            ) {
-              toast.error(
-                "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
-              );
-            } else {
-              toast.error("Không thể khôi phục phiên. Vui lòng đăng nhập lại.");
-            }
-            localStorage.removeItem("token");
-            dispatch(logout());
-          }
-        };
-        fetchUserProfile();
-      }
-    }
-  }, [userSliceState, currentUser, dispatch]);
-  console.log("CurrentUser in header:", currentUser);
-  console.log("link avatar:", avatar);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -86,18 +40,21 @@ function ConsultantHeader() {
     };
   }, [openDropdown]);
 
-  // MENU CHUYÊN VIÊN TƯ VẤN
   const menuItems = [
     { label: "Trang chủ", path: "/consultant/appointments" },
     { label: "Khóa học", path: "/consultant/courses" },
     { label: "Chương trình cộng đồng", path: "/consultant/programs" },
-
-    // Thêm các mục khác nếu cần
   ];
+
+  // Lấy avatarUrl và displayName ưu tiên từ profile, fallback về redux, cuối cùng là chuỗi mặc định
+  const avatar =
+    profile?.avatarUrl ||
+    (currentUser?.avatarUrl || "https://placehold.co/40x40/ADD8E6/000000?text=AV");
+  const displayName =
+    profile?.fullName || currentUser?.fullName || "Tên người dùng";
 
   return (
     <header className="w-full bg-blue-600 text-white shadow flex items-center px-8 py-3 justify-between relative z-50">
-      {/* Logo + menu trái */}
       <div className="flex items-center gap-10">
         <img
           src="https://res.cloudinary.com/dwjtg28ti/image/upload/v1748824738/z6621531660497_00c45b7532add5b3a49055fb93d63a53_ewd8xj.jpg"
@@ -116,21 +73,18 @@ function ConsultantHeader() {
           ))}
         </nav>
       </div>
-      {/* Avatar & user */}
+
       <div className="flex items-center gap-2 relative" ref={dropdownRef}>
         <img
           src={avatar}
           alt="avatar"
           className="w-10 h-10 rounded-full border-2 border-white object-cover shadow-md"
-          onError={(e) => {
+          onError={e => {
             e.target.onerror = null;
             e.target.src = "https://placehold.co/40x40/ADD8E6/000000?text=AV";
           }}
         />
-
-        <span className="font-semibold">
-          {user?.fullName || profile?.fullName || "Tên người dùng"}
-        </span>
+        <span className="font-semibold">{displayName}</span>
         <button
           className="ml-2 focus:outline-none"
           onClick={() => setOpenDropdown((v) => !v)}
@@ -149,7 +103,6 @@ function ConsultantHeader() {
             />
           </svg>
         </button>
-        {/* Dropdown menu */}
         {openDropdown && (
           <div className="absolute right-0 top-14 bg-white text-blue-800 rounded shadow-lg min-w-[180px] py-2 z-50">
             <button
