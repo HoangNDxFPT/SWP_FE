@@ -18,11 +18,14 @@ function ConsultantHeader() {
 
   useEffect(() => {
     if (!currentUser || !currentUser.fullName) {
+      console.log("CurrentUser in header:", currentUser);
+
       const token = localStorage.getItem("token");
       if (token) {
         const fetchUserProfile = async () => {
           try {
             const response = await api.get("/consultant/profile");
+            console.log("Profile API response:", response.data);
             dispatch(login(response.data));
           } catch (error) {
             if (
