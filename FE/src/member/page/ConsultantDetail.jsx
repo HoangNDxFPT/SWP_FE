@@ -386,7 +386,7 @@ function ConsultantDetail() {
                 <div className="space-y-6">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-blue-700">
-                      Đang đặt lịch với: <span className="font-semibold">{user.fullName || user.userName}</span>
+                      Đang đặt lịch với tên: <span className="font-semibold">{user.fullName || user.userName}</span>
                     </p>
                   </div>
 
