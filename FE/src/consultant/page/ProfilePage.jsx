@@ -15,6 +15,7 @@ import {
   EnvelopeIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
+import { uploadImageToCloudinary } from "../../utils/uploadCloudinary";
 
 // Bạn có thể import Header từ project thật, dưới đây là placeholder
 const Header = ({ user }) => (
@@ -235,36 +236,39 @@ export default function ProfilePage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label
-                htmlFor="avatarUrl"
-                className="font-semibold text-gray-700 block mb-1"
-              >
-                Ảnh đại diện (URL)
-              </label>
-              <input
-                id="avatarUrl"
-                type="text"
-                name="avatarUrl"
-                value={editProfile.avatarUrl || ""}
-                onChange={(e) =>
-                  setEditProfile({ ...editProfile, avatarUrl: e.target.value })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-                placeholder="https://... (link ảnh đại diện)"
-              />
-              {editProfile.avatarUrl && (
-                <img
-                  src={editProfile.avatarUrl}
-                  alt="Avatar preview"
-                  className="mt-2 rounded-full w-20 h-20 border shadow"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src =
-                      "https://placehold.co/80x80/ADD8E6/000000?text=AV";
-                  }}
-                />
-              )}
-            </div>
+  <label htmlFor="avatarUrl" className="font-semibold text-gray-700 block mb-1">
+    Ảnh đại diện
+  </label>
+  <input
+    id="avatarUrl"
+    type="file"
+    accept="image/*"
+    onChange={async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        toast.info("Đang upload ảnh đại diện...");
+        const url = await uploadImageToCloudinary(file);
+        setEditProfile({ ...editProfile, avatarUrl: url });
+        toast.success("Upload thành công!");
+      } catch {
+        toast.error("Upload ảnh thất bại!");
+      }
+    }}
+    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+/>
+  {editProfile.avatarUrl && (
+    <img
+      src={editProfile.avatarUrl}
+      alt="Avatar preview"
+      className="mt-2 rounded-full w-20 h-20 border shadow"
+      onError={e => {
+        e.target.onerror = null;
+        e.target.src = "https://placehold.co/80x80/ADD8E6/000000?text=AV";
+      }}
+    />
+  )}
+</div>
 
             <div>
               <label
@@ -383,27 +387,36 @@ export default function ProfilePage() {
                 className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
               />
             </div>
-            <div>
-              <label
-                htmlFor="certifiedDegreeImage"
-                className="font-semibold text-gray-700 block mb-1"
-              >
-                Ảnh chứng nhận (URL)
-              </label>
-              <input
-                id="certifiedDegreeImage"
-                type="text"
-                name="certifiedDegreeImage"
-                value={editProfile.certifiedDegreeImage || ""}
-                onChange={(e) =>
-                  setEditProfile({
-                    ...editProfile,
-                    certifiedDegreeImage: e.target.value,
-                  })
-                }
-                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200"
-              />
-            </div>
+           <div>
+  <label htmlFor="certifiedDegreeImage" className="font-semibold text-gray-700 block mb-1">
+    Ảnh chứng nhận
+  </label>
+  <input
+    id="certifiedDegreeImage"
+    type="file"
+    accept="image/*"
+    onChange={async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      try {
+        toast.info("Đang upload ảnh chứng chỉ...");
+        const url = await uploadImageToCloudinary(file);
+        setEditProfile({ ...editProfile, certifiedDegreeImage: url });
+        toast.success("Upload thành công!");
+      } catch {
+        toast.error("Upload ảnh thất bại!");
+      }
+    }}
+    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+/>
+  {editProfile.certifiedDegreeImage && (
+    <img
+      src={editProfile.certifiedDegreeImage}
+      alt="Certified preview"
+      className="mt-2 rounded-lg w-40 border shadow"
+    />
+  )}
+</div>
             <div className="md:col-span-2">
               <label
                 htmlFor="googleMeetLink"
