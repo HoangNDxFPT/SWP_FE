@@ -198,6 +198,7 @@ function CourseQuiz() {
         const parsedQuizzes = quizRes.data.map(q => ({
           ...q,
           answer: Array.isArray(q.answer) ? q.answer : JSON.parse(q.answer || '[]'),
+          correct: typeof q.correct === 'string' ? Number(q.correct) - 1 : q.correct - 1,
         }));
         
         setQuizList(parsedQuizzes);
