@@ -32,6 +32,11 @@ function Program() {
         googleSheetUrl: '',
         program: null
     });
+    const PROGRAMS_PER_PAGE = 5;
+    const [programPage, setProgramPage] = useState(1);
+
+    const TEMPLATES_PER_PAGE = 8;
+    const [templatePage, setTemplatePage] = useState(1);
     const [showAddTemplateModal, setShowAddTemplateModal] = useState(false);
     const [showEditTemplateModal, setShowEditTemplateModal] = useState(false);
     const [searchTemplateQuery, setSearchTemplateQuery] = useState('');
@@ -455,6 +460,24 @@ function Program() {
 
     const activePrograms = programs.filter(program => new Date(program.end_date) >= new Date());
     const endedPrograms = programs.filter(program => new Date(program.end_date) < new Date());
+    useEffect(() => {
+        setProgramPage(1);
+    }, [searchProgramQuery, programStatusFilter]);
+
+    useEffect(() => {
+        setTemplatePage(1);
+    }, [searchTemplateQuery]);
+    const totalProgramPages = Math.ceil(filteredPrograms.length / PROGRAMS_PER_PAGE);
+    const paginatedPrograms = filteredPrograms.slice(
+        (programPage - 1) * PROGRAMS_PER_PAGE,
+        programPage * PROGRAMS_PER_PAGE
+    );
+
+    const totalTemplatePages = Math.ceil(filteredTemplates.length / TEMPLATES_PER_PAGE);
+    const paginatedTemplates = filteredTemplates.slice(
+        (templatePage - 1) * TEMPLATES_PER_PAGE,
+        templatePage * TEMPLATES_PER_PAGE
+    );
 
     return (
         <div className="w-full">
@@ -615,7 +638,7 @@ function Program() {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredPrograms.map((program) => (
+                                    {paginatedPrograms.map((program) => (
                                         <tr key={program.id} className="hover:bg-blue-50 transition-colors">
                                             <td className="px-6 py-4">
                                                 <div className="text-sm font-medium text-gray-900">{program.name}</div>
@@ -681,6 +704,35 @@ function Program() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+
+                    {/* Pagination for programs */}
+                    {totalProgramPages > 1 && (
+                        <div className="flex justify-center items-center gap-2 py-4">
+                            <button
+                                className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                                disabled={programPage === 1}
+                                onClick={() => setProgramPage(programPage - 1)}
+                            >
+                                Trước
+                            </button>
+                            {[...Array(totalProgramPages)].map((_, idx) => (
+                                <button
+                                    key={idx}
+                                    className={`px-3 py-1 rounded border ${programPage === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                                    onClick={() => setProgramPage(idx + 1)}
+                                >
+                                    {idx + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                                disabled={programPage === totalProgramPages}
+                                onClick={() => setProgramPage(programPage + 1)}
+                            >
+                                Sau
+                            </button>
                         </div>
                     )}
                 </>
@@ -756,7 +808,7 @@ function Program() {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white divide-y divide-gray-200">
-                                    {filteredTemplates.map((template) => (
+                                    {paginatedTemplates.map((template) => (
                                         <tr key={template.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4">
                                                 <div className="text-sm font-medium text-gray-900">{template.name}</div>
@@ -817,6 +869,35 @@ function Program() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+
+                    {/* Pagination for templates */}
+                    {totalTemplatePages > 1 && (
+                        <div className="flex justify-center items-center gap-2 py-4">
+                            <button
+                                className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                                disabled={templatePage === 1}
+                                onClick={() => setTemplatePage(templatePage - 1)}
+                            >
+                                Trước
+                            </button>
+                            {[...Array(totalTemplatePages)].map((_, idx) => (
+                                <button
+                                    key={idx}
+                                    className={`px-3 py-1 rounded border ${templatePage === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                                    onClick={() => setTemplatePage(idx + 1)}
+                                >
+                                    {idx + 1}
+                                </button>
+                            ))}
+                            <button
+                                className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                                disabled={templatePage === totalTemplatePages}
+                                onClick={() => setTemplatePage(templatePage + 1)}
+                            >
+                                Sau
+                            </button>
                         </div>
                     )}
                 </>

@@ -16,6 +16,8 @@ export default function AssessmentManage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAnswerModal, setShowAnswerModal] = useState(false);
+  const QUESTIONS_PER_PAGE = 6;
+  const [currentPage, setCurrentPage] = useState(1);
 
   const [currentQuestion, setCurrentQuestion] = useState({
     assessmentType: 'ASSIST',
@@ -46,11 +48,11 @@ export default function AssessmentManage() {
         api.get('/admin/assessment-questions/not-deleted'),
         api.get('/admin/assessment-answers/not-deleted')
       ]);
-      
+
       const filteredQuestions = questionsResponse.data.filter(
         question => question.assessmentType === assessmentType
       );
-      
+
       const answersByQuestionId = {};
       answersResponse.data.forEach(answer => {
         const questionId = answer.question?.id;
@@ -61,12 +63,12 @@ export default function AssessmentManage() {
           answersByQuestionId[questionId].push(answer);
         }
       });
-      
+
       const questionsWithAnswers = filteredQuestions.map(question => ({
         ...question,
         answers: answersByQuestionId[question.id] || []
       }));
-      
+
       setQuestions(questionsWithAnswers);
     } catch (error) {
       toast.error('Không thể tải câu hỏi');
@@ -251,11 +253,21 @@ export default function AssessmentManage() {
       answers: []
     });
   };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [assessmentType, questions.length]);
+
+  // Tính toán danh sách câu hỏi hiển thị theo trang
+  const totalPages = Math.ceil(questions.length / QUESTIONS_PER_PAGE);
+  const paginatedQuestions = questions.slice(
+    (currentPage - 1) * QUESTIONS_PER_PAGE,
+    currentPage * QUESTIONS_PER_PAGE
+  );
 
   return (
     <div className="w-full transition-all duration-300">
       <ToastContainer position="top-right" autoClose={3000} />
-      
+
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           Quản lý câu hỏi đánh giá
@@ -274,22 +286,20 @@ export default function AssessmentManage() {
               <button
                 key={type.value}
                 onClick={() => setAssessmentType(type.value)}
-                className={`px-5 py-2 text-sm ${
-                  assessmentType === type.value
-                    ? 'bg-indigo-600 text-white font-medium'
-                    : 'bg-white text-gray-700 hover:bg-gray-50'
-                } ${
-                  type.value === 'ASSIST' 
-                    ? 'rounded-l-md border border-gray-300' 
+                className={`px-5 py-2 text-sm ${assessmentType === type.value
+                  ? 'bg-indigo-600 text-white font-medium'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+                  } ${type.value === 'ASSIST'
+                    ? 'rounded-l-md border border-gray-300'
                     : 'rounded-r-md border-t border-r border-b border-gray-300'
-                }`}
+                  }`}
               >
                 {type.label}
               </button>
             ))}
           </div>
         </div>
-        
+
         <button
           className="inline-flex items-center justify-center px-4 py-2 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
           onClick={() => {
@@ -309,7 +319,7 @@ export default function AssessmentManage() {
         <div className="flex justify-center py-10">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
         </div>
-      ) : questions.length === 0 ? (
+      ) : paginatedQuestions.length === 0 ? (
         <div className="bg-white shadow-sm rounded-lg px-4 py-6 md:px-6 md:py-8 text-center border border-gray-200">
           <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -335,7 +345,7 @@ export default function AssessmentManage() {
         </div>
       ) : (
         <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          {questions.map((question, index) => (
+          {paginatedQuestions.map((question, index) => (
             <div key={question.id} className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
               <div className="p-4">
                 <div className="flex items-start justify-between mb-2">
@@ -343,7 +353,7 @@ export default function AssessmentManage() {
                     Câu hỏi #{index + 1}
                   </div>
                   <div className="flex space-x-1">
-                    <button 
+                    <button
                       className="text-gray-400 hover:text-gray-600 p-1"
                       onClick={() => openEditModal(question)}
                     >
@@ -361,19 +371,19 @@ export default function AssessmentManage() {
                     </button>
                   </div>
                 </div>
-                
+
                 <h2 className="text-lg font-medium text-gray-900 mb-4">
                   {question.questionText}
                 </h2>
-                
+
                 <div>
                   <h3 className="text-sm font-medium text-gray-700 mb-2">
                     Các đáp án ({question.answers?.length || 0})
                   </h3>
                   <div className="space-y-2">
                     {question.answers && question.answers.slice(0, 2).map((answer, idx) => (
-                      <div 
-                        key={answer.id || idx} 
+                      <div
+                        key={answer.id || idx}
                         className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
                       >
                         <p className="text-sm text-gray-800 truncate">
@@ -401,7 +411,7 @@ export default function AssessmentManage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-gray-50 p-3 flex justify-between items-center border-t border-gray-200">
                 <div className="text-xs text-gray-500">
                   ID: {question.id}
@@ -420,6 +430,33 @@ export default function AssessmentManage() {
           ))}
         </div>
       )}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 py-6">
+          <button
+            className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(currentPage - 1)}
+          >
+            Trước
+          </button>
+          {[...Array(totalPages)].map((_, idx) => (
+            <button
+              key={idx}
+              className={`px-3 py-1 rounded border ${currentPage === idx + 1 ? "bg-indigo-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+              onClick={() => setCurrentPage(idx + 1)}
+            >
+              {idx + 1}
+            </button>
+          ))}
+          <button
+            className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(currentPage + 1)}
+          >
+            Sau
+          </button>
+        </div>
+      )}
 
       {/* Modal tạo câu hỏi */}
       {showCreateModal && (
@@ -427,7 +464,7 @@ export default function AssessmentManage() {
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-medium text-gray-900">Thêm câu hỏi mới</h2>
-              <button 
+              <button
                 onClick={() => setShowCreateModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -436,7 +473,7 @@ export default function AssessmentManage() {
                 </svg>
               </button>
             </div>
-            
+
             {/* Modal content */}
             <div className="p-6 space-y-4">
               {/* Question form fields */}
@@ -452,7 +489,7 @@ export default function AssessmentManage() {
                   className="block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
                 ></textarea>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -503,7 +540,7 @@ export default function AssessmentManage() {
                     Thêm đáp án
                   </button>
                 </div>
-                
+
                 {/* Answers list */}
                 {currentQuestion.answers.length === 0 ? (
                   <div className="bg-gray-50 rounded-md text-center p-4">
@@ -558,11 +595,10 @@ export default function AssessmentManage() {
               <button
                 onClick={handleCreateQuestion}
                 disabled={loading || !currentQuestion.questionText.trim() || currentQuestion.answers.length === 0}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium text-white ${
-                  loading || !currentQuestion.questionText.trim() || currentQuestion.answers.length === 0
-                    ? 'bg-indigo-400 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
-                }`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium text-white ${loading || !currentQuestion.questionText.trim() || currentQuestion.answers.length === 0
+                  ? 'bg-indigo-400 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
               >
                 {loading ? 'Đang tạo...' : 'Tạo câu hỏi'}
               </button>
@@ -577,7 +613,7 @@ export default function AssessmentManage() {
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-medium text-gray-900">Sửa câu hỏi</h2>
-              <button 
+              <button
                 onClick={() => setShowEditModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -586,7 +622,7 @@ export default function AssessmentManage() {
                 </svg>
               </button>
             </div>
-            
+
             {/* Form content identical to create modal */}
             <div className="px-6 py-4 space-y-4">
               <div>
@@ -601,7 +637,7 @@ export default function AssessmentManage() {
                   className="block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
                 ></textarea>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -619,7 +655,7 @@ export default function AssessmentManage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Thứ tự <span className="text-red-500">*</span>
@@ -653,7 +689,7 @@ export default function AssessmentManage() {
                     Thêm đáp án
                   </button>
                 </div>
-                
+
                 {/* Answers list */}
                 {currentQuestion.answers.length === 0 ? (
                   <div className="bg-gray-50 rounded-md text-center p-4">
@@ -708,11 +744,10 @@ export default function AssessmentManage() {
               <button
                 onClick={handleUpdateQuestion}
                 disabled={loading || !currentQuestion.questionText.trim() || currentQuestion.answers.length === 0}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium text-white ${
-                  loading || !currentQuestion.questionText.trim() || currentQuestion.answers.length === 0
-                    ? 'bg-indigo-400 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
-                }`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium text-white ${loading || !currentQuestion.questionText.trim() || currentQuestion.answers.length === 0
+                  ? 'bg-indigo-400 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
               >
                 {loading ? 'Đang cập nhật...' : 'Cập nhật'}
               </button>
@@ -729,7 +764,7 @@ export default function AssessmentManage() {
               <h3 className="text-lg font-medium text-gray-900">
                 {editingAnswerIndex !== null ? 'Sửa đáp án' : 'Thêm đáp án'}
               </h3>
-              <button 
+              <button
                 onClick={() => setShowAnswerModal(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -738,7 +773,7 @@ export default function AssessmentManage() {
                 </svg>
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -756,7 +791,7 @@ export default function AssessmentManage() {
                   className="block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm px-3 py-2"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Điểm số <span className="text-red-500">*</span>
@@ -789,11 +824,10 @@ export default function AssessmentManage() {
               <button
                 onClick={handleAddAnswer}
                 disabled={!(currentAnswer.answerText || currentAnswer.text)?.trim()}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium text-white ${
-                  !(currentAnswer.answerText || currentAnswer.text)?.trim()
-                    ? 'bg-indigo-400 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
-                }`}
+                className={`px-4 py-1.5 rounded-md text-sm font-medium text-white ${!(currentAnswer.answerText || currentAnswer.text)?.trim()
+                  ? 'bg-indigo-400 cursor-not-allowed'
+                  : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
               >
                 {editingAnswerIndex !== null ? 'Cập nhật' : 'Thêm đáp án'}
               </button>
@@ -808,7 +842,7 @@ export default function AssessmentManage() {
           <div className="bg-white rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
               <h3 className="text-lg font-medium text-gray-900">Chi tiết câu hỏi</h3>
-              <button 
+              <button
                 onClick={() => setShowQuestionDetail(false)}
                 className="text-gray-400 hover:text-gray-600"
               >
@@ -817,7 +851,7 @@ export default function AssessmentManage() {
                 </svg>
               </button>
             </div>
-            
+
             <div className="p-6 space-y-4">
               <div className="bg-indigo-50 p-4 rounded-md">
                 <div className="flex justify-between items-start">

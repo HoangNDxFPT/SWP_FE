@@ -17,6 +17,8 @@ function CourseEnrollmentManage() {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const ENROLLMENTS_PER_PAGE = 10;
+  const [enrollmentPage, setEnrollmentPage] = useState(1);
 
   // Quiz result modal states
   const [showQuizModal, setShowQuizModal] = useState(false);
@@ -317,6 +319,14 @@ function CourseEnrollmentManage() {
       </div>
     );
   };
+  const totalEnrollmentPages = Math.ceil(filteredEnrollments.length / ENROLLMENTS_PER_PAGE);
+  const paginatedEnrollments = filteredEnrollments.slice(
+    (enrollmentPage - 1) * ENROLLMENTS_PER_PAGE,
+    enrollmentPage * ENROLLMENTS_PER_PAGE
+  );
+  useEffect(() => {
+    setEnrollmentPage(1);
+  }, [selectedCourseId, selectedUserId, statusFilter, searchQuery]);
 
   return (
     <>
@@ -509,7 +519,7 @@ function CourseEnrollmentManage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredEnrollments.map((enrollment, index) => (
+                {paginatedEnrollments.map((enrollment, index) => (
                   <tr key={index} className="hover:bg-blue-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{enrollment.userId}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{enrollment.userName}</td>
@@ -528,10 +538,38 @@ function CourseEnrollmentManage() {
                   </tr>
                 ))}
               </tbody>
+              {totalEnrollmentPages > 1 && (
+                <div className="flex justify-center items-center gap-2 py-4">
+                  <button
+                    className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                    disabled={enrollmentPage === 1}
+                    onClick={() => setEnrollmentPage(enrollmentPage - 1)}
+                  >
+                    Trước
+                  </button>
+                  {[...Array(totalEnrollmentPages)].map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`px-3 py-1 rounded border ${enrollmentPage === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                      onClick={() => setEnrollmentPage(idx + 1)}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+                  <button
+                    className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                    disabled={enrollmentPage === totalEnrollmentPages}
+                    onClick={() => setEnrollmentPage(enrollmentPage + 1)}
+                  >
+                    Sau
+                  </button>
+                </div>
+              )}
             </table>
           </div>
         </div>
       )}
+
 
       {/* User Progress Card - Only show when filtering by user */}
       {selectedUserId && filteredEnrollments.length > 0 && (
@@ -655,8 +693,8 @@ function CourseEnrollmentManage() {
                             key={result.id}
                             onClick={() => handleSelectQuizAttempt(result)}
                             className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${selectedQuizResult.id === result.id
-                                ? 'bg-blue-600 text-white shadow-sm'
-                                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
                               }`}
                           >
                             Lần {index + 1}
@@ -753,10 +791,10 @@ function CourseEnrollmentManage() {
                                           <div
                                             key={idx}
                                             className={`p-3 rounded-lg ${isCorrectAnswer
-                                                ? 'bg-green-50 border border-green-200'
-                                                : isStudentAnswer && !isCorrectAnswer
-                                                  ? 'bg-red-50 border border-red-200'
-                                                  : 'bg-white border border-gray-200'
+                                              ? 'bg-green-50 border border-green-200'
+                                              : isStudentAnswer && !isCorrectAnswer
+                                                ? 'bg-red-50 border border-red-200'
+                                                : 'bg-white border border-gray-200'
                                               }`}
                                           >
                                             <div className="flex items-center justify-between">

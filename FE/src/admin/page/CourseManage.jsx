@@ -25,6 +25,8 @@ export default function CourseManage() {
 
   // States for lesson and quiz management
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const COURSES_PER_PAGE = 6;
   const [activeTab, setActiveTab] = useState('lessons');
   const [lessons, setLessons] = useState([]);
   const [showLessonModal, setShowLessonModal] = useState(false);
@@ -83,7 +85,7 @@ export default function CourseManage() {
       toast.error("Invalid date format");
       return;
     }
-    
+
     // Tạo payload với durationInMinutes đảm bảo là số nguyên
     const payload = {
       ...newCourse,
@@ -91,14 +93,14 @@ export default function CourseManage() {
       isDeleted: Boolean(newCourse.isDeleted), // Đảm bảo là boolean
       deleted: Boolean(newCourse.deleted) // Đảm bảo là boolean
     };
-    
+
     console.log("POST Request Payload:", payload);
     console.log("Payload data types:", {
       durationInMinutes: typeof payload.durationInMinutes,
       isDeleted: typeof payload.isDeleted,
       deleted: typeof payload.deleted
     });
-    
+
     try {
       setLoading(true);
       await api.post("/courses", payload);
@@ -155,7 +157,7 @@ export default function CourseManage() {
       toast.error("Định dạng ngày không hợp lệ");
       return;
     }
-    
+
     // Tạo payload theo đúng API specification
     const payload = {
       id: parseInt(editCourse.id), // Đảm bảo ID là số nguyên
@@ -168,28 +170,28 @@ export default function CourseManage() {
       url: editCourse.url || ""
       // Không gửi isDeleted vì API không hỗ trợ, chỉ có deleted
     };
-    
+
     console.log("PUT Request Payload:", payload);
     console.log("PUT Request URL:", `/courses/${editCourse.id}`);
     console.log("Payload data types:", {
       id: typeof payload.id,
       durationInMinutes: typeof payload.durationInMinutes
     });
-    
+
     try {
       setLoading(true);
-      
+
       // Thêm validation để đảm bảo dữ liệu hợp lệ
       if (!payload.id) {
         throw new Error("Course ID is required");
       }
-      
+
       console.log("Sending PUT request...");
       const response = await api.put(`/courses/${editCourse.id}`, payload);
       console.log("PUT Response:", response);
       console.log("Response Status:", response.status);
       console.log("Response Data:", response.data);
-      
+
       // Coi như thành công nếu không có lỗi throw
       toast.success("Cập nhật khóa học thành công!");
 
@@ -199,7 +201,7 @@ export default function CourseManage() {
         editCourseIdType: typeof editCourse.id,
         responseData: response.data
       });
-      
+
       setCourses(prevCourses => {
         const updatedCourses = prevCourses.map(course => {
           console.log('Comparing:', {
@@ -222,12 +224,12 @@ export default function CourseManage() {
       await fetchCourses();
     } catch (err) {
       console.error("PUT Request Error:", err);
-      
+
       if (err.response) {
         console.error("Error Response Status:", err.response.status);
         console.error("Error Response Data:", err.response.data);
         console.error("Error Response Headers:", err.response.headers);
-        
+
         // Hiển thị lỗi chi tiết từ backend
         const errorMessage = err.response.data?.message || err.response.data?.error || "Cập nhật khóa học thất bại!";
         toast.error(`Lỗi ${err.response.status}: ${errorMessage}`);
@@ -554,6 +556,18 @@ export default function CourseManage() {
         };
     }
   };
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Tính toán dữ liệu hiển thị theo trang
+  const paginatedCourses = filteredCourses.slice(
+    (currentPage - 1) * COURSES_PER_PAGE,
+    currentPage * COURSES_PER_PAGE
+  );
+
+  const totalPages = Math.ceil(filteredCourses.length / COURSES_PER_PAGE);
+
 
   return (
     <div className="flex-1 p-0 overflow-hidden">
@@ -636,8 +650,8 @@ export default function CourseManage() {
           <div className="flex flex-wrap gap-2 mt-3">
             <button
               className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "all"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               onClick={() => setStatusFilter("all")}
             >
@@ -645,8 +659,8 @@ export default function CourseManage() {
             </button>
             <button
               className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "active"
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-green-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               onClick={() => setStatusFilter("active")}
             >
@@ -654,8 +668,8 @@ export default function CourseManage() {
             </button>
             <button
               className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "ended"
-                  ? "bg-red-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ? "bg-red-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               onClick={() => setStatusFilter("ended")}
             >
@@ -673,7 +687,7 @@ export default function CourseManage() {
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </div>
-          ) : filteredCourses.length === 0 ? (
+          ) : paginatedCourses.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-lg shadow">
               <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -694,7 +708,7 @@ export default function CourseManage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredCourses.map((course) => {
+              {paginatedCourses.map((course) => {
                 const ageGroupStyle = getAgeGroupStyles(course.targetAgeGroup);
                 return (
                   <div key={course.id} className="bg-white shadow rounded-lg overflow-hidden hover:shadow-md transition-shadow border border-gray-100">
@@ -787,6 +801,34 @@ export default function CourseManage() {
             </div>
           )}
         </div>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 py-6">
+            <button
+              className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              Trước
+            </button>
+            {[...Array(totalPages)].map((_, idx) => (
+              <button
+                key={idx}
+                className={`px-3 py-1 rounded border ${currentPage === idx + 1 ? "bg-indigo-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                onClick={() => setCurrentPage(idx + 1)}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Sau
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -875,18 +917,17 @@ export default function CourseManage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
-                
+
                 {/* Quick Select Options */}
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   {[30, 60, 90, 120].map(duration => (
                     <button
                       key={duration}
                       type="button"
-                      className={`px-3 py-2 text-sm rounded border ${
-                        newCourse.durationInMinutes === duration 
-                          ? 'bg-blue-500 text-white border-blue-500' 
-                          : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
-                      }`}
+                      className={`px-3 py-2 text-sm rounded border ${newCourse.durationInMinutes === duration
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                        }`}
                       onClick={() => setNewCourse({ ...newCourse, durationInMinutes: duration })}
                     >
                       {duration}p
@@ -899,14 +940,14 @@ export default function CourseManage() {
                   <button
                     type="button"
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setNewCourse({ 
-                      ...newCourse, 
-                      durationInMinutes: Math.max(0, (newCourse.durationInMinutes || 0) - 15) 
+                    onClick={() => setNewCourse({
+                      ...newCourse,
+                      durationInMinutes: Math.max(0, (newCourse.durationInMinutes || 0) - 15)
                     })}
                   >
                     -15
                   </button>
-                  
+
                   <input
                     type="number"
                     className="flex-1 border rounded px-3 py-2 text-center"
@@ -916,19 +957,19 @@ export default function CourseManage() {
                     value={newCourse.durationInMinutes}
                     onChange={e => setNewCourse({ ...newCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
                   />
-                  
+
                   <button
                     type="button"
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setNewCourse({ 
-                      ...newCourse, 
-                      durationInMinutes: (newCourse.durationInMinutes || 0) + 15 
+                    onClick={() => setNewCourse({
+                      ...newCourse,
+                      durationInMinutes: (newCourse.durationInMinutes || 0) + 15
                     })}
                   >
                     +15
                   </button>
                 </div>
-                
+
                 <p className="text-xs text-gray-500 mt-1">
                   Chọn nhanh hoặc nhập số phút tùy chỉnh
                 </p>
@@ -1050,18 +1091,17 @@ export default function CourseManage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
-                
+
                 {/* Quick Select Options */}
                 <div className="grid grid-cols-4 gap-2 mb-3">
                   {[30, 60, 90, 120].map(duration => (
                     <button
                       key={duration}
                       type="button"
-                      className={`px-3 py-2 text-sm rounded border ${
-                        (editCourse.durationInMinutes || 0) === duration 
-                          ? 'bg-blue-500 text-white border-blue-500' 
-                          : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
-                      }`}
+                      className={`px-3 py-2 text-sm rounded border ${(editCourse.durationInMinutes || 0) === duration
+                        ? 'bg-blue-500 text-white border-blue-500'
+                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                        }`}
                       onClick={() => setEditCourse({ ...editCourse, durationInMinutes: duration })}
                     >
                       {duration}p
@@ -1074,14 +1114,14 @@ export default function CourseManage() {
                   <button
                     type="button"
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setEditCourse({ 
-                      ...editCourse, 
-                      durationInMinutes: Math.max(0, (editCourse.durationInMinutes || 0) - 15) 
+                    onClick={() => setEditCourse({
+                      ...editCourse,
+                      durationInMinutes: Math.max(0, (editCourse.durationInMinutes || 0) - 15)
                     })}
                   >
                     -15
                   </button>
-                  
+
                   <input
                     type="number"
                     className="flex-1 border rounded px-3 py-2 text-center"
@@ -1091,19 +1131,19 @@ export default function CourseManage() {
                     value={editCourse.durationInMinutes || 0}
                     onChange={e => setEditCourse({ ...editCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
                   />
-                  
+
                   <button
                     type="button"
                     className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setEditCourse({ 
-                      ...editCourse, 
-                      durationInMinutes: (editCourse.durationInMinutes || 0) + 15 
+                    onClick={() => setEditCourse({
+                      ...editCourse,
+                      durationInMinutes: (editCourse.durationInMinutes || 0) + 15
                     })}
                   >
                     +15
                   </button>
                 </div>
-                
+
                 <p className="text-xs text-gray-500 mt-1">
                   Chọn nhanh hoặc nhập số phút tùy chỉnh
                 </p>
