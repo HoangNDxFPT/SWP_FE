@@ -4,6 +4,7 @@ import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { uploadImageToCloudinary } from "../../services/uploadCloudinary";
 
 function ConsultantManagement() {
     // States
@@ -71,16 +72,16 @@ function ConsultantManagement() {
         try {
             const res = await api.get("/consultant/all");
             let consultantData = res.data || [];
-            
+
             // Apply filter if selectedConsultant is set
             if (selectedConsultant && activeTab === "consultants") {
-                consultantData = consultantData.filter(consultant => 
+                consultantData = consultantData.filter(consultant =>
                     consultant.consultantId.toString() === selectedConsultant
                 );
             }
-            
+
             setConsultants(consultantData);
-            
+
             // Calculate consultant stats based on filtered data
             const consultantStats = {
                 totalConsultants: consultantData.length,
@@ -119,7 +120,7 @@ function ConsultantManagement() {
     const updateConsultant = async (consultantData) => {
         try {
             console.log("Updating consultant with data:", consultantData);
-            
+
             // Prepare payload according to new API schema
             const payload = {
                 consultantId: consultantData.consultantId || consultantData.id,
@@ -135,11 +136,11 @@ function ConsultantManagement() {
             };
 
             console.log("API payload:", payload);
-            
+
             // Use new API endpoint with consultantId
             const consultantId = payload.consultantId;
             await api.put(`/consultant/admin/profile/${consultantId}`, payload);
-            
+
             toast.success("Cập nhật thông tin tư vấn viên thành công");
             fetchConsultants();
             setIsEditing(false);
@@ -184,13 +185,13 @@ function ConsultantManagement() {
                 }
                 acc[date].totalSlots++;
                 acc[date].slots.push(slot);
-                
+
                 if (slot.status === "CÒN TRỐNG") {
                     acc[date].availableSlots++;
                 } else if (slot.status === "ĐÃ ĐẶT") {
                     acc[date].bookedSlots++;
                 }
-                
+
                 return acc;
             }, {});
 
@@ -313,11 +314,10 @@ function ConsultantManagement() {
                 <div className="border-b">
                     <nav className="-mb-px flex space-x-8 px-6">
                         <button
-                            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === "consultants"
-                                    ? "border-blue-500 text-blue-600"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "consultants"
+                                ? "border-blue-500 text-blue-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                }`}
                             onClick={() => handleTabChange("consultants")}
                         >
                             <div className="flex items-center">
@@ -328,11 +328,10 @@ function ConsultantManagement() {
                             </div>
                         </button>
                         <button
-                            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                                activeTab === "slots"
-                                    ? "border-blue-500 text-blue-600"
-                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                            }`}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "slots"
+                                ? "border-blue-500 text-blue-600"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                }`}
                             onClick={() => handleTabChange("slots")}
                         >
                             <div className="flex items-center">
@@ -354,7 +353,7 @@ function ConsultantManagement() {
                     </svg>
                     Bộ lọc
                 </h2>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tư vấn viên</label>
@@ -615,40 +614,51 @@ function ConsultantManagement() {
                                 <div>
                                     {/* Avatar tư vấn viên */}
                                     <div className="flex items-center mb-6">
-                                      {(isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl) ? (
-                                        <img
-                                          src={isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl}
-                                          alt="avatar"
-                                          className="w-20 h-20 rounded-full object-cover border mr-4"
-                                        />
-                                      ) : (
-                                        <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mr-4">
-                                          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
-                                          </svg>
+                                        {(isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl) ? (
+                                            <img
+                                                src={isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl}
+                                                alt="avatar"
+                                                className="w-20 h-20 rounded-full object-cover border mr-4"
+                                            />
+                                        ) : (
+                                            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mr-4">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <h4 className="text-lg font-semibold text-gray-900">
+                                                {isEditing ? editingConsultant.fullName : currentConsultant.fullName}
+                                            </h4>
+                                            <p className="text-gray-500 text-sm">
+                                                {isEditing ? editingConsultant.degree : currentConsultant.degree}
+                                            </p>
                                         </div>
-                                      )}
-                                      <div>
-                                        <h4 className="text-lg font-semibold text-gray-900">
-                                          {isEditing ? editingConsultant.fullName : currentConsultant.fullName}
-                                        </h4>
-                                        <p className="text-gray-500 text-sm">
-                                          {isEditing ? editingConsultant.degree : currentConsultant.degree}
-                                        </p>
-                                      </div>
                                     </div>
                                     {/* Input chỉnh sửa avatarUrl */}
                                     {isEditing && (
-                                      <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">URL ảnh đại diện</h4>
-                                        <input
-                                          type="url"
-                                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                          value={editingConsultant.avatarUrl || ""}
-                                          onChange={(e) => handleEditChange("avatarUrl", e.target.value)}
-                                          placeholder="https://example.com/avatar.jpg"
-                                        />
-                                      </div>
+                                        <div className="mb-4">
+                                            <h4 className="text-sm font-medium text-gray-500 mb-1">Ảnh đại diện</h4>
+                                            <input
+                                                id="avatarUrl"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+                                                    try {
+                                                        toast.info("Đang upload ảnh đại diện...");
+                                                        const url = await uploadImageToCloudinary(file);
+                                                        handleEditChange("avatarUrl", url);
+                                                        toast.success("Upload thành công!");
+                                                    } catch {
+                                                        toast.error("Upload ảnh thất bại!");
+                                                    }
+                                                }}
+                                                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+                                            />
+                                        </div>
                                     )}
 
                                     <div className="mb-4">
@@ -679,7 +689,7 @@ function ConsultantManagement() {
                                             <p className="text-gray-800">{currentConsultant.phoneNumber}</p>
                                         )}
                                     </div>
-                                    
+
                                     <div className="mb-4">
                                         <h4 className="text-sm font-medium text-gray-500 mb-1">Bằng cấp</h4>
                                         {isEditing ? (
@@ -708,7 +718,7 @@ function ConsultantManagement() {
                                             <p className="text-gray-800">{currentConsultant.certifiedDegree}</p>
                                         )}
                                     </div>
-                                    
+
                                     <div className="mb-4">
                                         <h4 className="text-sm font-medium text-gray-500 mb-1">Địa chỉ</h4>
                                         {isEditing ? (
@@ -736,8 +746,8 @@ function ConsultantManagement() {
                                         ) : (
                                             <p className="text-gray-800">
                                                 {currentConsultant.googleMeetLink ? (
-                                                    <a href={currentConsultant.googleMeetLink} target="_blank" rel="noopener noreferrer" 
-                                                       className="text-blue-600 hover:text-blue-800 underline">
+                                                    <a href={currentConsultant.googleMeetLink} target="_blank" rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-800 underline">
                                                         {currentConsultant.googleMeetLink}
                                                     </a>
                                                 ) : (
@@ -752,7 +762,7 @@ function ConsultantManagement() {
                                         <p className="text-gray-800 font-mono bg-gray-50 px-2 py-1 rounded">{currentConsultant.consultantId}</p>
                                     </div>
                                 </div>
-                                
+
                                 <div>
                                     {currentConsultant.certifiedDegreeImage && (
                                         <div className="mb-4">
@@ -767,19 +777,41 @@ function ConsultantManagement() {
 
                                     {isEditing && (
                                         <div className="mb-4">
-                                            <h4 className="text-sm font-medium text-gray-500 mb-1">URL ảnh bằng cấp</h4>
+                                            <h4 className="text-sm font-medium text-gray-500 mb-1">Ảnh bằng cấp (chứng chỉ)</h4>
                                             <input
-                                                type="url"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                value={editingConsultant.certifiedDegreeImage || ""}
-                                                onChange={(e) => handleEditChange("certifiedDegreeImage", e.target.value)}
-                                                placeholder="https://example.com/image.jpg"
+                                                id="certifiedDegreeImage"
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={async (e) => {
+                                                    const file = e.target.files[0];
+                                                    if (!file) return;
+                                                    try {
+                                                        toast.info("Đang upload ảnh chứng chỉ...");
+                                                        const url = await uploadImageToCloudinary(file);
+                                                        handleEditChange("certifiedDegreeImage", url);
+                                                        toast.success("Upload thành công!");
+                                                    } catch {
+                                                        toast.error("Upload ảnh chứng chỉ thất bại!");
+                                                    }
+                                                }}
+                                                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
                                             />
+                                            {editingConsultant.certifiedDegreeImage && (
+                                                <img
+                                                    src={editingConsultant.certifiedDegreeImage}
+                                                    alt="Ảnh chứng chỉ"
+                                                    className="mt-2 rounded-lg w-full h-48 object-cover border shadow"
+                                                    onError={e => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = "https://placehold.co/320x180/ADD8E6/000000?text=No+Image";
+                                                    }}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>
                             </div>
-                            
+
                             {currentConsultant.information && (
                                 <div className="mt-6">
                                     <h4 className="text-sm font-medium text-gray-500 mb-2">Thông tin thêm</h4>
@@ -889,11 +921,10 @@ function ConsultantManagement() {
                                                     {slot.startTime} - {slot.endTime}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        slot.status === "CÒN TRỐNG"
-                                                            ? "bg-green-100 text-green-800"
-                                                            : "bg-red-100 text-red-800"
-                                                    }`}>
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${slot.status === "CÒN TRỐNG"
+                                                        ? "bg-green-100 text-green-800"
+                                                        : "bg-red-100 text-red-800"
+                                                        }`}>
                                                         {slot.status}
                                                     </span>
                                                 </td>
@@ -947,23 +978,22 @@ function ConsultantManagement() {
                                         <p className="text-sm text-gray-500">Ngày</p>
                                         <p className="font-medium">{formatDate(currentSlot.date)}</p>
                                     </div>
-                                    
+
                                     <div>
                                         <p className="text-sm text-gray-500">Thời gian</p>
                                         <p className="font-medium">{currentSlot.startTime} - {currentSlot.endTime}</p>
                                     </div>
-                                    
+
                                     <div>
                                         <p className="text-sm text-gray-500">Trạng thái</p>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                            currentSlot.status === "CÒN TRỐNG"
-                                                ? "bg-green-100 text-green-800"
-                                                : "bg-red-100 text-red-800"
-                                        }`}>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${currentSlot.status === "CÒN TRỐNG"
+                                            ? "bg-green-100 text-green-800"
+                                            : "bg-red-100 text-red-800"
+                                            }`}>
                                             {currentSlot.status}
                                         </span>
                                     </div>
-                                    
+
                                     <div>
                                         <p className="text-sm text-gray-500">ID Slot</p>
                                         <p className="font-medium">{currentSlot.slotId}</p>
@@ -974,38 +1004,38 @@ function ConsultantManagement() {
                                 {currentSlot.status === "ĐÃ ĐẶT" && (
                                     <div className="space-y-4">
                                         <h4 className="text-lg font-semibold text-gray-800 border-b pb-2">Thông tin đặt lịch</h4>
-                                        
+
                                         {slotBookingInfo ? (
                                             <>
                                                 <div>
                                                     <p className="text-sm text-gray-500">ID Cuộc hẹn</p>
                                                     <p className="font-medium">{slotBookingInfo.appointmentId}</p>
                                                 </div>
-                                                
+
                                                 <div>
                                                     <p className="text-sm text-gray-500">Người đặt</p>
                                                     <p className="font-medium">
-                                                        {users.find(user => user.userId === slotBookingInfo.userId)?.fullName || 
-                                                         `User ID: ${slotBookingInfo.userId}`}
+                                                        {users.find(user => user.userId === slotBookingInfo.userId)?.fullName ||
+                                                            `User ID: ${slotBookingInfo.userId}`}
                                                     </p>
                                                 </div>
-                                                
+
                                                 <div>
                                                     <p className="text-sm text-gray-500">Email người đặt</p>
                                                     <p className="font-medium">
-                                                        {users.find(user => user.userId === slotBookingInfo.userId)?.email || 
-                                                         "Không có thông tin"}
+                                                        {users.find(user => user.userId === slotBookingInfo.userId)?.email ||
+                                                            "Không có thông tin"}
                                                     </p>
                                                 </div>
-                                                
+
                                                 <div>
                                                     <p className="text-sm text-gray-500">Số điện thoại</p>
                                                     <p className="font-medium">
-                                                        {users.find(user => user.userId === slotBookingInfo.userId)?.phone || 
-                                                         "Không có thông tin"}
+                                                        {users.find(user => user.userId === slotBookingInfo.userId)?.phone ||
+                                                            "Không có thông tin"}
                                                     </p>
                                                 </div>
-                                                
+
                                                 {slotBookingInfo.reason && (
                                                     <div>
                                                         <p className="text-sm text-gray-500">Lý do đặt lịch</p>
@@ -1014,19 +1044,18 @@ function ConsultantManagement() {
                                                         </div>
                                                     </div>
                                                 )}
-                                                
+
                                                 <div>
                                                     <p className="text-sm text-gray-500">Trạng thái cuộc hẹn</p>
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                                        slotBookingInfo.status === "CONFIRMED" 
-                                                            ? "bg-blue-100 text-blue-800"
-                                                            : slotBookingInfo.status === "COMPLETED"
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${slotBookingInfo.status === "CONFIRMED"
+                                                        ? "bg-blue-100 text-blue-800"
+                                                        : slotBookingInfo.status === "COMPLETED"
                                                             ? "bg-green-100 text-green-800"
                                                             : "bg-yellow-100 text-yellow-800"
-                                                    }`}>
+                                                        }`}>
                                                         {slotBookingInfo.status === "CONFIRMED" ? "Đã xác nhận" :
-                                                         slotBookingInfo.status === "COMPLETED" ? "Hoàn thành" :
-                                                         slotBookingInfo.status}
+                                                            slotBookingInfo.status === "COMPLETED" ? "Hoàn thành" :
+                                                                slotBookingInfo.status}
                                                     </span>
                                                 </div>
                                             </>

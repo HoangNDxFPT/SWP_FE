@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Spin } from "antd";
 import { toast, ToastContainer } from "react-toastify";
-import api from "../../config/axios"; // Dùng api thật ở đây!
+import api from "../../config/axios";
 import ConsultantHeader from "../components/Header";
 
 import {
@@ -15,7 +15,7 @@ import {
   EnvelopeIcon,
   CalendarDaysIcon,
 } from "@heroicons/react/24/outline";
-import { uploadImageToCloudinary } from "../../utils/uploadCloudinary";
+import { uploadImageToCloudinary } from "../../services/uploadCloudinary";
 
 // Bạn có thể import Header từ project thật, dưới đây là placeholder
 const Header = ({ user }) => (
