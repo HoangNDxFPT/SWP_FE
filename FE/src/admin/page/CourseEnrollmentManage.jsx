@@ -538,34 +538,35 @@ function CourseEnrollmentManage() {
                   </tr>
                 ))}
               </tbody>
-              {totalEnrollmentPages > 1 && (
-                <div className="flex justify-center items-center gap-2 py-4">
-                  <button
-                    className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
-                    disabled={enrollmentPage === 1}
-                    onClick={() => setEnrollmentPage(enrollmentPage - 1)}
-                  >
-                    Trước
-                  </button>
-                  {[...Array(totalEnrollmentPages)].map((_, idx) => (
-                    <button
-                      key={idx}
-                      className={`px-3 py-1 rounded border ${enrollmentPage === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
-                      onClick={() => setEnrollmentPage(idx + 1)}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
-                  <button
-                    className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
-                    disabled={enrollmentPage === totalEnrollmentPages}
-                    onClick={() => setEnrollmentPage(enrollmentPage + 1)}
-                  >
-                    Sau
-                  </button>
-                </div>
-              )}
+
             </table>
+            {totalEnrollmentPages > 1 && (
+              <div className="flex justify-center items-center gap-2 py-4">
+                <button
+                  className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                  disabled={enrollmentPage === 1}
+                  onClick={() => setEnrollmentPage(enrollmentPage - 1)}
+                >
+                  Trước
+                </button>
+                {[...Array(totalEnrollmentPages)].map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`px-3 py-1 rounded border ${enrollmentPage === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                    onClick={() => setEnrollmentPage(idx + 1)}
+                  >
+                    {idx + 1}
+                  </button>
+                ))}
+                <button
+                  className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                  disabled={enrollmentPage === totalEnrollmentPages}
+                  onClick={() => setEnrollmentPage(enrollmentPage + 1)}
+                >
+                  Sau
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
