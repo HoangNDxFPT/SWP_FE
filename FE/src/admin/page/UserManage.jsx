@@ -93,6 +93,27 @@ export default function UserManage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [userCourses, setUserCourses] = useState([]);
 
+  // Thêm state cho phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const USERS_PER_PAGE = 10;
+
+  // Filter users
+  const filteredUsers = users.filter(
+    (u) =>
+      (!searchTerm ||
+        (u.fullName && u.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (u.userName && u.userName.toLowerCase().includes(searchTerm.toLowerCase()))) &&
+      (!selectedRole || u.role === selectedRole)
+  );
+
+  // Tính toán dữ liệu hiển thị theo trang
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * USERS_PER_PAGE,
+    currentPage * USERS_PER_PAGE
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+
   // Fetch user list
   const fetchUsers = async () => {
     try {
@@ -290,14 +311,10 @@ export default function UserManage() {
     fetchUserHistory(user.id);
   };
 
-  // Filter users
-  const filteredUsers = users.filter(
-    (u) =>
-      (!searchTerm ||
-        (u.fullName && u.fullName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (u.userName && u.userName.toLowerCase().includes(searchTerm.toLowerCase()))) &&
-      (!selectedRole || u.role === selectedRole)
-  );
+  // Khi thay đổi bộ lọc hoặc tìm kiếm, reset về trang 1
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedRole]);
 
   return (
     <div className="bg-gray-50 min-h-full w-full">
@@ -469,7 +486,7 @@ export default function UserManage() {
                       <p className="text-center text-gray-500 mt-2">Đang tải danh sách người dùng...</p>
                     </td>
                   </tr>
-                ) : filteredUsers.length === 0 ? (
+                ) : paginatedUsers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center">
                       <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -485,7 +502,7 @@ export default function UserManage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredUsers.map((user) => (
+                  paginatedUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-blue-50 transition-colors duration-150 ease-in-out">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -547,6 +564,35 @@ export default function UserManage() {
             </table>
           </div>
         </div>
+
+        {/* Phân trang */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 py-4">
+            <button
+              className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(currentPage - 1)}
+            >
+              Trước
+            </button>
+            {[...Array(totalPages)].map((_, idx) => (
+              <button
+                key={idx}
+                className={`px-3 py-1 rounded border ${currentPage === idx + 1 ? "bg-blue-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                onClick={() => setCurrentPage(idx + 1)}
+              >
+                {idx + 1}
+              </button>
+            ))}
+            <button
+              className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(currentPage + 1)}
+            >
+              Sau
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Create User Modal */}
@@ -1064,7 +1110,7 @@ export default function UserManage() {
                 ) : userCourses.length === 0 ? (
                   <div className="bg-gray-50 rounded-lg p-8 text-center">
                     <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253v-13z" />
                     </svg>
                     <p className="mt-4 text-gray-600 text-lg font-medium">Chưa đăng ký khóa học nào</p>
                     <p className="text-gray-500">Người dùng này chưa đăng ký khóa học nào trong hệ thống</p>
@@ -1257,7 +1303,7 @@ export default function UserManage() {
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center ${activeHistoryTab === 'profile' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.403 1.403A2 2 0 0116 21H8a2 2 0 01-1.597-3.215L5 17h5m5-8h4a2 2 0 002 2v4m-6-6h-4a2 2 0 00-2 2v4m6-10h-4a2 2 0 00-2 2v4" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.403 1.403A2 2 0 0116 21H8a2 2 0 01-1.597-3.215L5 17h5m5-8h4a2  2 0 002 2v4m-6-6h-4a2 2 0 00-2 2v4m6-10h-4a2 2 0 00-2 2v4" />
                   </svg>
                   Thông tin cá nhân
                 </button>
@@ -1366,7 +1412,7 @@ export default function UserManage() {
                     ) : userCourses.length === 0 ? (
                       <div className="bg-gray-50 rounded-lg p-8 text-center">
                         <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253v-13z" />
                         </svg>
                         <p className="mt-4 text-gray-600 text-lg font-medium">Chưa đăng ký khóa học nào</p>
                         <p className="text-gray-500">Người dùng này chưa đăng ký khóa học nào trong hệ thống</p>
