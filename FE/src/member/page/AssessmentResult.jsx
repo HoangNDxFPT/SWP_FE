@@ -32,22 +32,39 @@ function AssessmentResult() {
     fetchResult();
   }, [assessmentResultId]);
 
+  const getUserAgeGroup = (user) => {
+    if (user && user.dateOfBirth) {
+      const birth = new Date(user.dateOfBirth);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      return age < 18 ? 'Teenagers' : 'Adults';
+    }
+    return '';
+  };
+
   // Lấy thông tin nút chuyển hướng dựa trên mức độ rủi ro
   const getActionButtonInfo = () => {
     switch (result?.riskLevel) {
       case 'LOW':
-        return { 
+        return {
           show: true,
-          text: 'Xem khóa học phòng ngừa',
+          text: 'Tham khảo khóa học',
           color: 'bg-green-500 hover:bg-green-600',
           action: () => navigate('/courseList', { state: { targetAgeGroup: userAgeGroup } })
         };
       case 'MEDIUM':
         return {
           show: true,
-          text: 'Xem khóa học phù hợp',
+          text: 'Xem khóa học khuyến nghị',
           color: 'bg-yellow-500 hover:bg-yellow-600',
-          action: () => navigate('/courseList', { state: { targetAgeGroup: userAgeGroup } })
+          action: () => {
+            setActiveTab('recommendations');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         };
       case 'HIGH':
         return {
@@ -146,7 +163,7 @@ function AssessmentResult() {
         };
     }
   };
-  
+
   // Lấy thông tin về loại đánh giá
   const getAssessmentTypeInfo = (type) => {
     switch (type) {
@@ -212,7 +229,7 @@ function AssessmentResult() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <p className="text-red-800 font-medium mb-2">Không có dữ liệu kết quả.</p>
-              <button 
+              <button
                 onClick={() => navigate('/assessment')}
                 className="text-blue-600 hover:underline mt-2"
               >
@@ -226,6 +243,7 @@ function AssessmentResult() {
     );
   }
 
+  const userAgeGroup = getUserAgeGroup(result.user);
   const actionButton = getActionButtonInfo();
   const riskInfo = getRiskLevelInfo(result.riskLevel);
   const assessmentInfo = getAssessmentTypeInfo(result.assessmentType);
@@ -261,7 +279,7 @@ function AssessmentResult() {
           {/* Tab Navigation */}
           <div className="mb-8 border-b border-gray-200">
             <nav className="flex space-x-6">
-              <button 
+              <button
                 onClick={() => setActiveTab('summary')}
                 className={`py-4 px-1 font-medium text-lg relative ${activeTab === 'summary' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               >
@@ -270,7 +288,7 @@ function AssessmentResult() {
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></span>
                 )}
               </button>
-              <button 
+              <button
                 onClick={() => setActiveTab('recommendations')}
                 className={`py-4 px-1 font-medium text-lg relative ${activeTab === 'recommendations' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
               >
@@ -280,7 +298,7 @@ function AssessmentResult() {
                 )}
               </button>
               {result.answers?.length > 0 && (
-                <button 
+                <button
                   onClick={() => setActiveTab('answers')}
                   className={`py-4 px-1 font-medium text-lg relative ${activeTab === 'answers' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
@@ -375,7 +393,7 @@ function AssessmentResult() {
                 <div className={`p-4 rounded-lg ${riskInfo.bgColor} mb-4`}>
                   <p className={`mb-4 ${riskInfo.textDark}`}>{riskInfo.description}</p>
                 </div>
-                
+
                 <h4 className="font-semibold mb-2">Khuyến nghị:</h4>
                 <ul className="space-y-2">
                   {riskInfo.recommendations.map((rec, index) => (
@@ -454,7 +472,7 @@ function AssessmentResult() {
                             {course.description}
                           </p>
                           <button
-                            onClick={() => navigate(`/course/${course.id}`)}
+                            onClick={() => navigate('/courseList', { state: { focusCourseId: course.id } })}
                             className="text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
                           >
                             Xem khóa học
@@ -476,7 +494,7 @@ function AssessmentResult() {
                   <p className="text-gray-500 mb-4">
                     Bạn có thể xem tất cả các khóa học để tìm khóa học phù hợp với nhu cầu của mình.
                   </p>
-                  <button 
+                  <button
                     onClick={() => navigate('/courseList')}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md inline-flex items-center gap-2 transition"
                   >
@@ -536,26 +554,24 @@ function AssessmentResult() {
           {activeTab === 'answers' && result.answers?.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn">
               <h3 className="text-xl font-semibold mb-4">Chi tiết câu trả lời</h3>
-              
+
               <div className="space-y-4">
                 {result.answers.map((answer, index) => (
-                  <div 
-                    key={answer.questionId} 
-                    className={`p-4 rounded-lg border ${
-                      answer.score > 2 
-                        ? 'border-red-200 bg-red-50' 
-                        : answer.score > 0 
-                          ? 'border-yellow-200 bg-yellow-50' 
-                          : 'border-gray-200 bg-gray-50'
-                    }`}
+                  <div
+                    key={answer.questionId}
+                    className={`p-4 rounded-lg border ${answer.score > 2
+                      ? 'border-red-200 bg-red-50'
+                      : answer.score > 0
+                        ? 'border-yellow-200 bg-yellow-50'
+                        : 'border-gray-200 bg-gray-50'
+                      }`}
                   >
                     <div className="flex items-start gap-3">
-                      <span className={`inline-flex justify-center items-center w-6 h-6 ${
-                        answer.score > 2 
-                          ? 'bg-red-100 text-red-800' 
-                          : answer.score > 0 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-blue-100 text-blue-800'
+                      <span className={`inline-flex justify-center items-center w-6 h-6 ${answer.score > 2
+                        ? 'bg-red-100 text-red-800'
+                        : answer.score > 0
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-blue-100 text-blue-800'
                         } rounded-full shrink-0 font-medium text-sm`}>
                         {index + 1}
                       </span>
@@ -570,13 +586,12 @@ function AssessmentResult() {
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="text-gray-600 text-sm">Điểm:</span>
-                            <span className={`font-medium ${
-                              answer.score > 2 
-                                ? 'text-red-600' 
-                                : answer.score > 0 
-                                  ? 'text-yellow-600' 
-                                  : 'text-green-600'
-                            }`}>
+                            <span className={`font-medium ${answer.score > 2
+                              ? 'text-red-600'
+                              : answer.score > 0
+                                ? 'text-yellow-600'
+                                : 'text-green-600'
+                              }`}>
                               {answer.score}
                             </span>
                           </div>
@@ -597,14 +612,14 @@ function AssessmentResult() {
             >
               Thực hiện đánh giá mới
             </button>
-            
+
             <button
               onClick={() => navigate('/assessment-history')}
               className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-lg transition font-medium"
             >
               Xem lịch sử đánh giá
             </button>
-            
+
             <button
               onClick={() => navigate('/')}
               className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-lg transition font-medium"
@@ -625,7 +640,7 @@ function AssessmentResult() {
           animation: fadeIn 0.3s ease-out forwards;
         }
       `}</style>
-      
+
       <Footer />
     </>
   );

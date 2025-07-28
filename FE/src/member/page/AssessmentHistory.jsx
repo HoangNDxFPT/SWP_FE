@@ -11,7 +11,7 @@ function AssessmentHistory() {
   const [loading, setLoading] = useState(true);
   const [expandedRow, setExpandedRow] = useState(null);
   const [filterType, setFilterType] = useState('ALL');
-  
+
   useEffect(() => {
     const fetchResults = async () => {
       try {
@@ -95,7 +95,7 @@ function AssessmentHistory() {
         };
     }
   };
-  
+
   const getAssessmentTypeDetails = (type) => {
     switch (type) {
       case 'ASSIST':
@@ -137,14 +137,14 @@ function AssessmentHistory() {
     }
   };
 
-  const filteredResults = filterType === 'ALL' 
+  const filteredResults = filterType === 'ALL'
     ? assessmentResults
     : assessmentResults.filter(result => result.assessmentType === filterType);
 
   return (
     <>
       <Header />
-      
+
       <div className="bg-gray-50 min-h-screen py-10">
         {/* Banner section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 py-8 mb-8">
@@ -184,33 +184,30 @@ function AssessmentHistory() {
                   Tổng cộng: <span className="text-blue-600">{assessmentResults.length}</span> kết quả
                 </h2>
                 <div className="flex flex-wrap gap-2">
-                  <button 
+                  <button
                     onClick={() => setFilterType('ALL')}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                      filterType === 'ALL' 
-                        ? 'bg-blue-100 text-blue-800' 
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${filterType === 'ALL'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     Tất cả
                   </button>
-                  <button 
+                  <button
                     onClick={() => setFilterType('ASSIST')}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                      filterType === 'ASSIST' 
-                        ? 'bg-blue-100 text-blue-800' 
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${filterType === 'ASSIST'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     ASSIST
                   </button>
-                  <button 
+                  <button
                     onClick={() => setFilterType('CRAFFT')}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${
-                      filterType === 'CRAFFT' 
-                        ? 'bg-blue-100 text-blue-800' 
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition ${filterType === 'CRAFFT'
+                        ? 'bg-blue-100 text-blue-800'
                         : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     CRAFFT
                   </button>
@@ -228,16 +225,15 @@ function AssessmentHistory() {
                     const riskLevel = getRiskLevelDetails(result.riskLevel);
                     const assessmentType = getAssessmentTypeDetails(result.assessmentType);
                     const isExpanded = expandedRow === result.assessmentResultId;
-                    
+
                     return (
-                      <div 
+                      <div
                         key={result.assessmentResultId}
-                        className={`bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300 ${
-                          isExpanded ? 'shadow-md' : 'hover:shadow-md'
-                        }`}
+                        className={`bg-white rounded-lg shadow-sm overflow-hidden transition-all duration-300 ${isExpanded ? 'shadow-md' : 'hover:shadow-md'
+                          }`}
                       >
                         {/* Result header */}
-                        <div 
+                        <div
                           className={`p-4 cursor-pointer ${isExpanded ? 'border-b border-gray-200' : ''}`}
                           onClick={() => handleViewResult(result.assessmentResultId)}
                         >
@@ -258,7 +254,7 @@ function AssessmentHistory() {
                                 </p>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-4">
                               <div className="flex items-center gap-2">
                                 {riskLevel.icon}
@@ -266,13 +262,13 @@ function AssessmentHistory() {
                                   {riskLevel.text}
                                 </span>
                               </div>
-                              
+
                               <button className="text-blue-500 flex items-center gap-1 focus:outline-none">
                                 <span>{isExpanded ? 'Ẩn' : 'Xem'}</span>
-                                <svg 
-                                  xmlns="http://www.w3.org/2000/svg" 
-                                  className={`h-4 w-4 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`} 
-                                  viewBox="0 0 20 20" 
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className={`h-4 w-4 transition-transform ${isExpanded ? 'transform rotate-180' : ''}`}
+                                  viewBox="0 0 20 20"
                                   fill="currentColor"
                                 >
                                   <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -281,13 +277,13 @@ function AssessmentHistory() {
                             </div>
                           </div>
                         </div>
-                        
+
                         {/* Expanded detail view */}
                         {isExpanded && (
                           <div className="p-5 bg-gray-50 animate-fadeIn">
                             <div className="mb-6">
                               <h3 className="text-xl font-semibold mb-4 text-gray-800">Chi tiết kết quả</h3>
-                              
+
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                                 <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
                                   <p className="text-sm text-gray-500 mb-1">Loại đánh giá</p>
@@ -297,13 +293,13 @@ function AssessmentHistory() {
                                   </div>
                                   <p className="text-xs text-gray-500 mt-1">{assessmentType.description}</p>
                                 </div>
-                                
+
                                 <div className="bg-white rounded-lg shadow-sm p-4 border border-gray-100">
                                   <p className="text-sm text-gray-500 mb-1">Điểm số</p>
                                   <p className="text-2xl font-bold">{result.score}</p>
                                   <p className="text-xs text-gray-500 mt-1">Dựa trên câu trả lời của bạn</p>
                                 </div>
-                                
+
                                 <div className={`rounded-lg shadow-sm p-4 border ${riskLevel.borderColor} ${riskLevel.bgColor}`}>
                                   <p className="text-sm text-gray-500 mb-1">Mức độ rủi ro</p>
                                   <div className="flex items-center">
@@ -311,18 +307,18 @@ function AssessmentHistory() {
                                     <span className={`font-semibold ml-2 ${riskLevel.color}`}>{riskLevel.text}</span>
                                   </div>
                                   <p className="text-xs text-gray-500 mt-1">
-                                    {result.assessmentType === 'ASSIST' 
-                                      ? 'Dựa trên thang điểm ASSIST' 
+                                    {result.assessmentType === 'ASSIST'
+                                      ? 'Dựa trên thang điểm ASSIST'
                                       : 'Dựa trên tiêu chuẩn CRAFFT'}
                                   </p>
                                 </div>
                               </div>
-                              
+
                               <div className={`p-5 rounded-lg mb-6 ${riskLevel.bgColor} ${riskLevel.borderColor} border`}>
                                 <h4 className={`font-medium mb-2 ${riskLevel.textDark}`}>Khuyến nghị:</h4>
                                 <p className={riskLevel.textDark}>{result.recommendation || "Không có khuyến nghị."}</p>
                               </div>
-                              
+
                               {result.recommendedCourses?.length > 0 && (
                                 <div className="mb-6">
                                   <h4 className="font-semibold mb-3">Khóa học được khuyến nghị:</h4>
@@ -335,7 +331,7 @@ function AssessmentHistory() {
                                           <p className="text-sm text-gray-500 mt-1">Độ tuổi: {course.targetAgeGroup}</p>
                                         </div>
                                         <button
-                                          onClick={() => navigate(`/course/${course.id}`)}
+                                          onClick={() => navigate('/courseList', { state: { focusCourseId: course.id } })}
                                           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center gap-1 transition-colors"
                                         >
                                           <span>Xem</span>
@@ -348,7 +344,7 @@ function AssessmentHistory() {
                                   </div>
                                 </div>
                               )}
-                              
+
                               <div className="flex justify-end gap-3">
                                 <button
                                   onClick={() => navigate(`/assessment-result/${result.assessmentResultId}`)}
@@ -371,7 +367,7 @@ function AssessmentHistory() {
                   })
                 )}
               </div>
-              
+
               {/* Action section */}
               <div className="mt-8 text-center">
                 <button
@@ -385,7 +381,7 @@ function AssessmentHistory() {
           )}
         </div>
       </div>
-      
+
       {/* Animation styles */}
       <style jsx>{`
         @keyframes fadeIn {
@@ -396,7 +392,7 @@ function AssessmentHistory() {
           animation: fadeIn 0.3s ease-out forwards;
         }
       `}</style>
-      
+
       <Footer />
     </>
   );
