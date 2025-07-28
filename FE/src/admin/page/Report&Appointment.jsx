@@ -38,6 +38,11 @@ function ReportAppointment() {
         cancelledAppointments: 0
     });
 
+    // Pagination states
+    const [reportPage, setReportPage] = useState(1);
+    const [appointmentPage, setAppointmentPage] = useState(1);
+    const pageSize = 10;
+
     // Fetch data when tab changes
     useEffect(() => {
         fetchMembers();
@@ -229,6 +234,10 @@ function ReportAppointment() {
             toast.error("Không thể tải báo cáo");
         }
     };
+
+    // Pagination logic
+    const paginatedReports = reports.slice((reportPage - 1) * pageSize, reportPage * pageSize);
+    const paginatedAppointments = appointments.slice((appointmentPage - 1) * pageSize, appointmentPage * pageSize);
 
     return (
         <div className="bg-gray-50 p-6 min-h-screen">
@@ -474,7 +483,7 @@ function ReportAppointment() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    reports.map(report => (
+                                    paginatedReports.map(report => (
                                         <tr key={report.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {report.id}
@@ -526,6 +535,35 @@ function ReportAppointment() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination for reports */}
+                    {Math.ceil(reports.length / pageSize) > 1 && (
+                      <div className="flex justify-center items-center gap-2 py-4">
+                        <button
+                          className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                          disabled={reportPage === 1}
+                          onClick={() => setReportPage(reportPage - 1)}
+                        >
+                          Trước
+                        </button>
+                        {[...Array(Math.ceil(reports.length / pageSize))].map((_, idx) => (
+                          <button
+                            key={idx}
+                            className={`px-3 py-1 rounded border ${reportPage === idx + 1 ? "bg-purple-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                            onClick={() => setReportPage(idx + 1)}
+                          >
+                            {idx + 1}
+                          </button>
+                        ))}
+                        <button
+                          className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                          disabled={reportPage === Math.ceil(reports.length / pageSize)}
+                          onClick={() => setReportPage(reportPage + 1)}
+                        >
+                          Sau
+                        </button>
+                      </div>
+                    )}
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -577,7 +615,7 @@ function ReportAppointment() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    appointments.map(appointment => (
+                                    paginatedAppointments.map(appointment => (
                                         <tr key={appointment.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                                 {appointment.id}
@@ -623,7 +661,7 @@ function ReportAppointment() {
                                                             onClick={() => viewAppointmentReport(appointment.id)}
                                                         >
                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                                                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h6a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                                                             </svg>
                                                             Báo cáo
                                                         </button>
@@ -636,6 +674,35 @@ function ReportAppointment() {
                             </tbody>
                         </table>
                     </div>
+
+                    {/* Pagination for appointments */}
+                    {Math.ceil(appointments.length / pageSize) > 1 && (
+                      <div className="flex justify-center items-center gap-2 py-4">
+                        <button
+                          className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                          disabled={appointmentPage === 1}
+                          onClick={() => setAppointmentPage(appointmentPage - 1)}
+                        >
+                          Trước
+                        </button>
+                        {[...Array(Math.ceil(appointments.length / pageSize))].map((_, idx) => (
+                          <button
+                            key={idx}
+                            className={`px-3 py-1 rounded border ${appointmentPage === idx + 1 ? "bg-purple-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
+                            onClick={() => setAppointmentPage(idx + 1)}
+                          >
+                            {idx + 1}
+                          </button>
+                        ))}
+                        <button
+                          className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+                          disabled={appointmentPage === Math.ceil(appointments.length / pageSize)}
+                          onClick={() => setAppointmentPage(appointmentPage + 1)}
+                        >
+                          Sau
+                        </button>
+                      </div>
+                    )}
                 </div>
             )}
 
