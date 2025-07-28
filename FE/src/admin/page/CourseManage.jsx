@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import api from "../../config/axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { uploadImageToCloudinary } from "../../services/uploadCloudinary";
 
 export default function CourseManage() {
   const [courses, setCourses] = useState([]);
@@ -567,6 +568,23 @@ export default function CourseManage() {
   );
 
   const totalPages = Math.ceil(filteredCourses.length / COURSES_PER_PAGE);
+  const handleCourseImageUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    setLoading(true);
+    const url = await uploadImageToCloudinary(file);
+    setNewCourse(prev => ({ ...prev, url }));
+    if (editMode && editCourse) {
+      setEditCourse(prev => ({ ...prev, url }));
+    }
+    toast.success("Tải ảnh thành công!");
+  } catch (err) {
+    toast.error("Tải ảnh thất bại!");
+  } finally {
+    setLoading(false);
+  }
+};
 
 
   return (
@@ -835,147 +853,150 @@ export default function CourseManage() {
       {/* Create course modal */}
       {showCreate && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Add New Course</h2>
-              <button
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setShowCreate(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <form className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Course Name <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  value={newCourse.name}
-                  onChange={e => setNewCourse({ ...newCourse, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  rows="3"
-                  value={newCourse.description}
-                  onChange={e => setNewCourse({ ...newCourse, description: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-red-500">*</span></label>
-                  <input
-                    type="date"
-                    className="mt-1 block w-full border rounded px-3 py-2"
-                    value={newCourse.startDate}
-                    onChange={e => setNewCourse({ ...newCourse, startDate: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">End Date <span className="text-red-500">*</span></label>
-                  <input
-                    type="date"
-                    className="mt-1 block w-full border rounded px-3 py-2"
-                    value={newCourse.endDate}
-                    onChange={e => setNewCourse({ ...newCourse, endDate: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Target Age Group</label>
-                <select
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  value={newCourse.targetAgeGroup}
-                  onChange={e => setNewCourse({ ...newCourse, targetAgeGroup: e.target.value })}
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-full sm:max-w-md mx-2 max-h-[80vh] flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Thêm Khóa Học Mới</h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowCreate(false)}
                 >
-                  {AGE_GROUPS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  ✕
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">URL</label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  placeholder="https://example.com"
-                  value={newCourse.url}
-                  onChange={e => setNewCourse({ ...newCourse, url: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
-
-                {/* Quick Select Options */}
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  {[30, 60, 90, 120].map(duration => (
-                    <button
-                      key={duration}
-                      type="button"
-                      className={`px-3 py-2 text-sm rounded border ${newCourse.durationInMinutes === duration
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
-                        }`}
-                      onClick={() => setNewCourse({ ...newCourse, durationInMinutes: duration })}
-                    >
-                      {duration}p
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom Input with Controls */}
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setNewCourse({
-                      ...newCourse,
-                      durationInMinutes: Math.max(0, (newCourse.durationInMinutes || 0) - 15)
-                    })}
-                  >
-                    -15
-                  </button>
-
+              <form className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Course Name <span className="text-red-500">*</span></label>
                   <input
-                    type="number"
-                    className="flex-1 border rounded px-3 py-2 text-center"
-                    placeholder="0"
-                    min="0"
-                    step="5"
-                    value={newCourse.durationInMinutes}
-                    onChange={e => setNewCourse({ ...newCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
+                    type="text"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newCourse.name}
+                    onChange={e => setNewCourse({ ...newCourse, name: e.target.value })}
+                    required
                   />
-
-                  <button
-                    type="button"
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setNewCourse({
-                      ...newCourse,
-                      durationInMinutes: (newCourse.durationInMinutes || 0) + 15
-                    })}
-                  >
-                    +15
-                  </button>
                 </div>
 
-                <p className="text-xs text-gray-500 mt-1">
-                  Chọn nhanh hoặc nhập số phút tùy chỉnh
-                </p>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    rows="3"
+                    value={newCourse.description}
+                    onChange={e => setNewCourse({ ...newCourse, description: e.target.value })}
+                  />
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      className="mt-1 block w-full border rounded px-3 py-2"
+                      value={newCourse.startDate}
+                      onChange={e => setNewCourse({ ...newCourse, startDate: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">End Date <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      className="mt-1 block w-full border rounded px-3 py-2"
+                      value={newCourse.endDate}
+                      onChange={e => setNewCourse({ ...newCourse, endDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Target Age Group</label>
+                  <select
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={newCourse.targetAgeGroup}
+                    onChange={e => setNewCourse({ ...newCourse, targetAgeGroup: e.target.value })}
+                  >
+                    {AGE_GROUPS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Ảnh khóa học</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    onChange={handleCourseImageUpload}
+                  />
+                  {newCourse.url && (
+                    <img src={newCourse.url} alt="Course" className="mt-2 h-24 rounded shadow" />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
+
+                  {/* Quick Select Options */}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[30, 60, 90, 120].map(duration => (
+                      <button
+                        key={duration}
+                        type="button"
+                        className={`px-3 py-2 text-sm rounded border ${newCourse.durationInMinutes === duration
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                        onClick={() => setNewCourse({ ...newCourse, durationInMinutes: duration })}
+                      >
+                        {duration}p
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Input with Controls */}
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                      onClick={() => setNewCourse({
+                        ...newCourse,
+                        durationInMinutes: Math.max(0, (newCourse.durationInMinutes || 0) - 15)
+                      })}
+                    >
+                      -15
+                    </button>
+
+                    <input
+                      type="number"
+                      className="flex-1 border rounded px-3 py-2 text-center"
+                      placeholder="0"
+                      min="0"
+                      step="5"
+                      value={newCourse.durationInMinutes}
+                      onChange={e => setNewCourse({ ...newCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
+                    />
+
+                    <button
+                      type="button"
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                      onClick={() => setNewCourse({
+                        ...newCourse,
+                        durationInMinutes: (newCourse.durationInMinutes || 0) + 15
+                      })}
+                    >
+                      +15
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-1">
+                    Chọn nhanh hoặc nhập số phút tùy chỉnh
+                  </p>
+                </div>
+              </form>
+            </div>
             <div className="flex justify-end gap-2 mt-6">
               <button
                 className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
@@ -1006,150 +1027,153 @@ export default function CourseManage() {
       {/* Edit course modal */}
       {editMode && editCourse && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Edit Course</h2>
-              <button
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => {
-                  setEditMode(false);
-                  setEditCourse(null);
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <form className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Course Name <span className="text-red-500">*</span></label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  value={editCourse.name}
-                  onChange={e => setEditCourse({ ...editCourse, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  rows="3"
-                  value={editCourse.description}
-                  onChange={e => setEditCourse({ ...editCourse, description: e.target.value })}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-red-500">*</span></label>
-                  <input
-                    type="date"
-                    className="mt-1 block w-full border rounded px-3 py-2"
-                    value={editCourse.startDate}
-                    onChange={e => setEditCourse({ ...editCourse, startDate: e.target.value })}
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">End Date <span className="text-red-500">*</span></label>
-                  <input
-                    type="date"
-                    className="mt-1 block w-full border rounded px-3 py-2"
-                    value={editCourse.endDate}
-                    onChange={e => setEditCourse({ ...editCourse, endDate: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Target Age Group</label>
-                <select
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  value={editCourse.targetAgeGroup}
-                  onChange={e => setEditCourse({ ...editCourse, targetAgeGroup: e.target.value })}
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-full max-w-full sm:max-w-md mx-2 max-h-[90vh] flex flex-col h-full">
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Chỉnh Sửa Khóa Học</h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => {
+                    setEditMode(false);
+                    setEditCourse(null);
+                  }}
                 >
-                  {AGE_GROUPS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+                  ✕
+                </button>
               </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">URL</label>
-                <input
-                  type="text"
-                  className="mt-1 block w-full border rounded px-3 py-2"
-                  placeholder="https://example.com"
-                  value={editCourse.url}
-                  onChange={e => setEditCourse({ ...editCourse, url: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
-
-                {/* Quick Select Options */}
-                <div className="grid grid-cols-4 gap-2 mb-3">
-                  {[30, 60, 90, 120].map(duration => (
-                    <button
-                      key={duration}
-                      type="button"
-                      className={`px-3 py-2 text-sm rounded border ${(editCourse.durationInMinutes || 0) === duration
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
-                        }`}
-                      onClick={() => setEditCourse({ ...editCourse, durationInMinutes: duration })}
-                    >
-                      {duration}p
-                    </button>
-                  ))}
-                </div>
-
-                {/* Custom Input with Controls */}
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setEditCourse({
-                      ...editCourse,
-                      durationInMinutes: Math.max(0, (editCourse.durationInMinutes || 0) - 15)
-                    })}
-                  >
-                    -15
-                  </button>
-
+              <form className="flex flex-col gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Course Name <span className="text-red-500">*</span></label>
                   <input
-                    type="number"
-                    className="flex-1 border rounded px-3 py-2 text-center"
-                    placeholder="0"
-                    min="0"
-                    step="5"
-                    value={editCourse.durationInMinutes || 0}
-                    onChange={e => setEditCourse({ ...editCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
+                    type="text"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={editCourse.name}
+                    onChange={e => setEditCourse({ ...editCourse, name: e.target.value })}
+                    required
                   />
-
-                  <button
-                    type="button"
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
-                    onClick={() => setEditCourse({
-                      ...editCourse,
-                      durationInMinutes: (editCourse.durationInMinutes || 0) + 15
-                    })}
-                  >
-                    +15
-                  </button>
                 </div>
 
-                <p className="text-xs text-gray-500 mt-1">
-                  Chọn nhanh hoặc nhập số phút tùy chỉnh
-                </p>
-              </div>
-            </form>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Description</label>
+                  <textarea
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    rows="3"
+                    value={editCourse.description}
+                    onChange={e => setEditCourse({ ...editCourse, description: e.target.value })}
+                  />
+                </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Start Date <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      className="mt-1 block w-full border rounded px-3 py-2"
+                      value={editCourse.startDate}
+                      onChange={e => setEditCourse({ ...editCourse, startDate: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">End Date <span className="text-red-500">*</span></label>
+                    <input
+                      type="date"
+                      className="mt-1 block w-full border rounded px-3 py-2"
+                      value={editCourse.endDate}
+                      onChange={e => setEditCourse({ ...editCourse, endDate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Target Age Group</label>
+                  <select
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    value={editCourse.targetAgeGroup}
+                    onChange={e => setEditCourse({ ...editCourse, targetAgeGroup: e.target.value })}
+                  >
+                    {AGE_GROUPS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Ảnh khóa học</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="mt-1 block w-full border rounded px-3 py-2"
+                    onChange={handleCourseImageUpload}
+                  />
+                  {editCourse.url && (
+                    <img src={editCourse.url} alt="Course" className="mt-2 h-24 rounded shadow" />
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Thời lượng (phút)</label>
+
+                  {/* Quick Select Options */}
+                  <div className="grid grid-cols-4 gap-2 mb-3">
+                    {[30, 60, 90, 120].map(duration => (
+                      <button
+                        key={duration}
+                        type="button"
+                        className={`px-3 py-2 text-sm rounded border ${(editCourse.durationInMinutes || 0) === duration
+                          ? 'bg-blue-500 text-white border-blue-500'
+                          : 'bg-gray-50 text-gray-700 border-gray-300 hover:bg-gray-100'
+                          }`}
+                        onClick={() => setEditCourse({ ...editCourse, durationInMinutes: duration })}
+                      >
+                        {duration}p
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Input with Controls */}
+                  <div className="flex items-center space-x-2">
+                    <button
+                      type="button"
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                      onClick={() => setEditCourse({
+                        ...editCourse,
+                        durationInMinutes: Math.max(0, (editCourse.durationInMinutes || 0) - 15)
+                      })}
+                    >
+                      -15
+                    </button>
+
+                    <input
+                      type="number"
+                      className="flex-1 border rounded px-3 py-2 text-center"
+                      placeholder="0"
+                      min="0"
+                      step="5"
+                      value={editCourse.durationInMinutes || 0}
+                      onChange={e => setEditCourse({ ...editCourse, durationInMinutes: parseInt(e.target.value) || 0 })}
+                    />
+
+                    <button
+                      type="button"
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded"
+                      onClick={() => setEditCourse({
+                        ...editCourse,
+                        durationInMinutes: (editCourse.durationInMinutes || 0) + 15
+                      })}
+                    >
+                      +15
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-1">
+                    Chọn nhanh hoặc nhập số phút tùy chỉnh
+                  </p>
+                </div>
+              </form>
+            </div>
             <div className="flex justify-end gap-2 mt-6">
               <button
                 className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded"
@@ -1173,7 +1197,7 @@ export default function CourseManage() {
                     </svg>
                     Saving...
                   </>
-                ) : "Save"}
+                ) : "Lưu"}
               </button>
             </div>
           </div>
@@ -1305,7 +1329,7 @@ export default function CourseManage() {
 
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                        </svg>
+                      </svg>
                         Thêm bài học
                       </button>
                     </div>
@@ -1484,7 +1508,7 @@ export default function CourseManage() {
                                     >
                                       {option.isCorrect && (
                                         <svg className="w-3 h-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path>
                                         </svg>
                                       )}
                                       {option.text}

@@ -496,6 +496,7 @@ function CoursesListPage() {
       setAgeGroupFilter(location.state.targetAgeGroup);
     }
   }, [location.state]);
+  const focusCourseId = location.state?.focusCourseId;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -635,7 +636,20 @@ function CoursesListPage() {
             ) : (
               <div className="space-y-6">
                 {paginatedCourses.map(course => (
-                  <div key={course.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300">
+                  <div
+                    key={course.id}
+                    ref={el => {
+                      // Tự động scroll đến khóa học khi vào trang
+                      if (focusCourseId === course.id && el) {
+                        setTimeout(() => {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 300);
+                      }
+                    }}
+                    className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition duration-300
+                      ${focusCourseId === course.id ? 'border-4 border-yellow-400' : ''}
+                    `}
+                  >
                     <div className="p-6">
                       <div className="flex items-center mb-3">
                         <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full mr-2 ${getStatusColorClass(course)}`}>
