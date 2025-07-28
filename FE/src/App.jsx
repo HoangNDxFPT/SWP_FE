@@ -166,6 +166,7 @@ const router = createBrowserRouter([
       </RequireAdmin>
     ),
     children: [
+      { index: true, element: <Dashboard /> },
       { path: "dashboard", element: <Dashboard /> },
       { path: "profile", element: <AdminProfilePage /> },
       { path: "users", element: <UserManage /> },
