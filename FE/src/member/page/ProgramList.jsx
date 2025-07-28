@@ -164,41 +164,47 @@ function ProgramList() {
 
   // Filter programs based on active filter and search query
   const getFilteredPrograms = () => {
-    let filtered = [...programs];
-    
-    // Filter by search
-    if (search.trim() !== '') {
-      const searchTerm = search.trim().toLowerCase();
+  let filtered = [...programs];
+  const today = new Date();
+
+  // ❗️Loại bỏ chương trình đã kết thúc (end_date < hôm nay)
+  filtered = filtered.filter(program => {
+    const endDate = new Date(program.end_date);
+    return endDate >= today;
+  });
+
+  // Lọc theo từ khóa tìm kiếm
+  if (search.trim() !== '') {
+    const searchTerm = search.trim().toLowerCase();
+    filtered = filtered.filter(program => 
+      program.name.toLowerCase().includes(searchTerm) || 
+      (program.description && program.description.toLowerCase().includes(searchTerm)) ||
+      (program.location && program.location.toLowerCase().includes(searchTerm))
+    );
+  }
+
+  // Lọc theo loại filter
+ switch (activeFilter) {
+  case 'registered': {
+    const myProgramIds = myPrograms.map(p => p.id); // ✅ OK
+    filtered = filtered.filter(program => myProgramIds.includes(program.id));
+    break;
+  }
+    case 'upcoming':
+      filtered = filtered.filter(program => new Date(program.start_date) > today);
+      break;
+    case 'ongoing':
       filtered = filtered.filter(program => 
-        program.name.toLowerCase().includes(searchTerm) || 
-        (program.description && program.description.toLowerCase().includes(searchTerm)) ||
-        (program.location && program.location.toLowerCase().includes(searchTerm))
+        new Date(program.start_date) <= today && new Date(program.end_date) >= today
       );
-    }
-    
-    // Filter by status
-    switch (activeFilter) {
-      case 'registered':
-        const myProgramIds = myPrograms.map(program => program.id);
-        filtered = filtered.filter(program => myProgramIds.includes(program.id));
-        break;
-      case 'upcoming':
-        const today = new Date();
-        filtered = filtered.filter(program => new Date(program.start_date) > today);
-        break;
-      case 'ongoing':
-        const now = new Date();
-        filtered = filtered.filter(program => 
-          new Date(program.start_date) <= now && new Date(program.end_date) >= now
-        );
-        break;
-      default:
-        // 'all' - no additional filtering needed
-        break;
-    }
-    
-    return filtered;
-  };
+      break;
+    default:
+      // 'all': đã loại bỏ chương trình kết thúc ở bước đầu
+      break;
+  }
+
+  return filtered;
+};
 
   const filteredPrograms = getFilteredPrograms();
 
