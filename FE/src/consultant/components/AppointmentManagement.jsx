@@ -405,8 +405,8 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       key: "status",
       render: (status) => {
         const statusConfig = {
-          PENDING: { color: "orange", text: "Chờ xác nhận" },
-          
+          PENDING: { color: "orange", text: "Chưa hoàn thành" },
+
           COMPLETED: { color: "green", text: "Hoàn thành" },
         };
 
@@ -426,7 +426,6 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         if (record.status !== "PENDING") return null;
         return (
           <div className="flex gap-2">
-            
             <Button
               type="primary"
               onClick={() => updateAppointmentStatus(record.id, "COMPLETED")}
@@ -524,7 +523,6 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       key: "status",
       render: (status) => {
         const statusConfig = {
-          
           CANCELLED: { color: "red", text: "Đã hủy" },
           COMPLETED: { color: "green", text: "Hoàn thành" },
         };
@@ -538,8 +536,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         );
       },
     },
-    
-    
+
     {
       title: "Ngày tạo",
       dataIndex: "createAt",
@@ -550,7 +547,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
 
   // ✅ Status tabs
   const statusTabs = [
-    { key: "PENDING", label: "Chờ xác nhận", color: "orange" },
+    { key: "PENDING", label: "Cuộc hẹn hiện có", color: "orange" },
     { key: "CANCELLED", label: "Đã hủy", color: "red" },
     { key: "COMPLETED", label: "Hoàn thành", color: "green" },
   ];
@@ -785,7 +782,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
                   {consultantWorkDays.length} ngày)
                 </div>
               </Col>
-              
+
               <Col span={12}>
                 <Form.Item
                   label="Slot thời gian"
