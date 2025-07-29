@@ -560,7 +560,7 @@ export default function ConsultationCases() {
             <div className="flex items-center mb-4">
               <div className="h-8 w-1 bg-blue-500 rounded mr-3"></div>
               <h2 className="text-xl font-semibold text-gray-800">
-                Khóa học đã tham gia & Quiz
+                Khóa học đã tham gia 
               </h2>
             </div>
             {enrollments.length === 0 ? (
@@ -581,9 +581,9 @@ export default function ConsultationCases() {
                       <th className="px-4 py-2 text-left text-xs font-semibold">
                         Trạng thái
                       </th>
-                      <th className="px-4 py-2 text-left text-xs font-semibold">
+                      {/* <th className="px-4 py-2 text-left text-xs font-semibold">
                         Quiz
-                      </th>
+                      </th> */}
                     </tr>
                   </thead>
                   <tbody>
@@ -619,14 +619,14 @@ export default function ConsultationCases() {
                                 : "Đã hủy"}
                             </span>
                           </td>
-                          <td className="px-4 py-2">
+                          {/* <td className="px-4 py-2">
                             <button
                               className="text-blue-600 hover:underline"
                               onClick={() => handleViewQuiz(enrollment)}
                             >
                               Xem quiz
                             </button>
-                          </td>
+                          </td> */}
                         </tr>
                       );
                     })}
