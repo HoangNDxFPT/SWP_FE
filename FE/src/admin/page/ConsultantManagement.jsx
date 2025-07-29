@@ -918,7 +918,7 @@ function ConsultantManagement() {
                                         {currentDaySlots.map((slot, index) => (
                                             <tr key={index} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                    {slot.startTime} - {slot.endTime}
+                                                    {slot.start} - {slot.end}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${slot.status === "CÒN TRỐNG"
