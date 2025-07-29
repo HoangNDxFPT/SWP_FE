@@ -50,11 +50,11 @@ function AssessmentResult() {
   const getActionButtonInfo = () => {
     switch (result?.riskLevel) {
       case 'LOW':
-        return {
+         return {
           show: true,
-          text: 'Tham khảo khóa học',
+          text: 'Tham gia chương trình cộng đồng',
           color: 'bg-green-500 hover:bg-green-600',
-          action: () => navigate('/courseList', { state: { targetAgeGroup: userAgeGroup } })
+          action: () => navigate('/com-program')
         };
       case 'MEDIUM':
         return {
