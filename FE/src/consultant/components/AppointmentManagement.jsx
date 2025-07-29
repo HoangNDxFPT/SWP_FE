@@ -785,7 +785,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
                   {consultantWorkDays.length} ngày)
                 </div>
               </Col>
-              Copy{" "}
+              
               <Col span={12}>
                 <Form.Item
                   label="Slot thời gian"
