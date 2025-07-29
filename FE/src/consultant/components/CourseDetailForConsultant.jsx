@@ -80,13 +80,7 @@ function CourseDetailForConsultant() {
                       )}
                     </ol>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold mb-2 text-blue-700">Thông tin bài kiểm tra</h2>
-                    {quiz
-                      ? <div className="text-gray-700">Bài kiểm tra cuối khóa: <b>{quiz.title || 'Không có tên'}</b> ({quiz.totalQuestions || '?'} câu hỏi)</div>
-                      : <div className="text-gray-500">Chưa có bài kiểm tra cho khóa học này</div>
-                    }
-                  </div>
+                  
                 </div>
                 <div className="md:w-1/3 flex justify-center">
                   <img
