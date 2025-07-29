@@ -24,7 +24,6 @@ function LoginPage() {
       const response = await api.post("/login", values);
 
       let userData = response.data.user || response.data;
-      // Nếu không có id, cố gắng lấy từ trường khác
       if (!userData.id && userData.userId) {
         userData.id = userData.userId;
       }
@@ -43,7 +42,13 @@ function LoginPage() {
         navigate("/");
       }
     } catch (e) {
-      toast.error(`Username or Password not valid!`);
+      // Cập nhật thông báo lỗi chi tiết
+      const errorMsg =
+        e.response?.data?.message ||
+        (e.response?.status === 401
+          ? "Tên đăng nhập hoặc mật khẩu không đúng!"
+          : "Đã xảy ra lỗi, vui lòng thử lại sau.");
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }

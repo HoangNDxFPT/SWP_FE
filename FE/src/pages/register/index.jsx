@@ -13,7 +13,7 @@ function RegisterPage() {
 
   const onFinish = async (values) => {
     setLoading(true);
-    const {...data } = values;
+    const { ...data } = values;
 
     if (data.dateOfBirth instanceof Date) {
       data.dateOfBirth = data.dateOfBirth.toISOString().slice(0, 10);
@@ -24,16 +24,30 @@ function RegisterPage() {
       toast.success("Tạo tài khoản mới thành công!");
       navigate("/login");
     } catch (e) {
-      const errorMessage = e.response?.data?.message || e.message || "Đăng ký thất bại!";
+      let errorMessage = "Đăng ký thất bại!";
+      if (e.response?.data?.message) {
+        errorMessage = e.response.data.message;
+      } else if (e.response?.status === 409) {
+        errorMessage = "Tên đăng nhập hoặc email đã tồn tại!";
+      } else if (e.response?.status === 400) {
+        // Nếu backend trả về chi tiết lỗi từng trường
+        if (e.response?.data?.errors) {
+          const fieldErrors = Object.values(e.response.data.errors).join(", ");
+          errorMessage = `Thông tin nhập chưa hợp lệ: ${fieldErrors}`;
+        } else {
+          errorMessage = "Thông tin nhập chưa hợp lệ!";
+        }
+      } else if (e.message) {
+        errorMessage = e.message;
+      }
       toast.error(`Lỗi: ${errorMessage}`);
-    } finally {
-      setLoading(false);
     }
+  }
+  const onFinishFailed = (errorInfo) => {
+    toast.error("Vui lòng kiểm tra lại các trường thông tin!");
+    console.error('Failed:', errorInfo);
   };
 
-  const onFinishFailed = () => {
-    toast.error("Vui lòng kiểm tra lại thông tin nhập liệu!");
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100">
@@ -86,7 +100,7 @@ function RegisterPage() {
               </Link>
             </div>
           </div>
-          
+
           {/* Right column - Registration form */}
           <div className="md:col-span-3 bg-white p-8 md:p-10 rounded-3xl md:rounded-l-none shadow-xl">
             <div className="max-w-2xl mx-auto overflow-y-auto" style={{ maxHeight: 'calc(100vh - 180px)' }}>
@@ -96,7 +110,7 @@ function RegisterPage() {
                   Điền đầy đủ thông tin để tạo tài khoản mới
                 </p>
               </div>
-              
+
               <Form
                 name="registerForm"
                 layout='vertical'
@@ -117,10 +131,10 @@ function RegisterPage() {
                       { pattern: /^\S+$/, message: 'Tên đăng nhập không được chứa khoảng trắng!' }
                     ]}
                   >
-                    <Input 
-                      prefix={<UserOutlined className="text-gray-400" />} 
+                    <Input
+                      prefix={<UserOutlined className="text-gray-400" />}
                       placeholder="Tên đăng nhập"
-                      className="rounded-lg py-2.5" 
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
 
@@ -133,10 +147,10 @@ function RegisterPage() {
                       { pattern: /^[a-zA-ZÀ-ỹ\s]+$/, message: 'Họ tên chỉ chứa chữ cái và khoảng trắng!' }
                     ]}
                   >
-                    <Input 
-                      prefix={<UserOutlined className="text-gray-400" />} 
+                    <Input
+                      prefix={<UserOutlined className="text-gray-400" />}
                       placeholder="Họ và tên đầy đủ"
-                      className="rounded-lg py-2.5" 
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
                 </div>
@@ -149,10 +163,10 @@ function RegisterPage() {
                     { type: 'email', message: 'Email không hợp lệ!' }
                   ]}
                 >
-                  <Input 
-                    prefix={<MailOutlined className="text-gray-400" />} 
+                  <Input
+                    prefix={<MailOutlined className="text-gray-400" />}
                     placeholder="Email của bạn"
-                    className="rounded-lg py-2.5" 
+                    className="rounded-lg py-2.5"
                   />
                 </Form.Item>
 
@@ -166,10 +180,10 @@ function RegisterPage() {
                     ]}
                     hasFeedback
                   >
-                    <Input.Password 
-                      prefix={<LockOutlined className="text-gray-400" />} 
+                    <Input.Password
+                      prefix={<LockOutlined className="text-gray-400" />}
                       placeholder="Mật khẩu"
-                      className="rounded-lg py-2.5" 
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
 
@@ -190,10 +204,10 @@ function RegisterPage() {
                       }),
                     ]}
                   >
-                    <Input.Password 
-                      prefix={<LockOutlined className="text-gray-400" />} 
+                    <Input.Password
+                      prefix={<LockOutlined className="text-gray-400" />}
                       placeholder="Nhập lại mật khẩu"
-                      className="rounded-lg py-2.5" 
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
                 </div>
@@ -207,10 +221,10 @@ function RegisterPage() {
                       { pattern: /^(0[3|5|7|8|9])[0-9]{8}$/, message: 'Số điện thoại không hợp lệ!' }
                     ]}
                   >
-                    <Input 
-                      prefix={<PhoneOutlined className="text-gray-400" />} 
+                    <Input
+                      prefix={<PhoneOutlined className="text-gray-400" />}
                       placeholder="Số điện thoại"
-                      className="rounded-lg py-2.5" 
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
 
@@ -230,10 +244,10 @@ function RegisterPage() {
                       }
                     ]}
                   >
-                    <Input 
-                      prefix={<CalendarOutlined className="text-gray-400" />} 
-                      type="date" 
-                      className="rounded-lg py-2.5" 
+                    <Input
+                      prefix={<CalendarOutlined className="text-gray-400" />}
+                      type="date"
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
                 </div>
@@ -246,10 +260,10 @@ function RegisterPage() {
                       { max: 100, message: 'Địa chỉ tối đa 100 ký tự!' }
                     ]}
                   >
-                    <Input 
-                      prefix={<HomeOutlined className="text-gray-400" />} 
+                    <Input
+                      prefix={<HomeOutlined className="text-gray-400" />}
                       placeholder="Địa chỉ của bạn"
-                      className="rounded-lg py-2.5" 
+                      className="rounded-lg py-2.5"
                     />
                   </Form.Item>
 
@@ -271,7 +285,7 @@ function RegisterPage() {
                 ]}>
                   <Checkbox>
                     Tôi đã đọc và đồng ý với{' '}
-                    <span 
+                    <span
                       onClick={(e) => {
                         e.preventDefault();
                         setShowTermsModal(true);
@@ -280,7 +294,7 @@ function RegisterPage() {
                     >
                       Điều khoản dịch vụ
                     </span>{' '}và{' '}
-                    <span 
+                    <span
                       onClick={(e) => {
                         e.preventDefault();
                         setShowPrivacyModal(true);
@@ -341,7 +355,7 @@ function RegisterPage() {
             <div className="border-l-4 border-blue-500 pl-4 mb-4">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Tổng Quan</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Hệ thống Tư Vấn Tâm Lý Sinh Viên cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng. 
+                Hệ thống Tư Vấn Tâm Lý Sinh Viên cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng.
                 Chính sách này mô tả cách chúng tôi thu thập, sử dụng, lưu trữ và bảo vệ thông tin của bạn.
               </p>
             </div>
@@ -569,7 +583,7 @@ function RegisterPage() {
             <div className="border-l-4 border-green-500 pl-4 mb-4">
               <h3 className="text-lg font-bold text-gray-800 mb-2">Giới Thiệu</h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Chào mừng bạn đến với Hệ thống Tư Vấn Tâm Lý Sinh Viên. Bằng việc sử dụng dịch vụ của chúng tôi, 
+                Chào mừng bạn đến với Hệ thống Tư Vấn Tâm Lý Sinh Viên. Bằng việc sử dụng dịch vụ của chúng tôi,
                 bạn đồng ý tuân thủ các điều khoản và điều kiện được nêu dưới đây.
               </p>
             </div>
