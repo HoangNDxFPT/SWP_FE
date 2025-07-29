@@ -343,6 +343,12 @@ function ConsultantList() {
     }
   }, [location.state]);
 
+  const isExpired = (appointment) => {
+    const now = new Date();
+    const end = new Date(`${appointment.date}T${appointment.endTime}`);
+    return appointment.status === 'PENDING' && end < now;
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <Header />
@@ -980,17 +986,19 @@ function ConsultantList() {
                                       ? 'bg-green-100'
                                       : 'bg-red-100'
                                 }`}>
-                                  {appointment.status === 'PENDING' 
-                                    ? 'Sắp tới' 
-                                    : appointment.status === 'COMPLETED'
-                                      ? 'Đã hoàn thành'
-                                      : 'Đã hủy'}
+                                  {isExpired(appointment)
+                                    ? 'Quá hạn'
+                                    : appointment.status === 'PENDING'
+                                      ? 'Sắp tới'
+                                      : appointment.status === 'COMPLETED'
+                                        ? 'Đã hoàn thành'
+                                        : 'Đã hủy'}
                                 </span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex items-center space-x-3">
-                                {appointment.status !== 'CANCELLED' && (
+                                {appointment.status !== 'CANCELLED' && !isExpired(appointment) ? (
                                   <a
                                     href={appointment.googleMeetLink}
                                     target="_blank"
@@ -1004,11 +1012,17 @@ function ConsultantList() {
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                     </svg>
-                                    {appointment.status === 'PENDING' ? 'Tham gia' : 'Xem link'}
+                                    {appointment.status === 'PENDING' ? 'Tham gia buổi tư vấn' : 'Xem link buổi tư vấn'}
                                   </a>
+                                ) : (
+                                  <div className="flex-1 py-2 px-3 flex justify-center items-center rounded-lg text-sm font-medium bg-gray-100 text-gray-400 opacity-60">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636" />
+                                    </svg>
+                                    Link không khả dụng
+                                  </div>
                                 )}
-                                
-                                {appointment.status === 'PENDING' && (
+                                {appointment.status === 'PENDING' && !isExpired(appointment) && (
                                   <button
                                     onClick={() => handleCancelAppointment(appointment.id)}
                                     className="inline-flex items-center px-3 py-1.5 border border-red-300 rounded text-sm font-medium text-red-700 bg-white hover:bg-red-50 transition-colors"
@@ -1019,7 +1033,6 @@ function ConsultantList() {
                                     Hủy lịch
                                   </button>
                                 )}
-                                {/* 3. Thêm nút báo cáo cho desktop view - tìm phần desktop table dưới phần actions và thêm: */}
                                 {appointment.status === 'COMPLETED' && (
                                   <button
                                     onClick={() => handleOpenReportModal(appointment.id)}

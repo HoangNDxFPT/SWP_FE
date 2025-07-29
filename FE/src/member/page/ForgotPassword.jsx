@@ -13,11 +13,14 @@ function ForgotPassword() {
       await api.post("/forgot-password", { email: values.email });
       setSuccess(true);
       toast.success("Hãy kiểm tra email của bạn!");
-      // Không chuyển hướng về login nữa
     } catch (e) {
-      const errorMessage = e.response?.data?.message || e.message || "Gửi yêu cầu thất bại!";
       const statusCode = e.response?.status;
-      toast.error(`Lỗi ${statusCode ? statusCode + ': ' : ''}${errorMessage}`);
+      let errorMessage = e.response?.data?.message || e.message || "Gửi yêu cầu thất bại!";
+      // Nếu là lỗi 401 hoặc 404 thì báo rõ cho người dùng
+      if (statusCode === 401 || statusCode === 404) {
+        errorMessage = "Email này không tồn tại trong hệ thống!";
+      }
+      toast.error(` ${errorMessage}`);
     }
   };
 
