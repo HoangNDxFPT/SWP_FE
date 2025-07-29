@@ -182,7 +182,7 @@ export default function AdminLayout() {
           className={`
             fixed inset-y-0 left-0 z-40 
             transform transition-all duration-300 ease-in-out
-            bg-gradient-to-b from-indigo-800 to-indigo-900 
+            bg-gradient-to-b from-blue-700 to-blue-900 
             text-white flex flex-col shadow-xl
             ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
             ${sidebarCollapsed ? 'w-20' : 'w-64'}
@@ -193,7 +193,7 @@ export default function AdminLayout() {
           <div className={`flex items-center justify-between p-4 ${sidebarCollapsed ? 'justify-center' : 'px-6'}`}>
             {!sidebarCollapsed && (
               <div className="flex items-center gap-2">
-                <svg className="h-8 w-8 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-8 w-8 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
                     d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -204,7 +204,7 @@ export default function AdminLayout() {
             {/* Collapse/Expand button for desktop */}
             <button 
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)} 
-              className="hidden lg:block text-indigo-300 hover:text-white transition-colors p-1 rounded-full hover:bg-indigo-700"
+              className="hidden lg:block text-blue-300 hover:text-white transition-colors p-1 rounded-full hover:bg-blue-700"
             >
               {sidebarCollapsed ? (
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,14 +227,14 @@ export default function AdminLayout() {
                     to={item.path}
                     className={`flex items-center ${sidebarCollapsed ? 'justify-center' : 'justify-start'} px-3 py-3 rounded-md transition-all ${
                       location.pathname === item.path
-                        ? "bg-indigo-700 text-white shadow-md"
-                        : "text-indigo-100 hover:bg-indigo-700/50"
+                        ? "bg-blue-700 text-white shadow-md"
+                        : "text-blue-100 hover:bg-blue-700/50"
                     }`}
                   >
                     <span className="flex-shrink-0">{item.icon}</span>
                     {!sidebarCollapsed && <span className="ml-3 text-sm font-medium">{item.label}</span>}
                     {sidebarCollapsed && (
-                      <span className="absolute left-full ml-3 px-2 py-1 text-xs font-medium bg-indigo-700 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap transform scale-0 group-hover:scale-100 origin-left">
+                      <span className="absolute left-full ml-3 px-2 py-1 text-xs font-medium bg-blue-700 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap transform scale-0 group-hover:scale-100 origin-left">
                         {item.label}
                       </span>
                     )}
@@ -245,14 +245,14 @@ export default function AdminLayout() {
           </nav>
 
           {/* Sidebar Footer */}
-          <div className={`p-4 border-t border-indigo-700/50 ${sidebarCollapsed ? 'flex justify-center' : ''}`}>
+          <div className={`p-4 border-t border-blue-700/50 ${sidebarCollapsed ? 'flex justify-center' : ''}`}>
             {!sidebarCollapsed ? (
               <button
                 onClick={() => {
                   localStorage.removeItem("user");
                   window.location.href = "/login";
                 }}
-                className="flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md bg-indigo-700 hover:bg-indigo-600 transition-colors text-sm font-medium"
+                className="flex w-full items-center justify-center gap-2 px-4 py-2 rounded-md bg-blue-700 hover:bg-blue-600 transition-colors text-sm font-medium"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -265,7 +265,7 @@ export default function AdminLayout() {
                   localStorage.removeItem("user");
                   window.location.href = "/login";
                 }}
-                className="p-2 rounded-md bg-indigo-700 hover:bg-indigo-600 transition-colors"
+                className="p-2 rounded-md bg-blue-700 hover:bg-blue-600 transition-colors"
                 title="Logout"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

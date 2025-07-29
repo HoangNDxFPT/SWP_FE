@@ -22,7 +22,6 @@ function AdminProfilePage() {
             setLoading(true);
             setError(null);
             try {
-                // Thêm dấu / ở đầu URL 
                 const response = await api.get('profile');
                 if (response.status === 200 && response.data) {
                     setUser({
@@ -54,7 +53,6 @@ function AdminProfilePage() {
 
     const handleSave = async () => {
         try {
-            // Tạo payload phù hợp với ProfileDTO
             const profilePayload = {
                 userId: user.id, 
                 fullName: user.fullName,
@@ -104,20 +102,14 @@ function AdminProfilePage() {
         
         setChangePwLoading(true);
         try {
-            // Sửa URL API - thêm /api/ phía trước
             await api.post('/change-password', {
                 oldPassword: pwForm.oldPassword,
                 newPassword: pwForm.newPassword
             });
-            
-            // Hiển thị thông báo thành công
             toast.success('Đổi mật khẩu thành công!');
-            
-            // Reset form sau khi đổi mật khẩu thành công
             setPwForm({ oldPassword: '', newPassword: '', confirmPassword: '' });
             
         } catch (err) {
-            // Hiển thị thông báo lỗi cụ thể
             if (err.response?.status === 401) {
                 toast.error('Mật khẩu cũ không đúng');
             } else {

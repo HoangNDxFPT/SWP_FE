@@ -815,12 +815,12 @@ function Program() {
                                                 <div className="text-sm text-gray-500 line-clamp-1">{template.description}</div>
                                                 <div className="flex gap-2 mt-1">
                                                     <a
-                                                        href={template.googleFormUrl}
+                                                        href={template.googleSheetUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="text-xs text-blue-600 hover:underline"
                                                     >
-                                                        Xem Google Form
+                                                        Xem Google Sheet
                                                     </a>
                                                     {template.googleFormUrlEdit && (
                                                         <a
