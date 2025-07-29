@@ -5,9 +5,7 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Tag, Spin, Modal, Button, Select } from "antd";
 
-const consultantId = JSON.parse(
-  localStorage.getItem("user") || "{}"
-).consultantId;
+
 
 export default function ConsultationCases() {
   const [assessments, setAssessments] = useState([]); // Chứa các bài khảo sát cá nhân (ASSIST, CRAFFT) đã hoàn thành
@@ -31,17 +29,12 @@ export default function ConsultationCases() {
 
   const [enrollments, setEnrollments] = useState([]); // Tất cả các đăng ký
   const [courses, setCourses] = useState([]); // Khóa học
-  const [quizLoading, setQuizLoading] = useState(false);
-  const [showQuizModal, setShowQuizModal] = useState(false);
-  const [quizResults, setQuizResults] = useState([]);
-  const [selectedQuizEnrollment, setSelectedQuizEnrollment] = useState(null);
-  const [selectedQuizResult, setSelectedQuizResult] = useState(null);
-  const [quizQuestions, setQuizQuestions] = useState([]);
-  const [userAnswers, setUserAnswers] = useState({});
+ 
 
   useEffect(() => {
     if (!selectedUser) {
       setEnrollments([]);
+      // Nếu không có user được chọn, reset enrollments và courses
       return;
     }
     const fetchEnrollments = async () => {
@@ -64,43 +57,7 @@ export default function ConsultationCases() {
     fetchEnrollments();
   }, [selectedUser]);
 
-  const handleViewQuiz = async (enrollment) => {
-    setQuizLoading(true);
-    setShowQuizModal(true);
-    setSelectedQuizEnrollment(enrollment);
-    setQuizResults([]);
-    setSelectedQuizResult(null);
-    setQuizQuestions([]);
-    setUserAnswers({});
-    try {
-      // Lấy kết quả quiz của user cho khóa học này
-      const resQuiz = await api.get("/quiz-result");
-      const results = resQuiz.data.filter(
-        (r) =>
-          r.user &&
-          String(r.user.id) === String(enrollment.userId) &&
-          r.course &&
-          String(r.course.id) === String(enrollment.courseId)
-      );
-      setQuizResults(results);
-      if (results.length) {
-        setSelectedQuizResult(results[0]);
-        // Lấy câu hỏi quiz
-        const resQuizQ = await api.get(`/quiz/course/${enrollment.courseId}`);
-        setQuizQuestions(resQuizQ.data);
-        // Lấy đáp án user
-        const resAnswers = await api.get(`/quiz/result/${results[0].id}`);
-        const answersMap = {};
-        resAnswers.data.forEach((ans) => {
-          answersMap[ans.questionId] = ans.selectedAnswer;
-        });
-        setUserAnswers(answersMap);
-      }
-    } catch (e) {
-      console.error("Error fetching quiz data:", e);
-    }
-    setQuizLoading(false);
-  };
+ 
 
   // Lấy tất cả bài khảo sát đã hoàn thành và danh sách người dùng duy nhất
   // Đồng thời lấy toàn bộ templates (mẫu khảo sát) một lần duy nhất khi component mount
@@ -638,178 +595,7 @@ export default function ConsultationCases() {
         </>
       )}
 
-      <Modal
-        title={<span className="text-xl font-bold">Kết quả Quiz</span>}
-        open={showQuizModal}
-        onCancel={() => setShowQuizModal(false)}
-        footer={[
-          <Button key="close" onClick={() => setShowQuizModal(false)}>
-            Đóng
-          </Button>,
-        ]}
-        width={800}
-        centered
-        bodyStyle={{ maxHeight: "70vh", overflowY: "auto" }}
-      >
-        {quizLoading ? (
-          <Spin size="large" tip="Đang tải kết quả quiz..." />
-        ) : selectedQuizResult ? (
-          <div>
-            {/* Thông tin khóa học và người dùng */}
-            <div className="mb-4">
-              <b>Khóa học:</b>{" "}
-              {courses.find(
-                (c) => String(c.id) === String(selectedQuizEnrollment?.courseId)
-              )?.name || "N/A"}
-              <br />
-              <b>Ngày đăng ký:</b>{" "}
-              {formatShortDate(selectedQuizEnrollment?.enrolledAt)}
-            </div>
-
-            {/* Nếu có nhiều lần làm quiz */}
-            {quizResults.length > 1 && (
-              <div className="mb-4">
-                <b>Chọn lần làm bài:</b>
-                <div className="flex gap-2 mt-2">
-                  {quizResults.map((result, idx) => (
-                    <Button
-                      key={result.id}
-                      type={
-                        selectedQuizResult.id === result.id
-                          ? "primary"
-                          : "default"
-                      }
-                      onClick={() => {
-                        setSelectedQuizResult(result);
-                        // Lấy lại đáp án user cho lần này
-                        api.get(`/quiz/result/${result.id}`).then((res) => {
-                          const answersMap = {};
-                          res.data.forEach((ans) => {
-                            answersMap[ans.questionId] = ans.selectedAnswer;
-                          });
-                          setUserAnswers(answersMap);
-                        });
-                      }}
-                    >
-                      Lần {idx + 1} (
-                      {new Date(result.submittedAt).toLocaleDateString("vi-VN")}
-                      )
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Tóm tắt kết quả */}
-            <div
-              className={`mb-4 p-4 rounded ${
-                selectedQuizResult.score / selectedQuizResult.totalQuestions >=
-                0.8
-                  ? "bg-green-50"
-                  : "bg-red-50"
-              }`}
-            >
-              <div className="text-lg font-bold mb-2">
-                {selectedQuizResult.score}/{selectedQuizResult.totalQuestions}{" "}
-                đúng (
-                {Math.round(
-                  (selectedQuizResult.score /
-                    selectedQuizResult.totalQuestions) *
-                    100
-                )}
-                %) -
-                <span
-                  className={
-                    selectedQuizResult.score /
-                      selectedQuizResult.totalQuestions >=
-                    0.8
-                      ? "text-green-600 ml-2"
-                      : "text-red-600 ml-2"
-                  }
-                >
-                  {selectedQuizResult.score /
-                    selectedQuizResult.totalQuestions >=
-                  0.8
-                    ? "Đậu"
-                    : "Rớt"}
-                </span>
-              </div>
-              <div className="text-gray-600 text-sm">
-                Ngày làm bài:{" "}
-                {new Date(selectedQuizResult.submittedAt).toLocaleString(
-                  "vi-VN"
-                )}
-              </div>
-            </div>
-
-            {/* Danh sách câu hỏi/đáp án */}
-            <div>
-              <b>Chi tiết từng câu hỏi:</b>
-              <div className="mt-3 space-y-4">
-                {quizQuestions.map((question, idx) => {
-                  const userAnswerIndex = userAnswers[question.id];
-                  const isCorrect = userAnswerIndex === question.correct;
-                  return (
-                    <div key={question.id} className="border rounded-lg p-4">
-                      <div className="mb-2 font-medium">
-                        {idx + 1}. {question.question}
-                      </div>
-                      <div className="ml-4">
-                        {question.answer.map((ans, aIdx) => (
-                          <div
-                            key={aIdx}
-                            className={`py-1 px-2 rounded mb-1
-                        ${aIdx === question.correct ? "bg-green-100" : ""}
-                        ${
-                          userAnswerIndex === aIdx && aIdx !== question.correct
-                            ? "bg-red-100"
-                            : ""
-                        }
-                      `}
-                          >
-                            <span className="font-bold">
-                              {String.fromCharCode(65 + aIdx)}.{" "}
-                            </span>
-                            {ans}
-                            {aIdx === question.correct && (
-                              <span className="text-green-600 ml-2">
-                                (Đáp án đúng)
-                              </span>
-                            )}
-                            {userAnswerIndex === aIdx &&
-                              aIdx !== question.correct && (
-                                <span className="text-red-600 ml-2">
-                                  (Đáp án của bạn)
-                                </span>
-                              )}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-1 text-xs">
-                        {isCorrect ? (
-                          <span className="text-green-600">
-                            Bạn trả lời đúng
-                          </span>
-                        ) : userAnswerIndex !== undefined ? (
-                          <span className="text-red-600">Bạn trả lời sai</span>
-                        ) : (
-                          <span className="text-gray-400">
-                            Bạn chưa chọn đáp án
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <span>Chưa có kết quả quiz cho khóa học này.</span>
-          </div>
-        )}
-      </Modal>
+     
 
       {/* Modal chi tiết kết quả ASSIST/CRAFFT */}
       <Modal
@@ -866,32 +652,7 @@ export default function ConsultationCases() {
           </div>
         )}
       </Modal>
-      <Modal
-        title={<span className="text-xl font-bold">Kết quả Quiz</span>}
-        open={showQuizModal}
-        onCancel={() => setShowQuizModal(false)}
-        footer={[
-          <Button key="close" onClick={() => setShowQuizModal(false)}>
-            Đóng
-          </Button>,
-        ]}
-        width={800}
-        centered
-        bodyStyle={{ maxHeight: "70vh", overflowY: "auto" }}
-      >
-        {quizLoading ? (
-          <Spin size="large" tip="Đang tải kết quả quiz..." />
-        ) : selectedQuizResult ? (
-          <div>
-            {/* ... nội dung modal quiz như trong UserCourseQuizViewer ... */}
-            {/* Xem lại code UserCourseQuizViewer để copy block modal quiz vào đây */}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <span>Chưa có kết quả quiz cho khóa học này.</span>
-          </div>
-        )}
-      </Modal>
+     
 
       {/* Spin loader chung */}
       {loading && (

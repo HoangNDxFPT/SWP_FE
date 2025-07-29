@@ -6,6 +6,7 @@ import { Calendar as CalendarIcon, Check, X, Plus } from "lucide-react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import api from "../../config/axios";
+import { toast } from "react-toastify";
 
 const formatDate = (date) => {
   const year = date.getFullYear();
@@ -108,6 +109,7 @@ export default function ModernWorkdayCalendar({ open, onCancel, onRegistered }) 
   const handleRegister = async () => {
     if (selectedDates.length === 0) {
       message.warning("Bạn chưa chọn ngày nào!");
+      toast.warning("Bạn chưa chọn ngày nào!");
       return;
     }
 
@@ -121,6 +123,7 @@ export default function ModernWorkdayCalendar({ open, onCancel, onRegistered }) 
       );
 
       message.success("Đăng ký thành công!");
+      toast.success("Đăng ký thành công!");
       setSelectedDates([]);
       
       // ✅ Refresh lại dữ liệu tháng hiện tại sau khi đăng ký
@@ -150,6 +153,7 @@ export default function ModernWorkdayCalendar({ open, onCancel, onRegistered }) 
     } catch (error) {
       console.error("Error registering dates:", error);
       message.error("Đăng ký thất bại!");
+      toast.error("Đăng ký thất bại!");
     } finally {
       setLoading(false);
     }
