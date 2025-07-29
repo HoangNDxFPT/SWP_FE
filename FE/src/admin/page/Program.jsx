@@ -815,10 +815,18 @@ function Program() {
                                                 <div className="text-sm text-gray-500 line-clamp-1">{template.description}</div>
                                                 <div className="flex gap-2 mt-1">
                                                     <a
-                                                        href={template.googleSheetUrl}
+                                                        href={template.googleSheetUrl || undefined}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="text-xs text-blue-600 hover:underline"
+                                                        className={`text-xs ${template.googleSheetUrl ? "text-blue-600 hover:underline" : "text-gray-400 cursor-not-allowed"}`}
+                                                        tabIndex={template.googleSheetUrl ? 0 : -1}
+                                                        onClick={e => {
+                                                            if (!template.googleSheetUrl) {
+                                                                e.preventDefault();
+                                                                // Hiện thông báo
+                                                                toast.error("Chưa có link Google Sheet cho mẫu này!") || alert("Không có link Google Sheet cho mẫu này!");
+                                                            }
+                                                        }}
                                                     >
                                                         Xem Google Sheet
                                                     </a>
