@@ -80,8 +80,13 @@ function ConsultantDetail() {
         registeredMap[slot.slotId] = slot;
       });
       
+      // Get current date and time for filtering
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentTimeString = now.toTimeString().slice(0, 5); // Format: "HH:MM"
+      
       // Combine all slots with availability
-      const allSlots = timeSlotsRes.data.map(slot => ({
+      let allSlots = timeSlotsRes.data.map(slot => ({
         slotId: slot.id,
         label: slot.label,
         startTime: slot.start,
@@ -89,6 +94,11 @@ function ConsultantDetail() {
         available: registeredMap[slot.id]?.available || false,
         isRegistered: !!registeredMap[slot.id]
       }));
+      
+      // Filter out past slots for today
+      if (selectedDate === today) {
+        allSlots = allSlots.filter(slot => slot.startTime > currentTimeString);
+      }
       
       // Sort by start time
       allSlots.sort((a, b) => a.startTime.localeCompare(b.startTime));

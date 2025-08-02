@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../../config/axios';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 import { toast } from 'react-toastify';
@@ -7,12 +8,48 @@ import { toast } from 'react-toastify';
 function AssessmentPage() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userAge, setUserAge] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Kiểm tra xem người dùng đã đăng nhập chưa
     const token = localStorage.getItem('token');
     setIsLoggedIn(!!token);
+    
+    if (token) {
+      fetchUserProfile(token);
+    } else {
+      setLoading(false);
+    }
   }, []);
+
+  const fetchUserProfile = async (token) => {
+    try {
+      // Use the api instance instead of fetch
+      const response = await api.get('/profile');
+      
+      // The api instance automatically returns response.data, not response.json()
+      const userData = response.data;
+      
+      // Calculate age from date of birth
+      if (userData.dateOfBirth) {
+        const birthDate = new Date(userData.dateOfBirth);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        setUserAge(age);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleStartAssessment = (type) => {
     if (!isLoggedIn) {
@@ -20,14 +57,73 @@ function AssessmentPage() {
       setTimeout(() => navigate('/login', { state: { from: `/assessment-${type}` } }), 1500);
       return;
     }
-    
-    // Chuyển đến các trang riêng biệt
+
+    // Kiểm tra độ tuổi phù hợp
+    if (userAge === null) {
+      toast.error("Không thể xác định độ tuổi của bạn. Vui lòng cập nhật thông tin cá nhân.");
+      return;
+    }
+
     if (type === 'assist') {
+      // ASSIST phù hợp với người trưởng thành (18+ tuổi)
+      if (userAge < 18) {
+        toast.warning("Bài đánh giá ASSIST dành cho người từ 18 tuổi trở lên. Bạn có thể thử bài đánh giá CRAFFT.");
+        return;
+      }
       navigate('/assessment-assist');
     } else if (type === 'crafft') {
+      // CRAFFT phù hợp với thanh thiếu niên (12-21 tuổi)
+      if (userAge < 12 || userAge > 21) {
+        if (userAge < 12) {
+          toast.warning("Bài đánh giá CRAFFT dành cho độ tuổi từ 12-21 tuổi. Bạn còn quá nhỏ để thực hiện bài đánh giá này.");
+        } else {
+          toast.warning("Bài đánh giá CRAFFT dành cho độ tuổi từ 12-21 tuổi. Bạn có thể thử bài đánh giá ASSIST.");
+        }
+        return;
+      }
       navigate('/assessment-crafft');
     }
   };
+
+  const getAgeRecommendation = () => {
+    if (!isLoggedIn || userAge === null) return null;
+    
+    if (userAge >= 18) {
+      return {
+        recommended: 'assist',
+        message: `Với độ tuổi ${userAge}, chúng tôi khuyến nghị bạn sử dụng bài đánh giá ASSIST.`
+      };
+    } else if (userAge >= 12 && userAge <= 21) {
+      return {
+        recommended: 'crafft',
+        message: `Với độ tuổi ${userAge}, chúng tôi khuyến nghị bạn sử dụng bài đánh giá CRAFFT.`
+      };
+    } else if (userAge < 12) {
+      return {
+        recommended: null,
+        message: `Với độ tuổi ${userAge}, bạn còn quá nhỏ để thực hiện các bài đánh giá này.`
+      };
+    }
+    
+    return null;
+  };
+
+  const ageRecommendation = getAgeRecommendation();
+
+  if (loading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <Header />
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Đang tải thông tin...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -48,14 +144,58 @@ function AssessmentPage() {
             </p>
           </div>
         </div>
+
+        {/* Age Recommendation Banner */}
+        {ageRecommendation && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className={`p-4 rounded-lg border ${
+              ageRecommendation.recommended === 'assist' 
+                ? 'bg-blue-50 border-blue-200' 
+                : ageRecommendation.recommended === 'crafft'
+                ? 'bg-green-50 border-green-200'
+                : 'bg-yellow-50 border-yellow-200'
+            }`}>
+              <div className="flex items-center gap-3">
+                <svg className={`w-6 h-6 ${
+                  ageRecommendation.recommended === 'assist' 
+                    ? 'text-blue-600' 
+                    : ageRecommendation.recommended === 'crafft'
+                    ? 'text-green-600'
+                    : 'text-yellow-600'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className={`font-semibold ${
+                    ageRecommendation.recommended === 'assist' 
+                      ? 'text-blue-800' 
+                      : ageRecommendation.recommended === 'crafft'
+                      ? 'text-green-800'
+                      : 'text-yellow-800'
+                  }`}>
+                    Khuyến nghị cho bạn
+                  </p>
+                  <p className="text-gray-700">{ageRecommendation.message}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
         
         {/* Survey Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* ASSIST Survey */}
-          <div className="bg-white rounded-lg overflow-hidden shadow-lg border border-gray-100 transition hover:shadow-xl">
+          <div className={`bg-white rounded-lg overflow-hidden shadow-lg border border-gray-100 transition hover:shadow-xl ${
+            isLoggedIn && userAge !== null && userAge < 18 ? 'opacity-60' : ''
+          }`}>
             <div className="h-48 bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center relative">
               <div className="absolute inset-0 opacity-20 bg-pattern"></div>
               <h3 className="text-3xl font-bold text-white relative z-10">ASSIST</h3>
+              {isLoggedIn && userAge !== null && userAge < 18 && (
+                <div className="absolute top-4 right-4 bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold">
+                  Không phù hợp
+                </div>
+              )}
             </div>
             <div className="p-6">
               <h3 className="text-xl font-bold text-blue-800 mb-2">Công cụ đánh giá ASSIST</h3>
@@ -69,27 +209,48 @@ function AssessmentPage() {
                   </svg>
                   <span className="text-gray-700">Thời gian: ~5-10 phút</span>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center mb-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <span className="text-gray-700">8 câu hỏi chính</span>
                 </div>
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-gray-700">Dành cho: 18+ tuổi</span>
+                </div>
               </div>
               <button 
                 onClick={() => handleStartAssessment('assist')}
-                className="inline-block w-full py-3 px-6 text-center font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition shadow-md"
+                className={`inline-block w-full py-3 px-6 text-center font-medium text-white rounded-md transition shadow-md ${
+                  isLoggedIn && userAge !== null && userAge < 18 
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+                disabled={isLoggedIn && userAge !== null && userAge < 18}
               >
-                Bắt đầu bài kiểm tra ASSIST
+                {isLoggedIn && userAge !== null && userAge < 18 
+                  ? 'Không phù hợp với độ tuổi của bạn' 
+                  : 'Bắt đầu bài kiểm tra ASSIST'
+                }
               </button>
             </div>
           </div>
 
           {/* CRAFFT Survey */}
-          <div className="bg-white rounded-lg overflow-hidden shadow-lg border border-gray-100 transition hover:shadow-xl">
+          <div className={`bg-white rounded-lg overflow-hidden shadow-lg border border-gray-100 transition hover:shadow-xl ${
+            isLoggedIn && userAge !== null && (userAge < 12 || userAge > 21) ? 'opacity-60' : ''
+          }`}>
             <div className="h-48 bg-gradient-to-r from-green-500 to-green-700 flex items-center justify-center relative">
               <div className="absolute inset-0 opacity-20 bg-pattern"></div>
               <h3 className="text-3xl font-bold text-white relative z-10">CRAFFT</h3>
+              {isLoggedIn && userAge !== null && (userAge < 12 || userAge > 21) && (
+                <div className="absolute top-4 right-4 bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold">
+                  Không phù hợp
+                </div>
+              )}
             </div>
             <div className="p-6">
               <h3 className="text-xl font-bold text-green-800 mb-2">Công cụ đánh giá CRAFFT</h3>
@@ -103,18 +264,32 @@ function AssessmentPage() {
                   </svg>
                   <span className="text-gray-700">Thời gian: ~3-5 phút</span>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center mb-2">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <span className="text-gray-700">6 câu hỏi chính</span>
                 </div>
+                <div className="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span className="text-gray-700">Dành cho: 12-21 tuổi</span>
+                </div>
               </div>
               <button 
                 onClick={() => handleStartAssessment('crafft')}
-                className="inline-block w-full py-3 px-6 text-center font-medium text-white bg-green-600 rounded-md hover:bg-green-700 transition shadow-md"
+                className={`inline-block w-full py-3 px-6 text-center font-medium text-white rounded-md transition shadow-md ${
+                  isLoggedIn && userAge !== null && (userAge < 12 || userAge > 21)
+                    ? 'bg-gray-400 cursor-not-allowed' 
+                    : 'bg-green-600 hover:bg-green-700'
+                }`}
+                disabled={isLoggedIn && userAge !== null && (userAge < 12 || userAge > 21)}
               >
-                Bắt đầu bài kiểm tra CRAFFT
+                {isLoggedIn && userAge !== null && (userAge < 12 || userAge > 21)
+                  ? 'Không phù hợp với độ tuổi của bạn' 
+                  : 'Bắt đầu bài kiểm tra CRAFFT'
+                }
               </button>
             </div>
           </div>

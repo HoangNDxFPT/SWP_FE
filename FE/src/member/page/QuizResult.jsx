@@ -258,53 +258,37 @@ function QuizResult() {
                           
                           <div className="space-y-2 mb-4">
                             {options.map((option, idx) => {
-                              const isStudentAnswer = detail.studentAnswer?.trim() === option?.trim();
-                              const isCorrectAnswer = detail.correctAnswer?.trim() === option?.trim();
+                              // Kiểm tra xem đây có phải là đáp án học viên đã chọn không
+                              const isUserAnswer = detail.studentAnswer === String.fromCharCode(65 + idx) || 
+                                                   detail.studentAnswer === option ||
+                                                   detail.studentAnswer === `${String.fromCharCode(65 + idx)}. ${option}`;
                               
                               return (
                                 <div 
                                   key={idx} 
                                   className={`p-3 rounded-lg border ${
-                                    isCorrectAnswer
-                                      ? 'bg-green-50 border-green-300'
-                                      : isStudentAnswer 
-                                        ? 'bg-red-50 border-red-300'
-                                        : 'bg-gray-50 border-gray-200'
+                                    isUserAnswer 
+                                      ? detail.correct 
+                                        ? 'bg-green-50 border-green-300' 
+                                        : 'bg-red-50 border-red-300'
+                                      : 'bg-gray-50 border-gray-200'
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <span>
-                                      <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
-                                      {option}
-                                    </span>
-                                    
-                                    {isCorrectAnswer && (
-                                      <span className="text-green-600 text-sm font-medium">✓ Đáp án đúng</span>
+                                  <span>
+                                    <span className="font-medium mr-2">{String.fromCharCode(65 + idx)}.</span>
+                                    {option}
+                                    {isUserAnswer && (
+                                      <span className={`ml-2 text-sm font-medium ${
+                                        detail.correct ? 'text-green-600' : 'text-red-600'
+                                      }`}>
+                                        (Đáp án bạn chọn)
+                                      </span>
                                     )}
-                                    
-                                    {isStudentAnswer && !isCorrectAnswer && (
-                                      <span className="text-red-600 text-sm font-medium">✗ Bạn đã chọn</span>
-                                    )}
-                                  </div>
+                                  </span>
                                 </div>
                               );
                             })}
-                          </div>
-                          
-                          <div className="p-3 bg-gray-100 rounded-lg text-sm">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              <div>
-                                <span className="font-medium">Đáp án đúng: </span>
-                                <span className="text-green-600">{detail.correctAnswer}</span>
-                              </div>
-                              <div>
-                                <span className="font-medium">Bạn đã chọn: </span>
-                                <span className={detail.correct ? 'text-green-600' : 'text-red-600'}>
-                                  {detail.studentAnswer || 'Không chọn'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                          </div>                          
                         </div>
                       </div>
                     </div>
@@ -313,7 +297,6 @@ function QuizResult() {
               </div>
             </div>
           )}
-
         </div>
       </main>
       
