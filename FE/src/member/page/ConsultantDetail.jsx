@@ -55,7 +55,7 @@ function ConsultantDetail() {
     const timeParam = searchParams.get("time");
     if (dateParam) {
       setDate(dateParam);
-      setSelectedDate(dateParam); // Thêm dòng này để set ngày cho input
+      setSelectedDate(dateParam); 
     }
     if (timeParam) setTime(timeParam);
   }, [searchParams]);
@@ -146,7 +146,7 @@ function ConsultantDetail() {
       
     } catch (error) {
       console.error('Error booking appointment:', error);
-      const message = error.response?.data?.message || 'Đặt lịch thất bại. Vui lòng thử lại.';
+      const message = error.response?.data?.message || 'Bạn đã có lịch hẹn vào khung giờ này!';
       toast.error(message);
       
       if (error.response?.status === 400) {

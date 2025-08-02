@@ -50,6 +50,7 @@ import Dashboard from "./admin/page/Dashboard";
 import ConsultantManagement from "./admin/page/ConsultantManagement";
 import ReportAppointment from "./admin/page/Report&Appointment";
 import OAuth2RedirectHandler from "./pages/login/OAuth2RedirectHandler";
+import ActivationPage from "./pages/activation";
 
 
 function RequireAdmin({ children }) {
@@ -76,6 +77,10 @@ const router = createBrowserRouter([
   {
     path: "/about-us",
     element: <AboutUs />,
+  },
+  {
+    path: "/activate",
+    element: <ActivationPage />,
   },
   {
     path: "/login",
