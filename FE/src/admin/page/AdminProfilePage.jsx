@@ -3,6 +3,7 @@ import api from '../../config/axios';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Link } from 'react-router-dom';
+import { FaUser, FaLock, FaEdit, FaSave, FaTimes, FaSpinner } from 'react-icons/fa';
 
 function AdminProfilePage() {
     const [user, setUser] = useState(null);
@@ -123,27 +124,45 @@ function AdminProfilePage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-                <p className="ml-3">Đang tải hồ sơ ......</p>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
+                    <div className="flex flex-col items-center">
+                        <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-500 border-t-transparent mb-4"></div>
+                        <h3 className="text-lg font-semibold text-gray-700 mb-2">Đang tải hồ sơ</h3>
+                        <p className="text-gray-500 text-center">Vui lòng chờ trong giây lát...</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 max-w-xl w-full">
-                    <p className="font-bold">Lỗi</p>
-                    <p>Không thể tải hồ sơ: {error.message}. Vui lòng thử lại sau.</p>
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+                <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full">
+                    <div className="text-center">
+                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Có lỗi xảy ra</h3>
+                        <p className="text-gray-600 mb-4">Không thể tải hồ sơ: {error.message}</p>
+                        <button 
+                            onClick={() => window.location.reload()} 
+                            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            Thử lại
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <>
-            {/* Cấu hình ToastContainer để hiển thị thông báo đẹp hơn */}
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+            {/* Toast Container Configuration */}
             <ToastContainer 
                 position="top-right" 
                 autoClose={3000} 
@@ -154,163 +173,255 @@ function AdminProfilePage() {
                 pauseOnFocusLoss
                 draggable
                 pauseOnHover
+                className="mt-16"
             />
             
-            <div className="max-w-xl mx-auto bg-white rounded shadow p-8 mt-10 mb-10">
-                <h2 className="text-2xl font-bold mb-6 text-center">Hồ Sơ Quản Trị Viên</h2>
-                
-                <div className="flex border-b mb-8">
-                    <button
-                        className={`flex-1 py-2 font-semibold ${activeTab === 'profile' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-                        onClick={() => setActiveTab('profile')}
-                    >
-                        Thông Tin Cá Nhân
-                    </button>
-                    <button
-                        className={`flex-1 py-2 font-semibold ${activeTab === 'password' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-600'}`}
-                        onClick={() => setActiveTab('password')}
-                    >
-                        Đổi Mật Khẩu
-                    </button>
+            <div className="max-w-4xl mx-auto">
+                {/* Header Section */}
+                <div className="bg-white rounded-xl shadow-lg mb-6 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+                        <div className="flex items-center">
+                            <div className="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mr-4">
+                                <FaUser className="text-2xl text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-bold text-white">Hồ Sơ Quản Trị Viên</h1>
+                                <p className="text-blue-100 mt-1">Quản lý thông tin cá nhân và bảo mật tài khoản</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Tab Navigation */}
+                    <div className="flex border-b border-gray-200">
+                        <button
+                            className={`flex-1 py-4 px-6 font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${
+                                activeTab === 'profile' 
+                                    ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                            }`}
+                            onClick={() => setActiveTab('profile')}
+                        >
+                            <FaUser className="text-sm" />
+                            Thông Tin Cá Nhân
+                        </button>
+                        <button
+                            className={`flex-1 py-4 px-6 font-semibold transition-colors duration-200 flex items-center justify-center gap-2 ${
+                                activeTab === 'password' 
+                                    ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                                    : 'text-gray-600 hover:text-blue-600 hover:bg-gray-50'
+                            }`}
+                            onClick={() => setActiveTab('password')}
+                        >
+                            <FaLock className="text-sm" />
+                            Đổi Mật Khẩu
+                        </button>
+                    </div>
                 </div>
 
-                {activeTab === 'profile' && (
-                    <div className="flex flex-col gap-4">
-                        <label className="font-semibold">Họ và Tên</label>
-                        <input
-                            type="text"
-                            name="fullName"
-                            value={user.fullName}
-                            onChange={handleChange}
-                            disabled={!editMode}
-                            className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-                        />
+                {/* Content Section */}
+                <div className="bg-white rounded-xl shadow-lg p-8">{activeTab === 'profile' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Họ và Tên</label>
+                                <input
+                                    type="text"
+                                    name="fullName"
+                                    value={user.fullName}
+                                    onChange={handleChange}
+                                    disabled={!editMode}
+                                    className={`w-full p-3 border rounded-lg transition-colors duration-200 ${
+                                        !editMode 
+                                            ? 'bg-gray-50 border-gray-200 text-gray-600' 
+                                            : 'bg-white border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                                    }`}
+                                    placeholder="Nhập họ và tên"
+                                />
+                            </div>
 
-                        <label className="font-semibold">Số Điện Thoại</label>
-                        <input
-                            type="text"
-                            name="phoneNumber"
-                            value={user.phoneNumber}
-                            onChange={handleChange}
-                            disabled={!editMode}
-                            className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-                        />
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Số Điện Thoại</label>
+                                <input
+                                    type="text"
+                                    name="phoneNumber"
+                                    value={user.phoneNumber}
+                                    onChange={handleChange}
+                                    disabled={!editMode}
+                                    className={`w-full p-3 border rounded-lg transition-colors duration-200 ${
+                                        !editMode 
+                                            ? 'bg-gray-50 border-gray-200 text-gray-600' 
+                                            : 'bg-white border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                                    }`}
+                                    placeholder="Nhập số điện thoại"
+                                />
+                            </div>
 
-                        <label className="font-semibold">Địa Chỉ</label>
-                        <input
-                            type="text"
-                            name="address"
-                            value={user.address}
-                            onChange={handleChange}
-                            disabled={!editMode}
-                            className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-                        />
+                            <div className="space-y-2 md:col-span-2">
+                                <label className="block text-sm font-semibold text-gray-700">Địa Chỉ</label>
+                                <input
+                                    type="text"
+                                    name="address"
+                                    value={user.address}
+                                    onChange={handleChange}
+                                    disabled={!editMode}
+                                    className={`w-full p-3 border rounded-lg transition-colors duration-200 ${
+                                        !editMode 
+                                            ? 'bg-gray-50 border-gray-200 text-gray-600' 
+                                            : 'bg-white border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                                    }`}
+                                    placeholder="Nhập địa chỉ"
+                                />
+                            </div>
 
-                        <label className="font-semibold">Ngày Sinh</label>
-                        <input
-                            type="date"
-                            name="dateOfBirth"
-                            value={user.dateOfBirth || ''}
-                            onChange={handleChange}
-                            disabled={!editMode}
-                            className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-                        />
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Ngày Sinh</label>
+                                <input
+                                    type="date"
+                                    name="dateOfBirth"
+                                    value={user.dateOfBirth || ''}
+                                    onChange={handleChange}
+                                    disabled={!editMode}
+                                    className={`w-full p-3 border rounded-lg transition-colors duration-200 ${
+                                        !editMode 
+                                            ? 'bg-gray-50 border-gray-200 text-gray-600' 
+                                            : 'bg-white border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                                    }`}
+                                />
+                            </div>
 
-                        <label className="font-semibold">Giới Tính</label>
-                        <select
-                            name="gender"
-                            value={user.gender || ''}
-                            onChange={handleChange}
-                            disabled={!editMode}
-                            className={`p-2 border rounded ${!editMode ? 'bg-gray-100' : 'bg-white'} focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500`}
-                        >
-                            <option value="">Chọn</option>
-                            <option value="MALE">Nam</option>
-                            <option value="FEMALE">Nữ</option>
-                        </select>
-
-                        <div className="flex gap-4 mt-6 justify-center">
-                            {editMode ? (
-                                <>
-                                    <button
-                                        onClick={handleSave}
-                                        className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
-                                    >
-                                        Lưu
-                                    </button>
-                                    <button
-                                        onClick={() => setEditMode(false)}
-                                        className="border border-gray-400 text-gray-700 px-6 py-2 rounded-md font-semibold hover:bg-gray-100 transition-colors duration-200"
-                                    >
-                                        Hủy
-                                    </button>
-                                </>
-                            ) : (
-                                <button
-                                    onClick={() => setEditMode(true)}
-                                    className="bg-blue-600 text-white px-6 py-2 rounded-md font-semibold hover:bg-blue-700 transition-colors duration-200"
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Giới Tính</label>
+                                <select
+                                    name="gender"
+                                    value={user.gender || ''}
+                                    onChange={handleChange}
+                                    disabled={!editMode}
+                                    className={`w-full p-3 border rounded-lg transition-colors duration-200 ${
+                                        !editMode 
+                                            ? 'bg-gray-50 border-gray-200 text-gray-600' 
+                                            : 'bg-white border-gray-300 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200'
+                                    }`}
                                 >
-                                    Chỉnh Sửa Hồ Sơ
-                                </button>
-                            )}
+                                    <option value="">Chọn giới tính</option>
+                                    <option value="MALE">Nam</option>
+                                    <option value="FEMALE">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-6">
+                            <div className="flex gap-4 justify-center">
+                                {editMode ? (
+                                    <>
+                                        <button
+                                            onClick={handleSave}
+                                            className="bg-green-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200 flex items-center gap-2 shadow-md"
+                                        >
+                                            <FaSave />
+                                            Lưu Thay Đổi
+                                        </button>
+                                        <button
+                                            onClick={() => setEditMode(false)}
+                                            className="bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-600 transition-colors duration-200 flex items-center gap-2 shadow-md"
+                                        >
+                                            <FaTimes />
+                                            Hủy
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        onClick={() => setEditMode(true)}
+                                        className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 shadow-md"
+                                    >
+                                        <FaEdit />
+                                        Chỉnh Sửa Hồ Sơ
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
 
                 {activeTab === 'password' && (
-                    <form className="flex flex-col gap-4" onSubmit={handleChangePassword}>
-                        <label className="font-semibold">Mật Khẩu Cũ</label>
-                        <input
-                            type="password"
-                            name="oldPassword"
-                            value={pwForm.oldPassword}
-                            onChange={handlePwInput}
-                            className="p-2 border rounded bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            required
-                        />
+                    <form className="space-y-6" onSubmit={handleChangePassword}>
+                        <div className="space-y-6">
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Mật Khẩu Cũ</label>
+                                <input
+                                    type="password"
+                                    name="oldPassword"
+                                    value={pwForm.oldPassword}
+                                    onChange={handlePwInput}
+                                    className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors duration-200"
+                                    placeholder="Nhập mật khẩu hiện tại"
+                                    required
+                                />
+                            </div>
 
-                        <label className="font-semibold">Mật Khẩu Mới</label>
-                        <input
-                            type="password"
-                            name="newPassword"
-                            value={pwForm.newPassword}
-                            onChange={handlePwInput}
-                            className="p-2 border rounded bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            required
-                        />
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Mật Khẩu Mới</label>
+                                <input
+                                    type="password"
+                                    name="newPassword"
+                                    value={pwForm.newPassword}
+                                    onChange={handlePwInput}
+                                    className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors duration-200"
+                                    placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
+                                    required
+                                />
+                            </div>
 
-                        <label className="font-semibold">Xác Nhận Mật Khẩu Mới</label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            value={pwForm.confirmPassword}
-                            onChange={handlePwInput}
-                            className="p-2 border rounded bg-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                            required
-                        />
+                            <div className="space-y-2">
+                                <label className="block text-sm font-semibold text-gray-700">Xác Nhận Mật Khẩu Mới</label>
+                                <input
+                                    type="password"
+                                    name="confirmPassword"
+                                    value={pwForm.confirmPassword}
+                                    onChange={handlePwInput}
+                                    className="w-full p-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors duration-200"
+                                    placeholder="Nhập lại mật khẩu mới"
+                                    required
+                                />
+                            </div>
+                        </div>
 
-                        <Link
-                            to="/forgot-password"
-                            className="text-blue-600 hover:underline font-semibold"
-                        >
-                            Quên mật khẩu?
-                        </Link>
-                        <button
-                            type="submit"
-                            disabled={changePwLoading}
-                            className={`${changePwLoading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white px-6 py-2 rounded-md font-semibold transition-colors duration-200 mt-4`}
-                        >
-                            {changePwLoading ? (
-                                <>
-                                    <span className="inline-block animate-spin mr-2">⟳</span> 
-                                    Đang đổi mật khẩu...
-                                </>
-                            ) : 'Đổi Mật Khẩu'}
-                        </button>
+                        <div className="border-t pt-6">
+                            <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
+                                <Link
+                                    to="/forgot-password"
+                                    className="text-blue-600 hover:text-blue-800 font-semibold hover:underline transition-colors duration-200"
+                                >
+                                    Quên mật khẩu?
+                                </Link>
+                                
+                                <button
+                                    type="submit"
+                                    disabled={changePwLoading}
+                                    className={`px-8 py-3 rounded-lg font-semibold transition-colors duration-200 flex items-center gap-2 shadow-md ${
+                                        changePwLoading 
+                                            ? 'bg-blue-400 text-white cursor-not-allowed' 
+                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    }`}
+                                >
+                                    {changePwLoading ? (
+                                        <>
+                                            <FaSpinner className="animate-spin" />
+                                            Đang đổi mật khẩu...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaLock />
+                                            Đổi Mật Khẩu
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 )}
+                </div>
             </div>
-        </>
+        </div>
     );
 }
 

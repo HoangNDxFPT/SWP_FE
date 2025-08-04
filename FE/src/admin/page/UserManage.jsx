@@ -317,19 +317,45 @@ export default function UserManage() {
   }, [searchTerm, selectedRole]);
 
   return (
-    <div className="bg-gray-50 min-h-full w-full">
+    <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      {/* Header Section - Loại bỏ shadow và điều chỉnh padding */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Quản lý người dùng</h1>
-        <p className="mt-1 text-sm text-gray-600">
-          Xem và quản lý tất cả tài khoản người dùng trong hệ thống
-        </p>
+      {/* Header - Giống Dashboard */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-6 py-12 rounded-3xl shadow-lg mx-6 mt-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center text-white">
+            <div>
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold">Quản Lý Người Dùng</h1>
+              </div>
+              <p className="text-blue-100 text-lg">
+                Xem và quản lý tất cả tài khoản người dùng trong hệ thống
+              </p>
+            </div>
+            
+            <div className="mt-6 lg:mt-0 text-right">
+              <div className="text-blue-100 text-sm mb-1">Hôm nay</div>
+              <div className="text-xl font-bold">{new Date().toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}</div>
+              <div className="text-blue-200 text-sm mt-1">
+                {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Nội dung - Loại bỏ padding dư thừa */}
-      <div className="w-full">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats Cards - Điều chỉnh grid để responsive hơn */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4 border-l-4 border-indigo-500">
@@ -1283,7 +1309,7 @@ export default function UserManage() {
                   {selectedUser?.role !== 'ADMIN' && (
                     <button
                       className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition duration-150 ease-in-out flex items-center"
-                      onClick={() => setEditMode(true)}
+                                           onClick={() => setEditMode(true)}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -1391,7 +1417,7 @@ export default function UserManage() {
                       <div className="space-y-4">
                         {userPrograms.map(program => (
                           <div key={program.id} className="p-4 bg-white rounded-lg shadow">
-                            <h4 className="text-md font-semibold text-gray-800">{program.name}</h4>
+                            <h4 className="text-md font-semibold text-gray-900">{program.name}</h4>
                             <p className="text-sm text-gray-600">Mô tả: {program.description || "Chưa có mô tả"}</p>
                             <p className="text-sm text-gray-600">Thời gian: {new Date(program.startDate).toLocaleDateString()} - {new Date(program.endDate).toLocaleDateString()}</p>
                             <p className="text-sm text-gray-600">Trạng thái: <span className={`font-medium ${program.status === "ACTIVE" ? "text-green-600" : "text-red-600"}`}>{program.status === "ACTIVE" ? "Đang diễn ra" : "Đã kết thúc"}</span></p>

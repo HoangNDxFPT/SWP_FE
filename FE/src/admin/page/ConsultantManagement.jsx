@@ -588,60 +588,75 @@ function ConsultantManagement() {
                 </div>
             )}
 
-            {/* Consultant Modal */}
+            {/* Modern Consultant Modal */}
             {showConsultantModal && currentConsultant && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                        <div className="border-b px-6 py-4 flex justify-between items-center">
-                            <h3 className="text-xl font-bold text-gray-800">
-                                {isEditing ? "Chỉnh sửa thông tin tư vấn viên" : "Chi tiết tư vấn viên"}
-                            </h3>
-                            <button
-                                className="text-gray-500 hover:text-gray-700"
-                                onClick={() => {
-                                    setShowConsultantModal(false);
-                                    setIsEditing(false);
-                                }}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+                <div className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden">
+                        {/* Header with gradient */}
+                        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white px-8 py-6">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center space-x-4">
+                                    <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-2xl font-bold">
+                                            {isEditing ? "Chỉnh sửa thông tin tư vấn viên" : "Hồ sơ tư vấn viên"}
+                                        </h3>
+                                        <p className="text-blue-100 text-sm">
+                                            ID: {currentConsultant.consultantId} • {isEditing ? "Chế độ chỉnh sửa" : "Chế độ xem"}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    className="text-white hover:bg-white hover:bg-opacity-20 rounded-xl p-2 transition-all"
+                                    onClick={() => {
+                                        setShowConsultantModal(false);
+                                        setIsEditing(false);
+                                    }}
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    {/* Avatar tư vấn viên */}
-                                    <div className="flex items-center mb-6">
+                        {/* Content - Scrollable */}
+                        <div className="p-8 overflow-y-auto max-h-[calc(95vh-180px)]">
+                            {/* Profile Header */}
+                            <div className="flex flex-col lg:flex-row gap-8 mb-8">
+                                {/* Avatar Section */}
+                                <div className="flex-shrink-0">
+                                    <div className="relative">
                                         {(isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl) ? (
                                             <img
                                                 src={isEditing ? editingConsultant.avatarUrl : currentConsultant.avatarUrl}
                                                 alt="avatar"
-                                                className="w-20 h-20 rounded-full object-cover border mr-4"
+                                                className="w-32 h-32 rounded-2xl object-cover border-4 border-gray-100 shadow-lg"
                                             />
                                         ) : (
-                                            <div className="w-20 h-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 mr-4">
-                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 15c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center border-4 border-gray-100 shadow-lg">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                                 </svg>
                                             </div>
                                         )}
-                                        <div>
-                                            <h4 className="text-lg font-semibold text-gray-900">
-                                                {isEditing ? editingConsultant.fullName : currentConsultant.fullName}
-                                            </h4>
-                                            <p className="text-gray-500 text-sm">
-                                                {isEditing ? editingConsultant.degree : currentConsultant.degree}
-                                            </p>
-                                        </div>
+                                        {isEditing && (
+                                            <div className="absolute inset-0 rounded-2xl bg-black bg-opacity-40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                        )}
                                     </div>
-                                    {/* Input chỉnh sửa avatarUrl */}
                                     {isEditing && (
-                                        <div className="mb-4">
-                                            <h4 className="text-sm font-medium text-gray-500 mb-1">Ảnh đại diện</h4>
+                                        <div className="mt-4">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Cập nhật ảnh đại diện</label>
                                             <input
-                                                id="avatarUrl"
                                                 type="file"
                                                 accept="image/*"
                                                 onChange={async (e) => {
@@ -656,224 +671,331 @@ function ConsultantManagement() {
                                                         toast.error("Upload ảnh thất bại!");
                                                     }
                                                 }}
-                                                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
+                                                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                             />
                                         </div>
                                     )}
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Họ tên</h4>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                value={editingConsultant.fullName || ""}
-                                                onChange={(e) => handleEditChange("fullName", e.target.value)}
-                                            />
-                                        ) : (
-                                            <p className="text-lg font-semibold text-gray-900">{currentConsultant.fullName}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Số điện thoại</h4>
-                                        {isEditing ? (
-                                            <input
-                                                type="tel"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                value={editingConsultant.phoneNumber || ""}
-                                                onChange={(e) => handleEditChange("phoneNumber", e.target.value)}
-                                                placeholder="0123456789"
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800">{currentConsultant.phoneNumber}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Bằng cấp</h4>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                value={editingConsultant.degree || ""}
-                                                onChange={(e) => handleEditChange("degree", e.target.value)}
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800">{currentConsultant.degree}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Chứng chỉ</h4>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                value={editingConsultant.certifiedDegree || ""}
-                                                onChange={(e) => handleEditChange("certifiedDegree", e.target.value)}
-                                                placeholder="Tên chứng chỉ"
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800">{currentConsultant.certifiedDegree}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Địa chỉ</h4>
-                                        {isEditing ? (
-                                            <textarea
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                rows="2"
-                                                value={editingConsultant.address || ""}
-                                                onChange={(e) => handleEditChange("address", e.target.value)}
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800">{currentConsultant.address}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">Google Meet Link</h4>
-                                        {isEditing ? (
-                                            <input
-                                                type="url"
-                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                                value={editingConsultant.googleMeetLink || ""}
-                                                onChange={(e) => handleEditChange("googleMeetLink", e.target.value)}
-                                                placeholder="https://meet.google.com/..."
-                                            />
-                                        ) : (
-                                            <p className="text-gray-800">
-                                                {currentConsultant.googleMeetLink ? (
-                                                    <a href={currentConsultant.googleMeetLink} target="_blank" rel="noopener noreferrer"
-                                                        className="text-blue-600 hover:text-blue-800 underline">
-                                                        {currentConsultant.googleMeetLink}
-                                                    </a>
-                                                ) : (
-                                                    "Chưa có link"
-                                                )}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div className="mb-4">
-                                        <h4 className="text-sm font-medium text-gray-500 mb-1">ID Tư vấn viên</h4>
-                                        <p className="text-gray-800 font-mono bg-gray-50 px-2 py-1 rounded">{currentConsultant.consultantId}</p>
-                                    </div>
                                 </div>
 
-                                <div>
-                                    {currentConsultant.certifiedDegreeImage && (
-                                        <div className="mb-4">
-                                            <h4 className="text-sm font-medium text-gray-500 mb-2">Ảnh bằng cấp</h4>
-                                            <img
-                                                src={currentConsultant.certifiedDegreeImage}
-                                                alt="Bằng cấp"
-                                                className="w-full h-48 object-cover rounded-lg border"
-                                            />
+                                {/* Basic Info */}
+                                <div className="flex-1">
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
+                                        <h4 className="text-2xl font-bold text-gray-900 mb-2">
+                                            {isEditing ? editingConsultant.fullName : currentConsultant.fullName}
+                                        </h4>
+                                        <p className="text-blue-600 font-medium mb-4">
+                                            {isEditing ? editingConsultant.degree : currentConsultant.degree}
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-gray-700">{currentConsultant.phoneNumber || "Chưa cập nhật"}</span>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                </div>
+                                                <span className="text-gray-700 truncate">{currentConsultant.address || "Chưa cập nhật"}</span>
+                                            </div>
                                         </div>
-                                    )}
-
-                                    {isEditing && (
-                                        <div className="mb-4">
-                                            <h4 className="text-sm font-medium text-gray-500 mb-1">Ảnh bằng cấp (chứng chỉ)</h4>
-                                            <input
-                                                id="certifiedDegreeImage"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={async (e) => {
-                                                    const file = e.target.files[0];
-                                                    if (!file) return;
-                                                    try {
-                                                        toast.info("Đang upload ảnh chứng chỉ...");
-                                                        const url = await uploadImageToCloudinary(file);
-                                                        handleEditChange("certifiedDegreeImage", url);
-                                                        toast.success("Upload thành công!");
-                                                    } catch {
-                                                        toast.error("Upload ảnh chứng chỉ thất bại!");
-                                                    }
-                                                }}
-                                                className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
-                                            />
-                                            {editingConsultant.certifiedDegreeImage && (
-                                                <img
-                                                    src={editingConsultant.certifiedDegreeImage}
-                                                    alt="Ảnh chứng chỉ"
-                                                    className="mt-2 rounded-lg w-full h-48 object-cover border shadow"
-                                                    onError={e => {
-                                                        e.target.onerror = null;
-                                                        e.target.src = "https://placehold.co/320x180/ADD8E6/000000?text=No+Image";
-                                                    }}
-                                                />
-                                            )}
-                                        </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
 
-                            {currentConsultant.information && (
-                                <div className="mt-6">
-                                    <h4 className="text-sm font-medium text-gray-500 mb-2">Thông tin thêm</h4>
-                                    {isEditing ? (
-                                        <textarea
-                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                            rows="4"
-                                            value={editingConsultant.information || ""}
-                                            onChange={(e) => handleEditChange("information", e.target.value)}
-                                        />
-                                    ) : (
-                                        <div className="bg-gray-50 rounded-lg p-4">
-                                            <p className="text-gray-800 whitespace-pre-line">{currentConsultant.information}</p>
+                            {/* Detailed Information Tabs */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Left Column - Personal Information */}
+                                <div className="space-y-6">
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                        <h5 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            Thông tin cá nhân
+                                        </h5>
+                                        
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">Họ và tên</label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                        value={editingConsultant.fullName || ""}
+                                                        onChange={(e) => handleEditChange("fullName", e.target.value)}
+                                                        placeholder="Nhập họ và tên"
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-800 bg-gray-50 rounded-lg px-4 py-3">{currentConsultant.fullName}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">Số điện thoại</label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="tel"
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                        value={editingConsultant.phoneNumber || ""}
+                                                        onChange={(e) => handleEditChange("phoneNumber", e.target.value)}
+                                                        placeholder="0123456789"
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-800 bg-gray-50 rounded-lg px-4 py-3">{currentConsultant.phoneNumber || "Chưa cập nhật"}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">Địa chỉ</label>
+                                                {isEditing ? (
+                                                    <textarea
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                        rows="3"
+                                                        value={editingConsultant.address || ""}
+                                                        onChange={(e) => handleEditChange("address", e.target.value)}
+                                                        placeholder="Nhập địa chỉ"
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-800 bg-gray-50 rounded-lg px-4 py-3">{currentConsultant.address || "Chưa cập nhật"}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">Google Meet Link</label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="url"
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                        value={editingConsultant.googleMeetLink || ""}
+                                                        onChange={(e) => handleEditChange("googleMeetLink", e.target.value)}
+                                                        placeholder="https://meet.google.com/..."
+                                                    />
+                                                ) : (
+                                                    <div className="bg-gray-50 rounded-lg px-4 py-3">
+                                                        {currentConsultant.googleMeetLink ? (
+                                                            <a href={currentConsultant.googleMeetLink} target="_blank" rel="noopener noreferrer"
+                                                                className="text-blue-600 hover:text-blue-800 underline break-all">
+                                                                {currentConsultant.googleMeetLink}
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-gray-500">Chưa có link</span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
+                                    </div>
+
+                                    {/* Professional Information */}
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                        <h5 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                                            </svg>
+                                            Thông tin chuyên môn
+                                        </h5>
+                                        
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">Bằng cấp</label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                        value={editingConsultant.degree || ""}
+                                                        onChange={(e) => handleEditChange("degree", e.target.value)}
+                                                        placeholder="Thạc sĩ Tâm lý học, Tiến sĩ..."
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-800 bg-gray-50 rounded-lg px-4 py-3">{currentConsultant.degree || "Chưa cập nhật"}</p>
+                                                )}
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-600 mb-1">Chứng chỉ</label>
+                                                {isEditing ? (
+                                                    <input
+                                                        type="text"
+                                                        className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                        value={editingConsultant.certifiedDegree || ""}
+                                                        onChange={(e) => handleEditChange("certifiedDegree", e.target.value)}
+                                                        placeholder="Chứng chỉ hành nghề..."
+                                                    />
+                                                ) : (
+                                                    <p className="text-gray-800 bg-gray-50 rounded-lg px-4 py-3">{currentConsultant.certifiedDegree || "Chưa cập nhật"}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Column - Documents & Additional Info */}
+                                <div className="space-y-6">
+                                    {/* Certificate Image */}
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                        <h5 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                            Hình ảnh chứng chỉ
+                                        </h5>
+                                        
+                                        {isEditing ? (
+                                            <div className="space-y-4">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={async (e) => {
+                                                        const file = e.target.files[0];
+                                                        if (!file) return;
+                                                        try {
+                                                            toast.info("Đang upload ảnh chứng chỉ...");
+                                                            const url = await uploadImageToCloudinary(file);
+                                                            handleEditChange("certifiedDegreeImage", url);
+                                                            toast.success("Upload thành công!");
+                                                        } catch {
+                                                            toast.error("Upload ảnh chứng chỉ thất bại!");
+                                                        }
+                                                    }}
+                                                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                                                />
+                                                {(editingConsultant.certifiedDegreeImage || currentConsultant.certifiedDegreeImage) && (
+                                                    <img
+                                                        src={editingConsultant.certifiedDegreeImage || currentConsultant.certifiedDegreeImage}
+                                                        alt="Chứng chỉ"
+                                                        className="w-full h-64 object-cover rounded-xl border-2 border-gray-200"
+                                                        onError={e => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = "https://placehold.co/400x300/f3f4f6/6b7280?text=No+Image";
+                                                        }}
+                                                    />
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                {currentConsultant.certifiedDegreeImage ? (
+                                                    <img
+                                                        src={currentConsultant.certifiedDegreeImage}
+                                                        alt="Chứng chỉ"
+                                                        className="w-full h-64 object-cover rounded-xl border-2 border-gray-200 cursor-pointer hover:shadow-lg transition-shadow"
+                                                        onClick={() => window.open(currentConsultant.certifiedDegreeImage, '_blank')}
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-64 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center">
+                                                        <div className="text-center">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <p className="text-gray-500">Chưa có ảnh chứng chỉ</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Additional Information */}
+                                    <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+                                        <h5 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                            Thông tin bổ sung
+                                        </h5>
+                                        
+                                        {isEditing ? (
+                                            <textarea
+                                                className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                                rows="6"
+                                                value={editingConsultant.information || ""}
+                                                onChange={(e) => handleEditChange("information", e.target.value)}
+                                                placeholder="Kinh nghiệm làm việc, chuyên môn, thành tích..."
+                                            />
+                                        ) : (
+                                            <div className="bg-gray-50 rounded-lg p-4 min-h-[150px]">
+                                                {currentConsultant.information ? (
+                                                    <p className="text-gray-800 whitespace-pre-line leading-relaxed">{currentConsultant.information}</p>
+                                                ) : (
+                                                    <p className="text-gray-500 italic">Chưa có thông tin bổ sung</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons - Fixed at bottom */}
+                        <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
+                            <div className="flex justify-between items-center">
+                                <div className="text-sm text-gray-500">
+                                    Được tạo: {formatDate(currentConsultant.createdAt) || "Không xác định"}
+                                </div>
+                                <div className="flex gap-3">
+                                    {isEditing ? (
+                                        <>
+                                            <button
+                                                className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                                                onClick={handleSaveEdit}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                <span>Lưu thay đổi</span>
+                                            </button>
+                                            <button
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2"
+                                                onClick={() => {
+                                                    setIsEditing(false);
+                                                    setEditingConsultant({ ...currentConsultant });
+                                                }}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                <span>Hủy</span>
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <button
+                                                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                                                onClick={() => setIsEditing(true)}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                </svg>
+                                                <span>Chỉnh sửa</span>
+                                            </button>
+                                            <button
+                                                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                                                onClick={() => {
+                                                    setShowConsultantModal(false);
+                                                    viewConsultantSchedule(currentConsultant.consultantId);
+                                                }}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <span>Xem lịch làm việc</span>
+                                            </button>
+                                            <button
+                                                className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center space-x-2"
+                                                onClick={() => setShowConsultantModal(false)}
+                                            >
+                                                <span>Đóng</span>
+                                            </button>
+                                        </>
                                     )}
                                 </div>
-                            )}
-
-                            <div className="flex justify-end gap-3 mt-6">
-                                {isEditing ? (
-                                    <>
-                                        <button
-                                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
-                                            onClick={handleSaveEdit}
-                                        >
-                                            Lưu thay đổi
-                                        </button>
-                                        <button
-                                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
-                                            onClick={() => {
-                                                setIsEditing(false);
-                                                setEditingConsultant({ ...currentConsultant });
-                                            }}
-                                        >
-                                            Hủy
-                                        </button>
-                                    </>
-                                ) : (
-                                    <>
-                                        <button
-                                            className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-colors"
-                                            onClick={() => setIsEditing(true)}
-                                        >
-                                            Chỉnh sửa
-                                        </button>
-                                        <button
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-                                            onClick={() => {
-                                                setShowConsultantModal(false);
-                                                viewConsultantSchedule(currentConsultant.consultantId);
-                                            }}
-                                        >
-                                            Xem lịch làm việc
-                                        </button>
-                                        <button
-                                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors"
-                                            onClick={() => setShowConsultantModal(false)}
-                                        >
-                                            Đóng
-                                        </button>
-                                    </>
-                                )}
                             </div>
                         </div>
                     </div>

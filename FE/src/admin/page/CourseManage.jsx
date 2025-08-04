@@ -588,31 +588,64 @@ export default function CourseManage() {
 
 
   return (
-    <div className="flex-1 p-0 overflow-hidden">
+    <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-right" autoClose={2000} />
 
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <h1 className="text-2xl font-bold text-gray-900">Quản lý khóa học</h1>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md flex items-center shadow-sm transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Thêm khóa học
-            </button>
+      {/* Header - Giống Dashboard */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-6 py-12 rounded-3xl shadow-lg mx-6 mt-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center text-white">
+            <div>
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold">Quản Lý Khóa Học</h1>
+              </div>
+              <p className="text-blue-100 text-lg">
+                Tạo, chỉnh sửa và quản lý tất cả khóa học trong hệ thống
+              </p>
+            </div>
+            
+            <div className="mt-6 lg:mt-0 text-right">
+              <div className="text-blue-100 text-sm mb-1">Hôm nay</div>
+              <div className="text-xl font-bold">{new Date().toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}</div>
+              <div className="text-blue-200 text-sm mt-1">
+                {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="px-4 sm:px-6 lg:px-8 py-6 h-[calc(100vh-64px)] overflow-auto">
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header Action Bar */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Danh sách khóa học</h2>
+            <p className="text-gray-600 mt-1">Quản lý và tổ chức các khóa học</p>
+          </div>
+          <button
+            onClick={() => setShowCreate(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg flex items-center shadow-sm transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+            </svg>
+            Thêm khóa học
+          </button>
+        </div>
+
         {/* Search and filter bar */}
-        <div className="mb-8 bg-white shadow-sm rounded-lg p-4">
+        <div className="mb-8 bg-white shadow-sm rounded-lg p-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="relative flex-1">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -623,15 +656,15 @@ export default function CourseManage() {
               <input
                 type="text"
                 placeholder="Tìm kiếm khóa học theo tên hoặc nhóm tuổi..."
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               <select
-                className="pl-3 pr-10 py-2 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="pl-3 pr-10 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm bg-white"
                 value=""
                 onChange={(e) => {
                   if (e.target.value) {
@@ -646,10 +679,10 @@ export default function CourseManage() {
 
               {searchTerm && (
                 <button
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  className="inline-flex items-center px-4 py-3 border border-gray-300 rounded-lg bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                   onClick={() => setSearchTerm("")}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                   Xóa bộ lọc
@@ -659,40 +692,42 @@ export default function CourseManage() {
           </div>
 
           {/* Filter info */}
-          <p className="text-sm text-gray-500 mt-3">
-            Hiển thị {filteredCourses.length} trong tổng số {courses.length} khóa học
-            {searchTerm && ` với từ khóa "${searchTerm}"`}
-          </p>
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-sm text-gray-500">
+              Hiển thị {filteredCourses.length} trong tổng số {courses.length} khóa học
+              {searchTerm && ` với từ khóa "${searchTerm}"`}
+            </p>
 
-          {/* Add this in the filter section, after the existing filters */}
-          <div className="flex flex-wrap gap-2 mt-3">
-            <button
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "all"
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              onClick={() => setStatusFilter("all")}
-            >
-              Tất cả khóa học
-            </button>
-            <button
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "active"
-                ? "bg-green-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              onClick={() => setStatusFilter("active")}
-            >
-              Đang hoạt động
-            </button>
-            <button
-              className={`px-3 py-1 text-sm rounded-md transition-colors ${statusFilter === "ended"
-                ? "bg-red-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              onClick={() => setStatusFilter("ended")}
-            >
-              Đã kết thúc
-            </button>
+            {/* Status filter buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${statusFilter === "all"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                onClick={() => setStatusFilter("all")}
+              >
+                Tất cả khóa học
+              </button>
+              <button
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${statusFilter === "active"
+                  ? "bg-green-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                onClick={() => setStatusFilter("active")}
+              >
+                Đang hoạt động
+              </button>
+              <button
+                className={`px-4 py-2 text-sm rounded-lg transition-colors ${statusFilter === "ended"
+                  ? "bg-red-600 text-white shadow-sm"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                onClick={() => setStatusFilter("ended")}
+              >
+                Đã kết thúc
+              </button>
+            </div>
           </div>
         </div>
 
@@ -803,6 +838,7 @@ export default function CourseManage() {
             </div>
           )}
         </div>
+
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex justify-center items-center gap-2 py-6">
@@ -1197,7 +1233,7 @@ export default function CourseManage() {
               <div>
                 <h2 className="text-xl font-bold text-gray-800 flex items-center">
                   <svg className="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                   {selectedCourse.name}
                 </h2>
@@ -1230,7 +1266,7 @@ export default function CourseManage() {
                   >
                     <div className="flex items-center">
                       <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                       </svg>
                       Bài học
                     </div>
@@ -1438,7 +1474,7 @@ export default function CourseManage() {
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                        </svg>
+                      </svg>
                         Thêm câu hỏi mới
                       </button>
                     </div>

@@ -382,7 +382,6 @@ function AssessmentResult() {
                     <p className="text-sm text-gray-500">
                       {result.assessmentType === 'ASSIST' ? (
                         <>
-                          Thang điểm 0-27+ 
                           {result.substanceResults?.length > 0 && (
                             <span className="block">
                               Đánh giá {result.substanceResults.length} chất
