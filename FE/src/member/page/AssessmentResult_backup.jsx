@@ -362,7 +362,7 @@ function AssessmentResult() {
                   >
                     <div className="flex items-center justify-center gap-2">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                       Chi tiết
                     </div>
@@ -546,6 +546,45 @@ function AssessmentResult() {
                         </div>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+              
+              {/* Cải thiện hiển thị summary cho ASSIST */}
+              {result.assistSummary && (
+                <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-8 border border-blue-200">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Tổng kết đánh giá ASSIST
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="text-center p-4 bg-white/70 rounded-lg border border-blue-100">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">
+                        {result.assistSummary.totalSubstances}
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">Chất được đánh giá</div>
+                    </div>
+                    <div className="text-center p-4 bg-white/70 rounded-lg border border-purple-100">
+                      <div className="text-3xl font-bold text-purple-600 mb-2">
+                        {Math.round(result.assistSummary.averageSubstanceScore)}
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">Điểm trung bình</div>
+                    </div>
+                    <div className="text-center p-4 bg-white/70 rounded-lg border border-orange-100">
+                      <div className="text-3xl font-bold text-orange-600 mb-2">
+                        {result.assistSummary.highestSubstanceScore}
+                      </div>
+                      <div className="text-sm text-gray-600 font-medium">Điểm cao nhất</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 p-3 bg-blue-100/50 rounded border border-blue-200">
+                    <p className="text-blue-800 text-sm">
+                      <strong>Lưu ý:</strong> Mức độ rủi ro chung ({riskInfo.text}) được xác định dựa trên chất có điểm số cao nhất 
+                      ({result.assistSummary.highestSubstanceScore} điểm). 
+                      Tổng điểm ({result.score}) là tổng cộng của tất cả các chất được đánh giá.
+                    </p>
                   </div>
                 </div>
               )}
@@ -736,12 +775,173 @@ function AssessmentResult() {
             <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn">
               <h3 className="text-xl font-semibold mb-4">Chi tiết câu trả lời</h3>
 
-              {result.assessmentType === 'ASSIST' ? (
-                (() => {
-                  // Ưu tiên sử dụng substanceResults từ API mới
-                  const hasSubstanceResults = result.substanceResults && result.substanceResults.length > 0;
-                  
-                  if (hasSubstanceResults) {
+              {result.assessmentType === 'ASSIST' && result.substanceResults?.length > 0 ? (
+                // ASSIST with substanceResults
+                <div>
+                  {/* ASSIST Overview */}
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <h4 className="text-lg font-semibold text-blue-800">Đánh giá ASSIST</h4>
+                    </div>
+                    <p className="text-blue-700 text-sm">
+                      Kết quả đánh giá cho {result.substanceResults.length} loại chất
+                      {' - '}Tổng điểm: {result.score || result.totalScore} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel || result.overallRiskLevel)?.text || 'Chưa xác định'}</span>
+                    </p>
+                  </div>
+
+                  {/* Substance Results với answers chi tiết */}
+                  {result.substanceResults.map((substanceResult) => {
+                    const substanceRiskInfo = getRiskLevelInfo(substanceResult.riskLevel);
+                    return (
+                      <div key={substanceResult.substanceId} className="mb-8">
+                        {/* Substance Header */}
+                        <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                              <div>
+                                <h4 className="text-lg font-semibold text-gray-800">{substanceResult.substanceName}</h4>
+                                {substanceResult.substanceDescription && (
+                                  <p className="text-sm text-gray-600">{substanceResult.substanceDescription}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${substanceRiskInfo.bgColor} ${substanceRiskInfo.color} border ${substanceRiskInfo.borderColor}`}>
+                                {substanceRiskInfo.text}
+                              </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                Điểm: <span className={`font-bold ${substanceRiskInfo.color}`}>{substanceResult.substanceScore || substanceResult.score}</span>
+                              </div>
+                            </div>
+                          </div>
+                          {substanceResult.criteria && (
+                            <div className="mt-2 text-sm text-gray-600">
+                              <span className="font-medium">Tiêu chí đánh giá:</span> {substanceResult.criteria}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Substance Answers */}
+                        <div className="space-y-4">
+                          {substanceResult.answers.map((answer, answerIndex) => (
+                            <div
+                              key={`${substanceResult.substanceId}-${answer.questionOrder}-${answerIndex}`}
+                              className={`p-4 rounded-lg border ${answer.score > 2
+                                ? 'border-red-200 bg-red-50'
+                                : answer.score > 0
+                                  ? 'border-yellow-200 bg-yellow-50'
+                                  : 'border-gray-200 bg-gray-50'
+                                }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className={`inline-flex justify-center items-center w-8 h-8 ${answer.score > 2
+                                  ? 'bg-red-100 text-red-800'
+                                  : answer.score > 0
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-green-100 text-green-800'
+                                  } rounded-full shrink-0 font-semibold`}>
+                                  {answer.questionOrder}
+                                </span>
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-gray-800 mb-3">
+                                    {answer.questionText}
+                                  </h5>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-gray-600 text-sm font-medium">Trả lời:</span>
+                                      <span className="font-medium text-gray-800 bg-white px-3 py-1 rounded-md border">
+                                        {answer.answerText}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-gray-600 text-sm font-medium">Điểm:</span>
+                                      <span className={`font-bold text-xl ${answer.score > 2
+                                        ? 'text-red-600'
+                                        : answer.score > 0
+                                          ? 'text-yellow-600'
+                                          : 'text-green-600'
+                                        }`}>
+                                        {answer.score}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : result.assessmentType === 'CRAFFT' ? (
+                // CRAFFT Assessment
+                <div className="space-y-4">
+                  <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <h4 className="text-lg font-semibold text-green-800">Đánh giá CRAFFT</h4>
+                    </div>
+                    <p className="text-green-700 text-sm">
+                      Tổng điểm: {result.score || result.totalScore} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel).text}</span>
+                    </p>
+                  </div>
+
+                  {result.answers.map((answer, index) => (
+                    <div
+                      key={`crafft-${answer.questionId}-${index}`}
+                      className={`p-4 rounded-lg border ${answer.score > 0
+                        ? 'border-yellow-200 bg-yellow-50'
+                        : 'border-gray-200 bg-gray-50'
+                        }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className={`inline-flex justify-center items-center w-6 h-6 ${answer.score > 0
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-blue-100 text-blue-800'
+                          } rounded-full shrink-0 font-medium text-sm`}>
+                          {index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800 mb-2">
+                            {answer.questionText}
+                          </h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 text-sm">Câu trả lời:</span>
+                              <span className="font-medium">{answer.answerText}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 text-sm">Điểm:</span>
+                              <span className={`font-medium ${answer.score > 0 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                {answer.score}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                // Fallback for other types
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Không có dữ liệu chi tiết câu trả lời</p>
+              )}
+            </div>
+          )}
                     return (
                       <div>
                         {/* ASSIST Overview */}
@@ -939,7 +1139,7 @@ function AssessmentResult() {
                       </div>
 
                       {viewMode === 'grouped' ? (
-                        /* Grouped View - existing code */
+                        // Grouped View - existing code
                         <>
                           {Object.entries(groupedAnswers).map(([substanceName, answers]) => (
                             <div key={substanceName} className="mb-8">
@@ -950,8 +1150,7 @@ function AssessmentResult() {
                                     <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
-                                      </svg>
-                                    </div>
+                                    </svg>
                                     <div>
                                       <h4 className="text-lg font-semibold text-purple-800">{substanceName}</h4>
                                       <p className="text-purple-600 text-sm">
@@ -1069,7 +1268,7 @@ function AssessmentResult() {
                           </div>
                         </>
                       ) : (
-                        /* Linear List View */
+                        {/* Linear List View */}
                         <div className="space-y-4">
                           {result.answers.map((answer, index) => {
                             // Tìm tên chất cho câu hỏi này
@@ -1227,7 +1426,7 @@ function AssessmentResult() {
           {activeTab === 'answers' && !(result.answers?.length > 0 || result.substanceResults?.length > 0) && (
             <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn text-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
               <h3 className="text-lg font-medium text-gray-700 mb-2">Không có chi tiết câu trả lời</h3>
               <p className="text-gray-500">
