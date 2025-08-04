@@ -16,11 +16,12 @@ function AssistAssessment() {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
+  // Sửa API endpoint để lấy substances
   useEffect(() => {
     const fetchSubstances = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/assessments/assist/substances');
+        const res = await api.get('/substances');
         if (res.status === 200) {
           setSubstances(res.data);
         }
@@ -56,37 +57,68 @@ function AssistAssessment() {
     try {
       setLoadingQuestions(true);
       
-      // Sử dụng API mới để load câu hỏi cho nhiều chất cùng lúc
+      // Sửa API endpoint từ /assessments/assist/start-for-multiple-substances thành /assessments/start-assist
       console.log('Loading questions for substances:', selectedSubstances);
-      const res = await api.post('/assessments/assist/start-for-multiple-substances', selectedSubstances);
+      const res = await api.post('/assessments/start-assist');
       
-      if (res.status === 200 && res.data.questions) {
-        // Sử dụng substances từ API response thay vì state
+      if (res.status === 200) {
+        // Lấy substances và template questions từ response
         const substancesFromAPI = res.data.substances || [];
+        const templateQuestions = res.data.templateQuestions || [];
+        const injectionQuestion = res.data.injectionQuestion;
         
-        // API trả về câu hỏi đã có substanceId, chỉ cần thêm thông tin tên chất
-        const questionsWithSubstance = res.data.questions.map(q => {
-          // Tìm substance info từ API response
-          const substanceInfo = substancesFromAPI.find(s => s.id === q.substanceId);
+        // Tạo questions cho từng substance được chọn
+        const questionsWithSubstance = [];
+        
+        selectedSubstances.forEach(substanceId => {
+          const substanceInfo = substancesFromAPI.find(s => s.id === substanceId);
           
-          return {
-            ...q,
-            id: `${q.id}-${q.substanceId}`, // Tạo unique id bằng cách kết hợp questionId và substanceId
-            originalId: q.id, // Giữ lại id gốc để submit
-            substanceName: substanceInfo?.name || 'Unknown',
-            substanceDescription: substanceInfo?.description || '',
-            substanceInfo: substanceInfo // Lưu toàn bộ thông tin substance để sử dụng sau
-          };
+          // Thêm template questions (2-7)
+          templateQuestions.forEach(template => {
+            questionsWithSubstance.push({
+              id: `${template.questionOrder}-${substanceId}`, // Unique ID
+              originalId: template.questionOrder, // Question order để submit
+              questionText: template.questionTemplate,
+              questionOrder: template.questionOrder,
+              substanceId: substanceId,
+              substanceName: substanceInfo?.name || 'Unknown',
+              substanceDescription: substanceInfo?.description || '',
+              substanceInfo: substanceInfo,
+              answers: template.answerOptions.map(opt => ({
+                id: opt.id,
+                text: opt.text
+              }))
+            });
+          });
+          
+          // Thêm injection question (8)
+          if (injectionQuestion) {
+            questionsWithSubstance.push({
+              id: `${injectionQuestion.questionId}-${substanceId}`,
+              originalId: injectionQuestion.questionId,
+              questionText: injectionQuestion.questionText,
+              questionOrder: injectionQuestion.questionId,
+              substanceId: substanceId,
+              substanceName: substanceInfo?.name || 'Unknown',
+              substanceDescription: substanceInfo?.description || '',
+              substanceInfo: substanceInfo,
+              answers: injectionQuestion.answerOptions.map(opt => ({
+                id: opt.id,
+                text: opt.text
+              }))
+            });
+          }
         });
         
         setQuestions(questionsWithSubstance);
         setAnswers({}); // Reset answers
         
-        // Hiển thị thông tin chi tiết hơn
-        const substanceNames = substancesFromAPI.map(s => s.name).join(', ');
+        const substanceNames = selectedSubstances
+          .map(id => substancesFromAPI.find(s => s.id === id)?.name)
+          .filter(Boolean)
+          .join(', ');
         toast.success(`Đã tải ${questionsWithSubstance.length} câu hỏi cho: ${substanceNames}`);
         
-        // Log để debug
         console.log('Loaded questions with substances:', {
           questions: questionsWithSubstance,
           substances: substancesFromAPI,
@@ -144,19 +176,29 @@ function AssistAssessment() {
     
     setSubmitting(true);
 
-    // Chuyển đổi answers về format gốc để submit
-    const payload = Object.keys(answers).map(questionId => {
-      const question = questions.find(q => q.id === questionId);
+    // Tạo substanceAssessments theo format API mới nhất (không cần injectionAnswerId)
+    const substanceAssessments = selectedSubstances.map(substanceId => {
+      // Tìm tất cả answers cho substance này (bao gồm cả injection question)
+      const substanceQuestions = questions.filter(q => q.substanceId === substanceId);
+      
+      // Lấy tất cả answerIds cho substance này, sắp xếp theo questionOrder
+      const answerIds = substanceQuestions
+        .sort((a, b) => a.questionOrder - b.questionOrder)
+        .map(question => parseInt(answers[question.id]));
+
       return {
-        questionId: parseInt(question.originalId),
-        answerId: parseInt(answers[questionId]),
-        substanceId: parseInt(question.substanceId) // ✅ Already included
+        substanceId: parseInt(substanceId),
+        answerIds: answerIds
       };
     });
 
+    const payload = {
+      substanceAssessments: substanceAssessments
+    };
+
     try {
       console.log('Submitting ASSIST payload:', payload);
-      const res = await api.post('/assessments/submit?type=ASSIST', payload);
+      const res = await api.post('/assessments/submit-assist', payload);
 
       if (res.status === 200) {
         toast.success('Gửi bài thành công!');
@@ -167,11 +209,18 @@ function AssistAssessment() {
     } catch (err) {
       console.error('Submit error:', err);
       
-      if (err.response?.data && typeof err.response.data === 'string' && 
-          err.response.data.includes('Missing risk config for level')) {
-        
-        const riskLevel = err.response.data.split(': ')[1];
-        toast.warning(`Hệ thống hiện không hỗ trợ mức độ rủi ro ${riskLevel}. Vui lòng liên hệ quản trị viên.`);
+      if (err.response?.status === 401) {
+        toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+        navigate('/login');
+      } else if (err.response?.data && typeof err.response.data === 'string') {
+        if (err.response.data.includes('Missing risk config for level')) {
+          const riskLevel = err.response.data.split(': ')[1];
+          toast.warning(`Hệ thống hiện không hỗ trợ mức độ rủi ro ${riskLevel}. Vui lòng liên hệ quản trị viên.`);
+        } else if (err.response.data.includes('Substance not found')) {
+          toast.error('Không tìm thấy chất được chọn. Vui lòng thử lại!');
+        } else {
+          toast.error(`Lỗi: ${err.response.data}`);
+        }
       } else {
         toast.error('Có lỗi khi gửi câu trả lời!');
       }

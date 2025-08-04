@@ -17,6 +17,19 @@ function AssessmentResult() {
     const fetchResult = async () => {
       try {
         setLoading(true);
+        
+        // Thử sử dụng API mới trước
+        try {
+          const newApiRes = await api.get(`/assessment-results/${assessmentResultId}/by-substance`);
+          if (newApiRes.status === 200) {
+            setResult(newApiRes.data);
+            return;
+          }
+        } catch (error) {
+          console.log('New API not available, falling back to old API:', error.message);
+        }
+        
+        // Fallback về API cũ nếu API mới không có
         const res = await api.get(`/assessment-results/${assessmentResultId}`);
         if (res.status === 200) {
           setResult(res.data);
@@ -283,7 +296,7 @@ function AssessmentResult() {
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></span>
                 )}
               </button>
-              {result.answers?.length > 0 && (
+              {(result.answers?.length > 0 || result.substanceResults?.length > 0) && (
                 <button
                   onClick={() => setActiveTab('answers')}
                   className={`py-4 px-1 font-medium text-lg relative ${activeTab === 'answers' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -315,7 +328,7 @@ function AssessmentResult() {
                           {riskInfo.text}
                         </span>
                         <div className="text-lg font-semibold bg-gray-100 px-3 py-1 rounded-full">
-                          Điểm số: {result.totalScore || result.score}
+                          Điểm số: {result.score || result.totalScore}
                         </div>
                       </div>
                       <p className="text-gray-600">{riskInfo.description}</p>
@@ -365,9 +378,20 @@ function AssessmentResult() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-700">Điểm đánh giá</h3>
-                    <p className="text-lg font-semibold">{result.totalScore || result.score} điểm</p>
+                    <p className="text-lg font-semibold">{result.score || result.totalScore} điểm</p>
                     <p className="text-sm text-gray-500">
-                      Thang điểm {result.assessmentType === 'ASSIST' ? '0-27+' : '0-6'}
+                      {result.assessmentType === 'ASSIST' ? (
+                        <>
+                          Thang điểm 0-27+ 
+                          {result.substanceResults?.length > 0 && (
+                            <span className="block">
+                              Đánh giá {result.substanceResults.length} chất
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        'Thang điểm 0-6'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -420,7 +444,7 @@ function AssessmentResult() {
                     {result.substanceResults.map((substanceResult, index) => {
                       const substanceRiskInfo = getRiskLevelInfo(substanceResult.riskLevel);
                       return (
-                        <div key={index} className={`border rounded-lg p-4 ${substanceRiskInfo.borderColor} ${substanceRiskInfo.bgColor}`}>
+                        <div key={substanceResult.substanceId || index} className={`border rounded-lg p-4 ${substanceRiskInfo.borderColor} ${substanceRiskInfo.bgColor}`}>
                           <div className="flex items-center gap-3 mb-3">
                             <div className={`p-2 rounded-full ${substanceRiskInfo.lightColor}`}>
                               <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${substanceRiskInfo.color}`} viewBox="0 0 20 20" fill="currentColor">
@@ -428,7 +452,7 @@ function AssessmentResult() {
                               </svg>
                             </div>
                             <div>
-                              <h4 className="font-semibold text-gray-800">{substanceResult.substance.name}</h4>
+                              <h4 className="font-semibold text-gray-800">{substanceResult.substanceName}</h4>
                               <span className={`text-sm font-medium ${substanceRiskInfo.color}`}>
                                 {substanceRiskInfo.text}
                               </span>
@@ -438,13 +462,19 @@ function AssessmentResult() {
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-gray-600 text-sm">Điểm:</span>
                             <span className={`font-bold text-lg ${substanceRiskInfo.color}`}>
-                              {substanceResult.score}
+                              {substanceResult.substanceScore || substanceResult.score}
                             </span>
                           </div>
                           
-                          {substanceResult.riskCriteria && (
+                          {substanceResult.criteria && (
                             <div className="text-xs text-gray-500 mt-2">
-                              {substanceResult.riskCriteria}
+                              {substanceResult.criteria}
+                            </div>
+                          )}
+
+                          {substanceResult.substanceDescription && (
+                            <div className="text-xs text-gray-600 mt-1 italic">
+                              {substanceResult.substanceDescription}
                             </div>
                           )}
                         </div>
@@ -517,7 +547,7 @@ function AssessmentResult() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center gap-2">
                           <span className="text-purple-600 text-sm font-medium">Điểm số:</span>
-                          <span className={`font-bold text-lg ${riskInfo.color}`}>{result.totalScore || result.score}</span>
+                          <span className={`font-bold text-lg ${riskInfo.color}`}>{result.score || result.totalScore}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-purple-600 text-sm font-medium">Mức độ rủi ro:</span>
@@ -636,20 +666,18 @@ function AssessmentResult() {
           )}
 
           {/* Answer Details Tab Content */}
-          {activeTab === 'answers' && result.answers?.length > 0 && (
+          {activeTab === 'answers' && (result.answers?.length > 0 || result.substanceResults?.length > 0) && (
             <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn">
               <h3 className="text-xl font-semibold mb-4">Chi tiết câu trả lời</h3>
 
-              {/* ASSIST vs CRAFFT handling */}
               {result.assessmentType === 'ASSIST' ? (
-                /* ASSIST - Use substanceResults from new API */
                 (() => {
-                  // Use the new substanceResults if available, otherwise fall back to grouping answers
+                  // Ưu tiên sử dụng substanceResults từ API mới
                   const hasSubstanceResults = result.substanceResults && result.substanceResults.length > 0;
                   
                   if (hasSubstanceResults) {
                     return (
-                      <>
+                      <div>
                         {/* ASSIST Overview */}
                         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                           <div className="flex items-center gap-2 mb-2">
@@ -660,15 +688,15 @@ function AssessmentResult() {
                           </div>
                           <p className="text-blue-700 text-sm">
                             Kết quả đánh giá cho {result.substanceResults.length} loại chất
-                            {' - '}Tổng điểm: {result.totalScore || result.score} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.overallRiskLevel || result.riskLevel).text}</span>
+                            {' - '}Tổng điểm: {result.score || result.totalScore} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel || result.overallRiskLevel)?.text || 'Chưa xác định'}</span>
                           </p>
                         </div>
 
-                        {/* Substance Results */}
-                        {result.substanceResults.map((substanceResult, index) => {
+                        {/* Substance Results với answers chi tiết */}
+                        {result.substanceResults.map((substanceResult) => {
                           const substanceRiskInfo = getRiskLevelInfo(substanceResult.riskLevel);
                           return (
-                            <div key={index} className="mb-8">
+                            <div key={substanceResult.substanceId} className="mb-8">
                               {/* Substance Header */}
                               <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
                                 <div className="flex items-center justify-between">
@@ -679,9 +707,9 @@ function AssessmentResult() {
                                       </svg>
                                     </div>
                                     <div>
-                                      <h4 className="text-lg font-semibold text-gray-800">{substanceResult.substance.name}</h4>
-                                      {substanceResult.substance.description && (
-                                        <p className="text-sm text-gray-600">{substanceResult.substance.description}</p>
+                                      <h4 className="text-lg font-semibold text-gray-800">{substanceResult.substanceName}</h4>
+                                      {substanceResult.substanceDescription && (
+                                        <p className="text-sm text-gray-600">{substanceResult.substanceDescription}</p>
                                       )}
                                     </div>
                                   </div>
@@ -690,13 +718,13 @@ function AssessmentResult() {
                                       {substanceRiskInfo.text}
                                     </div>
                                     <div className="text-sm text-gray-600 mt-1">
-                                      Điểm: <span className={`font-bold ${substanceRiskInfo.color}`}>{substanceResult.score}</span>
+                                      Điểm: <span className={`font-bold ${substanceRiskInfo.color}`}>{substanceResult.substanceScore || substanceResult.score}</span>
                                     </div>
                                   </div>
                                 </div>
-                                {substanceResult.riskCriteria && (
+                                {substanceResult.criteria && (
                                   <div className="mt-2 text-sm text-gray-600">
-                                    <span className="font-medium">Tiêu chí đánh giá:</span> {substanceResult.riskCriteria}
+                                    <span className="font-medium">Tiêu chí đánh giá:</span> {substanceResult.criteria}
                                   </div>
                                 )}
                               </div>
@@ -705,7 +733,7 @@ function AssessmentResult() {
                               <div className="space-y-4">
                                 {substanceResult.answers.map((answer, answerIndex) => (
                                   <div
-                                    key={`${substanceResult.substance.id}-${answer.questionId}-${answerIndex}`}
+                                    key={`${substanceResult.substanceId}-${answer.questionOrder}-${answerIndex}`}
                                     className={`p-4 rounded-lg border ${answer.score > 2
                                       ? 'border-red-200 bg-red-50'
                                       : answer.score > 0
@@ -720,7 +748,7 @@ function AssessmentResult() {
                                           ? 'bg-yellow-100 text-yellow-800'
                                           : 'bg-green-100 text-green-800'
                                         } rounded-full shrink-0 font-semibold`}>
-                                        {answerIndex + 1}
+                                        {answer.questionOrder}
                                       </span>
                                       <div className="flex-1">
                                         <h5 className="font-medium text-gray-800 mb-3">
@@ -754,24 +782,20 @@ function AssessmentResult() {
                             </div>
                           );
                         })}
-                      </>
+                      </div>
                     );
                   }
                   
-                  // Fallback to old grouping logic for backward compatibility
-                  const groupedAnswers = result.answers.reduce((groups, answer) => {
-                    // Tìm tên chất từ các nguồn có thể có
+                  // Fallback về logic cũ nếu không có substanceResults
+                  // Tạo groupedAnswers từ result.answers
+                  const groupedAnswers = result.answers?.reduce((groups, answer) => {
                     let substanceName = 'Chất không xác định';
-                    
-                    // Ưu tiên substance từ result chính (dành cho single substance)
-                    if (result.substance?.name) {
-                      substanceName = result.substance.name;
-                    } else if (answer.substanceName) {
+                    if (answer.substanceName) {
                       substanceName = answer.substanceName;
                     } else if (answer.substance?.name) {
                       substanceName = answer.substance.name;
                     } else if (answer.questionText) {
-                      // Nếu không có thông tin chất, thử phân tích từ câu hỏi
+                      // Phân tích từ câu hỏi để xác định chất
                       const questionText = answer.questionText.toLowerCase();
                       if (questionText.includes('tobacco') || questionText.includes('thuốc lá')) {
                         substanceName = 'Tobacco products';
@@ -799,12 +823,11 @@ function AssessmentResult() {
                     }
                     groups[substanceName].push(answer);
                     return groups;
-                  }, {});
-
-                  return (
-                    <>
-                      {/* ASSIST Overview */}
-                      <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  }, {}) || {};
+                  
+                  return result.answers?.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2 mb-2">
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -817,7 +840,7 @@ function AssessmentResult() {
                           ) : (
                             <>Kết quả đánh giá cho {Object.keys(groupedAnswers).length} loại chất</>
                           )}
-                          {' - '}Tổng điểm: {result.totalScore || result.score} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.overallRiskLevel || result.riskLevel).text}</span>
+                          {' - '}Tổng điểm: {result.score || result.totalScore || 'N/A'} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel || result.overallRiskLevel)?.text || 'Chưa xác định'}</span>
                         </p>
                         {result.substance?.description && (
                           <p className="text-blue-600 text-xs mt-1 italic">
@@ -1075,8 +1098,8 @@ function AssessmentResult() {
                           })}
                         </div>
                       )}
-                    </>
-                  );
+                    </div>
+                  ) : null;
                 })()
               ) : (
                 /* CRAFFT - Standard display */
@@ -1089,8 +1112,7 @@ function AssessmentResult() {
                       <h4 className="text-lg font-semibold text-green-800">Đánh giá CRAFFT</h4>
                     </div>
                     <p className="text-green-700 text-sm">
-                      Đánh giá tổng quan về sử dụng chất ở thanh thiếu niên. 
-                      Tổng điểm: {result.totalScore || result.score} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.overallRiskLevel || result.riskLevel).text}</span>
+                      Tổng điểm: {result.score || result.totalScore} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel).text}</span>
                     </p>
                   </div>
 
@@ -1132,6 +1154,19 @@ function AssessmentResult() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* No answers available message */}
+          {activeTab === 'answers' && !(result.answers?.length > 0 || result.substanceResults?.length > 0) && (
+            <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">Không có chi tiết câu trả lời</h3>
+              <p className="text-gray-500">
+                Dữ liệu chi tiết câu trả lời không khả dụng cho kết quả đánh giá này.
+              </p>
             </div>
           )}
 

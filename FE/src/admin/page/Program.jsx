@@ -403,7 +403,15 @@ function Program() {
             setShowSendSurveyModal(false);
         } catch (error) {
             console.error('Lỗi khi gửi khảo sát:', error);
-            toast.error('Không thể gửi khảo sát. Vui lòng thử lại sau!');
+
+            // Xử lý thông báo lỗi cụ thể từ API
+            if (error.response && error.response.data && error.response.data.message) {
+                toast.error(error.response.data.message);
+            } else if (error.response && error.response.status === 400) {
+                toast.error('Không thể gửi khảo sát sau khi khảo sát trước chưa được gửi!');
+            } else {
+                toast.error('Không thể gửi khảo sát. Vui lòng thử lại sau!');
+            }
         } finally {
             setSendingSurvey(false);
         }
