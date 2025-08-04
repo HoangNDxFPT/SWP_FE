@@ -10,13 +10,26 @@ function AssessmentResult() {
   const navigate = useNavigate();
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showAnswerDetails, setShowAnswerDetails] = useState(false);
   const [activeTab, setActiveTab] = useState('summary');
+  const [viewMode, setViewMode] = useState('grouped'); // New state for view mode
 
   useEffect(() => {
     const fetchResult = async () => {
       try {
         setLoading(true);
+        
+        // Thử sử dụng API mới trước
+        try {
+          const newApiRes = await api.get(`/assessment-results/${assessmentResultId}/by-substance`);
+          if (newApiRes.status === 200) {
+            setResult(newApiRes.data);
+            return;
+          }
+        } catch (error) {
+          console.log('New API not available, falling back to old API:', error.message);
+        }
+        
+        // Fallback về API cũ nếu API mới không có
         const res = await api.get(`/assessment-results/${assessmentResultId}`);
         if (res.status === 200) {
           setResult(res.data);
@@ -32,23 +45,10 @@ function AssessmentResult() {
     fetchResult();
   }, [assessmentResultId]);
 
-  const getUserAgeGroup = (user) => {
-    if (user && user.dateOfBirth) {
-      const birth = new Date(user.dateOfBirth);
-      const today = new Date();
-      let age = today.getFullYear() - birth.getFullYear();
-      const m = today.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-        age--;
-      }
-      return age < 18 ? 'Teenagers' : 'Adults';
-    }
-    return '';
-  };
-
   // Lấy thông tin nút chuyển hướng dựa trên mức độ rủi ro
   const getActionButtonInfo = () => {
-    switch (result?.riskLevel) {
+    const riskLevel = result?.overallRiskLevel || result?.riskLevel;
+    switch (riskLevel) {
       case 'LOW':
          return {
           show: true,
@@ -243,9 +243,8 @@ function AssessmentResult() {
     );
   }
 
-  const userAgeGroup = getUserAgeGroup(result.user);
   const actionButton = getActionButtonInfo();
-  const riskInfo = getRiskLevelInfo(result.riskLevel);
+  const riskInfo = getRiskLevelInfo(result.overallRiskLevel || result.riskLevel);
   const assessmentInfo = getAssessmentTypeInfo(result.assessmentType);
 
   return (
@@ -297,7 +296,7 @@ function AssessmentResult() {
                   <span className="absolute bottom-0 left-0 w-full h-0.5 bg-blue-600"></span>
                 )}
               </button>
-              {result.answers?.length > 0 && (
+              {(result.answers?.length > 0 || result.substanceResults?.length > 0) && (
                 <button
                   onClick={() => setActiveTab('answers')}
                   className={`py-4 px-1 font-medium text-lg relative ${activeTab === 'answers' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
@@ -329,7 +328,7 @@ function AssessmentResult() {
                           {riskInfo.text}
                         </span>
                         <div className="text-lg font-semibold bg-gray-100 px-3 py-1 rounded-full">
-                          Điểm số: {result.score}
+                          Điểm số: {result.score || result.totalScore}
                         </div>
                       </div>
                       <p className="text-gray-600">{riskInfo.description}</p>
@@ -379,9 +378,20 @@ function AssessmentResult() {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-700">Điểm đánh giá</h3>
-                    <p className="text-lg font-semibold">{result.score} điểm</p>
+                    <p className="text-lg font-semibold">{result.score || result.totalScore} điểm</p>
                     <p className="text-sm text-gray-500">
-                      Thang điểm {result.assessmentType === 'ASSIST' ? '0-27+' : '0-6'}
+                      {result.assessmentType === 'ASSIST' ? (
+                        <>
+                          Thang điểm 0-27+ 
+                          {result.substanceResults?.length > 0 && (
+                            <span className="block">
+                              Đánh giá {result.substanceResults.length} chất
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        'Thang điểm 0-6'
+                      )}
                     </p>
                   </div>
                 </div>
@@ -420,6 +430,59 @@ function AssessmentResult() {
                   </div>
                 )}
               </div>
+
+              {/* Substance Results for ASSIST */}
+              {result.assessmentType === 'ASSIST' && result.substanceResults && result.substanceResults.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                    </svg>
+                    Kết quả theo từng chất
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {result.substanceResults.map((substanceResult, index) => {
+                      const substanceRiskInfo = getRiskLevelInfo(substanceResult.riskLevel);
+                      return (
+                        <div key={substanceResult.substanceId || index} className={`border rounded-lg p-4 ${substanceRiskInfo.borderColor} ${substanceRiskInfo.bgColor}`}>
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className={`p-2 rounded-full ${substanceRiskInfo.lightColor}`}>
+                              <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${substanceRiskInfo.color}`} viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-800">{substanceResult.substanceName}</h4>
+                              <span className={`text-sm font-medium ${substanceRiskInfo.color}`}>
+                                {substanceRiskInfo.text}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-gray-600 text-sm">Điểm:</span>
+                            <span className={`font-bold text-lg ${substanceRiskInfo.color}`}>
+                              {substanceResult.substanceScore || substanceResult.score}
+                            </span>
+                          </div>
+                          
+                          {substanceResult.criteria && (
+                            <div className="text-xs text-gray-500 mt-2">
+                              {substanceResult.criteria}
+                            </div>
+                          )}
+
+                          {substanceResult.substanceDescription && (
+                            <div className="text-xs text-gray-600 mt-1 italic">
+                              {substanceResult.substanceDescription}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -440,9 +503,61 @@ function AssessmentResult() {
                   </div>
                 </div>
                 <div className={`p-4 rounded-lg ${riskInfo.bgColor}`}>
-                  <p className={riskInfo.textDark}>{riskInfo.description}</p>
+                  <p className={riskInfo.textDark}>
+                    {result.recommendation || riskInfo.description}
+                  </p>
                 </div>
               </div>
+
+              {/* Specific Recommendations from API */}
+              {/* {result.recommendation && (
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Khuyến nghị cụ thể
+                  </h3>
+                  <div className="prose max-w-none">
+                    <div className="text-gray-700 leading-relaxed whitespace-pre-line">
+                      {result.recommendation}
+                    </div>
+                  </div>
+                </div>
+              )} */}
+
+              {/* Substance-specific information for ASSIST */}
+              {result.assessmentType === 'ASSIST' && result.substance && (
+                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+                  <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                    </svg>
+                    Thông tin về chất được đánh giá
+                  </h3>
+                  <div className="flex items-start gap-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-purple-800 text-lg mb-2">{result.substance.name}</h4>
+                      <p className="text-purple-700 mb-3">{result.substance.description}</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2">
+                          <span className="text-purple-600 text-sm font-medium">Điểm số:</span>
+                          <span className={`font-bold text-lg ${riskInfo.color}`}>{result.score || result.totalScore}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-purple-600 text-sm font-medium">Mức độ rủi ro:</span>
+                          <span className={`font-semibold ${riskInfo.color}`}>{riskInfo.text}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Recommended Courses */}
               {result.recommendedCourses?.length > 0 ? (
@@ -551,56 +666,507 @@ function AssessmentResult() {
           )}
 
           {/* Answer Details Tab Content */}
-          {activeTab === 'answers' && result.answers?.length > 0 && (
+          {activeTab === 'answers' && (result.answers?.length > 0 || result.substanceResults?.length > 0) && (
             <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn">
               <h3 className="text-xl font-semibold mb-4">Chi tiết câu trả lời</h3>
 
-              <div className="space-y-4">
-                {result.answers.map((answer, index) => (
-                  <div
-                    key={answer.questionId}
-                    className={`p-4 rounded-lg border ${answer.score > 2
-                      ? 'border-red-200 bg-red-50'
-                      : answer.score > 0
+              {result.assessmentType === 'ASSIST' ? (
+                (() => {
+                  // Ưu tiên sử dụng substanceResults từ API mới
+                  const hasSubstanceResults = result.substanceResults && result.substanceResults.length > 0;
+                  
+                  if (hasSubstanceResults) {
+                    return (
+                      <div>
+                        {/* ASSIST Overview */}
+                        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <h4 className="text-lg font-semibold text-blue-800">Đánh giá ASSIST</h4>
+                          </div>
+                          <p className="text-blue-700 text-sm">
+                            Kết quả đánh giá cho {result.substanceResults.length} loại chất
+                            {' - '}Tổng điểm: {result.score || result.totalScore} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel || result.overallRiskLevel)?.text || 'Chưa xác định'}</span>
+                          </p>
+                        </div>
+
+                        {/* Substance Results với answers chi tiết */}
+                        {result.substanceResults.map((substanceResult) => {
+                          const substanceRiskInfo = getRiskLevelInfo(substanceResult.riskLevel);
+                          return (
+                            <div key={substanceResult.substanceId} className="mb-8">
+                              {/* Substance Header */}
+                              <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-lg font-semibold text-gray-800">{substanceResult.substanceName}</h4>
+                                      {substanceResult.substanceDescription && (
+                                        <p className="text-sm text-gray-600">{substanceResult.substanceDescription}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${substanceRiskInfo.bgColor} ${substanceRiskInfo.color} border ${substanceRiskInfo.borderColor}`}>
+                                      {substanceRiskInfo.text}
+                                    </div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                      Điểm: <span className={`font-bold ${substanceRiskInfo.color}`}>{substanceResult.substanceScore || substanceResult.score}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                {substanceResult.criteria && (
+                                  <div className="mt-2 text-sm text-gray-600">
+                                    <span className="font-medium">Tiêu chí đánh giá:</span> {substanceResult.criteria}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Substance Answers */}
+                              <div className="space-y-4">
+                                {substanceResult.answers.map((answer, answerIndex) => (
+                                  <div
+                                    key={`${substanceResult.substanceId}-${answer.questionOrder}-${answerIndex}`}
+                                    className={`p-4 rounded-lg border ${answer.score > 2
+                                      ? 'border-red-200 bg-red-50'
+                                      : answer.score > 0
+                                        ? 'border-yellow-200 bg-yellow-50'
+                                        : 'border-gray-200 bg-gray-50'
+                                      }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <span className={`inline-flex justify-center items-center w-8 h-8 ${answer.score > 2
+                                        ? 'bg-red-100 text-red-800'
+                                        : answer.score > 0
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-green-100 text-green-800'
+                                        } rounded-full shrink-0 font-semibold`}>
+                                        {answer.questionOrder}
+                                      </span>
+                                      <div className="flex-1">
+                                        <h5 className="font-medium text-gray-800 mb-3">
+                                          {answer.questionText}
+                                        </h5>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-gray-600 text-sm font-medium">Trả lời:</span>
+                                            <span className="font-medium text-gray-800 bg-white px-3 py-1 rounded-md border">
+                                              {answer.answerText}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-gray-600 text-sm font-medium">Điểm:</span>
+                                            <span className={`font-bold text-xl ${answer.score > 2
+                                              ? 'text-red-600'
+                                              : answer.score > 0
+                                                ? 'text-yellow-600'
+                                                : 'text-green-600'
+                                              }`}>
+                                              {answer.score}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  }
+                  
+                  // Fallback về logic cũ nếu không có substanceResults
+                  // Tạo groupedAnswers từ result.answers
+                  const groupedAnswers = result.answers?.reduce((groups, answer) => {
+                    let substanceName = 'Chất không xác định';
+                    if (answer.substanceName) {
+                      substanceName = answer.substanceName;
+                    } else if (answer.substance?.name) {
+                      substanceName = answer.substance.name;
+                    } else if (answer.questionText) {
+                      // Phân tích từ câu hỏi để xác định chất
+                      const questionText = answer.questionText.toLowerCase();
+                      if (questionText.includes('tobacco') || questionText.includes('thuốc lá')) {
+                        substanceName = 'Tobacco products';
+                      } else if (questionText.includes('alcohol') || questionText.includes('rượu') || questionText.includes('bia')) {
+                        substanceName = 'Alcoholic beverages';
+                      } else if (questionText.includes('cannabis') || questionText.includes('marijuana') || questionText.includes('cần sa')) {
+                        substanceName = 'Cannabis';
+                      } else if (questionText.includes('cocaine')) {
+                        substanceName = 'Cocaine';
+                      } else if (questionText.includes('amphetamine') || questionText.includes('ecstasy') || questionText.includes('thuốc lắc')) {
+                        substanceName = 'Amphetamine type stimulants';
+                      } else if (questionText.includes('inhalant') || questionText.includes('hít') || questionText.includes('keo') || questionText.includes('xăng')) {
+                        substanceName = 'Inhalants';
+                      } else if (questionText.includes('sedative') || questionText.includes('sleeping') || questionText.includes('valium') || questionText.includes('thuốc ngủ') || questionText.includes('an thần')) {
+                        substanceName = 'Sedatives or sleeping pills';
+                      } else if (questionText.includes('hallucinogen') || questionText.includes('lsd') || questionText.includes('nấm') || questionText.includes('ảo giác')) {
+                        substanceName = 'Hallucinogens';
+                      } else if (questionText.includes('opioid') || questionText.includes('heroin') || questionText.includes('morphin') || questionText.includes('thuốc phiện')) {
+                        substanceName = 'Opioids';
+                      }
+                    }
+                    
+                    if (!groups[substanceName]) {
+                      groups[substanceName] = [];
+                    }
+                    groups[substanceName].push(answer);
+                    return groups;
+                  }, {}) || {};
+                  
+                  return result.answers?.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                          </svg>
+                          <h4 className="text-lg font-semibold text-blue-800">Đánh giá ASSIST</h4>
+                        </div>
+                        <p className="text-blue-700 text-sm">
+                          {result.substance?.name ? (
+                            <>Kết quả đánh giá cho chất: <span className="font-semibold">{result.substance.name}</span></>
+                          ) : (
+                            <>Kết quả đánh giá cho {Object.keys(groupedAnswers).length} loại chất</>
+                          )}
+                          {' - '}Tổng điểm: {result.score || result.totalScore || 'N/A'} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel || result.overallRiskLevel)?.text || 'Chưa xác định'}</span>
+                        </p>
+                        {result.substance?.description && (
+                          <p className="text-blue-600 text-xs mt-1 italic">
+                            {result.substance.description}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* View Toggle */}
+                      <div className="mb-6 flex items-center gap-4">
+                        <span className="text-sm font-medium text-gray-700">Hiển thị:</span>
+                        <div className="flex bg-gray-100 rounded-lg p-1">
+                          <button
+                            onClick={() => setViewMode('grouped')}
+                            className={`px-3 py-1 text-sm rounded-md transition ${viewMode === 'grouped' 
+                              ? 'bg-white shadow text-blue-600 font-medium' 
+                              : 'text-gray-600 hover:text-gray-800'}`}
+                          >
+                            Nhóm theo chất
+                          </button>
+                          <button
+                            onClick={() => setViewMode('list')}
+                            className={`px-3 py-1 text-sm rounded-md transition ${viewMode === 'list' 
+                              ? 'bg-white shadow text-blue-600 font-medium' 
+                              : 'text-gray-600 hover:text-gray-800'}`}
+                          >
+                            Danh sách tuyến tính
+                          </button>
+                        </div>
+                      </div>
+
+                      {viewMode === 'grouped' ? (
+                        /* Grouped View - existing code */
+                        <>
+                          {Object.entries(groupedAnswers).map(([substanceName, answers]) => (
+                            <div key={substanceName} className="mb-8">
+                              {/* Substance Header */}
+                              <div className="mb-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-purple-600" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                                      </svg>
+                                    </div>
+                                    <div>
+                                      <h4 className="text-lg font-semibold text-purple-800">{substanceName}</h4>
+                                      <p className="text-purple-600 text-sm">
+                                        {answers.length} câu hỏi được đánh giá
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-2xl font-bold text-purple-700">
+                                      {answers.reduce((sum, answer) => sum + answer.score, 0)} điểm
+                                    </div>
+                                    <div className="text-sm text-purple-600">
+                                      {(() => {
+                                        const substanceScore = answers.reduce((sum, answer) => sum + answer.score, 0);
+                                        const level = substanceScore > 15 ? 'Cao' : substanceScore > 9 ? 'Trung bình' : 'Thấp';
+                                        const color = substanceScore > 15 ? 'text-red-600' : substanceScore > 9 ? 'text-yellow-600' : 'text-green-600';
+                                        return <span className={color}>Rủi ro {level}</span>;
+                                      })()}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Questions for this substance */}
+                              <div className="space-y-4 pl-4">
+                                {answers.map((answer, index) => (
+                                  <div
+                                    key={`${substanceName}-${answer.questionId}-${index}`}
+                                    className={`p-4 rounded-lg border-l-4 ${answer.score > 2
+                                      ? 'border-l-red-400 bg-red-50 border border-red-200'
+                                      : answer.score > 0
+                                        ? 'border-l-yellow-400 bg-yellow-50 border border-yellow-200'
+                                        : 'border-l-green-400 bg-green-50 border border-green-200'
+                                      }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <span className={`inline-flex justify-center items-center w-7 h-7 ${answer.score > 2
+                                        ? 'bg-red-100 text-red-800'
+                                        : answer.score > 0
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : 'bg-green-100 text-green-800'
+                                        } rounded-full shrink-0 font-semibold`}>
+                                        {index + 1}
+                                      </span>
+                                      <div className="flex-1">
+                                        <h5 className="font-medium text-gray-800 mb-2">
+                                          {answer.questionText}
+                                        </h5>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-gray-600 text-sm font-medium">Trả lời:</span>
+                                            <span className="font-medium text-gray-800 bg-white px-2 py-1 rounded border">
+                                              {answer.answerText}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-gray-600 text-sm font-medium">Điểm:</span>
+                                            <span className={`font-bold text-lg ${answer.score > 2
+                                              ? 'text-red-600'
+                                              : answer.score > 0
+                                                ? 'text-yellow-600'
+                                                : 'text-green-600'
+                                              }`}>
+                                              {answer.score}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* Summary for ASSIST */}
+                          <div className="mt-8 p-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg border border-gray-200">
+                            <h4 className="font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Tổng kết đánh giá ASSIST
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {Object.entries(groupedAnswers).map(([substanceName, answers]) => {
+                                const totalScore = answers.reduce((sum, answer) => sum + answer.score, 0);
+                                const riskLevel = totalScore > 15 ? 'HIGH' : totalScore > 9 ? 'MEDIUM' : 'LOW';
+                                const riskColor = riskLevel === 'HIGH' ? 'text-red-600' : riskLevel === 'MEDIUM' ? 'text-yellow-600' : 'text-green-600';
+                                const riskBg = riskLevel === 'HIGH' ? 'bg-red-50 border-red-200' : riskLevel === 'MEDIUM' ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200';
+                                const riskText = riskLevel === 'HIGH' ? 'Cao' : riskLevel === 'MEDIUM' ? 'Trung bình' : 'Thấp';
+                                
+                                return (
+                                  <div key={substanceName} className={`p-4 rounded-lg border ${riskBg}`}>
+                                    <h5 className="font-semibold text-gray-800 mb-1">{substanceName}</h5>
+                                    <div className="text-sm text-gray-600 mb-2">
+                                      {answers.length} câu hỏi
+                                    </div>
+                                    <div className={`text-xl font-bold ${riskColor} mb-1`}>
+                                      {totalScore} điểm
+                                    </div>
+                                    <div className={`text-sm font-medium ${riskColor}`}>
+                                      Rủi ro {riskText}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <div className="mt-4 p-3 bg-blue-100 rounded border border-blue-200">
+                              <p className="text-blue-800 text-sm">
+                                <strong>Lưu ý:</strong> Điểm số cho từng chất được tính riêng biệt. 
+                                Điểm tổng ({result.score}) là tổng của tất cả các chất được đánh giá.
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        /* Linear List View */
+                        <div className="space-y-4">
+                          {result.answers.map((answer, index) => {
+                            // Tìm tên chất cho câu hỏi này
+                            let substanceName = 'Chất không xác định';
+                            if (result.substance?.name) {
+                              substanceName = result.substance.name;
+                            } else if (answer.substanceName) {
+                              substanceName = answer.substanceName;
+                            } else if (answer.substance?.name) {
+                              substanceName = answer.substance.name;
+                            } else if (answer.questionText) {
+                              // Nếu không có thông tin chất, thử phân tích từ câu hỏi
+                              const questionText = answer.questionText.toLowerCase();
+                              if (questionText.includes('tobacco') || questionText.includes('thuốc lá')) {
+                                substanceName = 'Tobacco products';
+                              } else if (questionText.includes('alcohol') || questionText.includes('rượu') || questionText.includes('bia')) {
+                                substanceName = 'Alcoholic beverages';
+                              } else if (questionText.includes('cannabis') || questionText.includes('marijuana') || questionText.includes('cần sa')) {
+                                substanceName = 'Cannabis';
+                              } else if (questionText.includes('cocaine')) {
+                                substanceName = 'Cocaine';
+                              } else if (questionText.includes('amphetamine') || questionText.includes('ecstasy') || questionText.includes('thuốc lắc')) {
+                                substanceName = 'Amphetamine type stimulants';
+                              } else if (questionText.includes('inhalant') || questionText.includes('hít') || questionText.includes('keo') || questionText.includes('xăng')) {
+                                substanceName = 'Inhalants';
+                              } else if (questionText.includes('sedative') || questionText.includes('sleeping') || questionText.includes('valium') || questionText.includes('thuốc ngủ') || questionText.includes('an thần')) {
+                                substanceName = 'Sedatives or sleeping pills';
+                              } else if (questionText.includes('hallucinogen') || questionText.includes('lsd') || questionText.includes('nấm') || questionText.includes('ảo giác')) {
+                                substanceName = 'Hallucinogens';
+                              } else if (questionText.includes('opioid') || questionText.includes('heroin') || questionText.includes('morphin') || questionText.includes('thuốc phiện')) {
+                                substanceName = 'Opioids';
+                              }
+                            }
+
+                            return (
+                              <div
+                                key={`linear-${answer.questionId}-${index}`}
+                                className={`p-4 rounded-lg border ${answer.score > 2
+                                  ? 'border-red-200 bg-red-50'
+                                  : answer.score > 0
+                                    ? 'border-yellow-200 bg-yellow-50'
+                                    : 'border-gray-200 bg-gray-50'
+                                  }`}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <span className={`inline-flex justify-center items-center w-8 h-8 ${answer.score > 2
+                                    ? 'bg-red-100 text-red-800'
+                                    : answer.score > 0
+                                      ? 'bg-yellow-100 text-yellow-800'
+                                      : 'bg-green-100 text-green-800'
+                                    } rounded-full shrink-0 font-semibold`}>
+                                    {index + 1}
+                                  </span>
+                                  <div className="flex-1">
+                                    {/* Substance Badge */}
+                                    <div className="mb-3">
+                                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" viewBox="0 0 20 20" fill="currentColor">
+                                          <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                                        </svg>
+                                        {substanceName}
+                                      </span>
+                                    </div>
+                                    
+                                    <h5 className="font-medium text-gray-800 mb-3">
+                                      {answer.questionText}
+                                    </h5>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600 text-sm font-medium">Trả lời:</span>
+                                        <span className="font-medium text-gray-800 bg-white px-3 py-1 rounded-md border">
+                                          {answer.answerText}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-gray-600 text-sm font-medium">Điểm:</span>
+                                        <span className={`font-bold text-xl ${answer.score > 2
+                                          ? 'text-red-600'
+                                          : answer.score > 0
+                                            ? 'text-yellow-600'
+                                            : 'text-green-600'
+                                          }`}>
+                                          {answer.score}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  ) : null;
+                })()
+              ) : (
+                /* CRAFFT - Standard display */
+                <div className="space-y-4">
+                  <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
+                      <h4 className="text-lg font-semibold text-green-800">Đánh giá CRAFFT</h4>
+                    </div>
+                    <p className="text-green-700 text-sm">
+                      Tổng điểm: {result.score || result.totalScore} - Mức độ rủi ro: <span className="font-semibold">{getRiskLevelInfo(result.riskLevel).text}</span>
+                    </p>
+                  </div>
+
+                  {result.answers.map((answer, index) => (
+                    <div
+                      key={`crafft-${answer.questionId}-${index}`}
+                      className={`p-4 rounded-lg border ${answer.score > 0
                         ? 'border-yellow-200 bg-yellow-50'
                         : 'border-gray-200 bg-gray-50'
-                      }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className={`inline-flex justify-center items-center w-6 h-6 ${answer.score > 2
-                        ? 'bg-red-100 text-red-800'
-                        : answer.score > 0
+                        }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className={`inline-flex justify-center items-center w-6 h-6 ${answer.score > 0
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-blue-100 text-blue-800'
-                        } rounded-full shrink-0 font-medium text-sm`}>
-                        {index + 1}
-                      </span>
-                      <div className="flex-1">
-                        <h4 className="font-medium text-gray-800 mb-2">
-                          {answer.questionText}
-                        </h4>
-                        <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-8">
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600 text-sm">Câu trả lời:</span>
-                            <span className="font-medium">{answer.answerText}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600 text-sm">Điểm:</span>
-                            <span className={`font-medium ${answer.score > 2
-                              ? 'text-red-600'
-                              : answer.score > 0
-                                ? 'text-yellow-600'
-                                : 'text-green-600'
-                              }`}>
-                              {answer.score}
-                            </span>
+                          } rounded-full shrink-0 font-medium text-sm`}>
+                          {index + 1}
+                        </span>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-800 mb-2">
+                            {answer.questionText}
+                          </h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 text-sm">Câu trả lời:</span>
+                              <span className="font-medium">{answer.answerText}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-600 text-sm">Điểm:</span>
+                              <span className={`font-medium ${answer.score > 0 ? 'text-yellow-600' : 'text-green-600'}`}>
+                                {answer.score}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* No answers available message */}
+          {activeTab === 'answers' && !(result.answers?.length > 0 || result.substanceResults?.length > 0) && (
+            <div className="bg-white rounded-lg shadow-sm p-6 animate-fadeIn text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <h3 className="text-lg font-medium text-gray-700 mb-2">Không có chi tiết câu trả lời</h3>
+              <p className="text-gray-500">
+                Dữ liệu chi tiết câu trả lời không khả dụng cho kết quả đánh giá này.
+              </p>
             </div>
           )}
 

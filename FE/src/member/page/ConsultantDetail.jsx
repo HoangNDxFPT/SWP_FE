@@ -55,7 +55,7 @@ function ConsultantDetail() {
     const timeParam = searchParams.get("time");
     if (dateParam) {
       setDate(dateParam);
-      setSelectedDate(dateParam); // Thêm dòng này để set ngày cho input
+      setSelectedDate(dateParam); 
     }
     if (timeParam) setTime(timeParam);
   }, [searchParams]);
@@ -80,8 +80,13 @@ function ConsultantDetail() {
         registeredMap[slot.slotId] = slot;
       });
       
+      // Get current date and time for filtering
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentTimeString = now.toTimeString().slice(0, 5); // Format: "HH:MM"
+      
       // Combine all slots with availability
-      const allSlots = timeSlotsRes.data.map(slot => ({
+      let allSlots = timeSlotsRes.data.map(slot => ({
         slotId: slot.id,
         label: slot.label,
         startTime: slot.start,
@@ -89,6 +94,11 @@ function ConsultantDetail() {
         available: registeredMap[slot.id]?.available || false,
         isRegistered: !!registeredMap[slot.id]
       }));
+      
+      // Filter out past slots for today
+      if (selectedDate === today) {
+        allSlots = allSlots.filter(slot => slot.startTime > currentTimeString);
+      }
       
       // Sort by start time
       allSlots.sort((a, b) => a.startTime.localeCompare(b.startTime));
@@ -136,7 +146,7 @@ function ConsultantDetail() {
       
     } catch (error) {
       console.error('Error booking appointment:', error);
-      const message = error.response?.data?.message || 'Đặt lịch thất bại. Vui lòng thử lại.';
+      const message = error.response?.data?.message || 'Bạn đã có lịch hẹn vào khung giờ này!';
       toast.error(message);
       
       if (error.response?.status === 400) {

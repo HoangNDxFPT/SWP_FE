@@ -202,9 +202,8 @@ function CourseQuiz() {
         }));
         
         setQuizList(parsedQuizzes);
-        
-        // Thiết lập timer (30 phút)
-        setTimeLeft(30 * 60); // 30 phút tính bằng giây
+      
+        setTimeLeft(30 * 60);
       } catch (err) {
         console.error('Lỗi khi tải dữ liệu:', err);
         toast.error("Không thể tải bài kiểm tra. Vui lòng thử lại sau.");
@@ -220,7 +219,7 @@ function CourseQuiz() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [id, navigate, user]); // Thêm user vào dependencies
+  }, [id, navigate, user]);
 
   if (loading) {
     return (

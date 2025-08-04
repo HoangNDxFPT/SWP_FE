@@ -3,26 +3,31 @@ import { toast } from 'react-toastify';
 import api from '../../config/axios';
 import { useNavigate, Link } from 'react-router-dom';
 import { Form, Input, Button, Checkbox, Modal } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, PhoneOutlined, HomeOutlined, CalendarOutlined } from '@ant-design/icons';
+import { UserOutlined, MailOutlined, LockOutlined, PhoneOutlined, HomeOutlined, CalendarOutlined, CheckCircleOutlined, MailFilled } from '@ant-design/icons';
 
 function RegisterPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+  const [resendingEmail, setResendingEmail] = useState(false);
 
   const onFinish = async (values) => {
     setLoading(true);
-    const { ...data } = values;
+    const { confirm, agreement, ...data } = values;
 
+    // Convert date if needed
     if (data.dateOfBirth instanceof Date) {
       data.dateOfBirth = data.dateOfBirth.toISOString().slice(0, 10);
     }
 
     try {
-      await api.post("register", data);
-      toast.success("Tạo tài khoản mới thành công!");
-      navigate("/login");
+      const response = await api.post("register", data);
+      setUserEmail(data.email);
+      setRegistrationSuccess(true);
+      toast.success("Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.");
     } catch (e) {
       let errorMessage = "Đăng ký thất bại!";
       if (e.response?.data?.message) {
@@ -41,13 +46,108 @@ function RegisterPage() {
         errorMessage = e.message;
       }
       toast.error(`Lỗi: ${errorMessage}`);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const handleResendActivation = async () => {
+    if (!userEmail) return;
+    
+    try {
+      setResendingEmail(true);
+      await api.post(`/resend-activation?email=${encodeURIComponent(userEmail)}`);
+      toast.success("Email xác thực đã được gửi lại!");
+    } catch (error) {
+      toast.error("Không thể gửi lại email xác thực. Tài khoản có thể đã được xác thực trước đó.");
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
   const onFinishFailed = (errorInfo) => {
     toast.error("Vui lòng kiểm tra lại các trường thông tin!");
     console.error('Failed:', errorInfo);
   };
 
+  // Success screen after registration
+  if (registrationSuccess) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-green-50 to-emerald-100">
+        <div className="flex-grow flex items-center justify-center px-4 py-8">
+          <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center">
+            <div className="mb-6">
+              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircleOutlined className="text-4xl text-green-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">
+                Đăng ký thành công!
+              </h1>
+              <p className="text-gray-600">
+                Chúng tôi đã gửi email xác thực đến địa chỉ:
+              </p>
+              <p className="font-semibold text-blue-600 mt-1">{userEmail}</p>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start">
+                <MailFilled className="text-blue-600 text-xl mt-1 mr-3" />
+                <div className="text-left">
+                  <h3 className="font-semibold text-blue-800 mb-1">
+                    Bước tiếp theo:
+                  </h3>
+                  <ol className="text-sm text-blue-700 space-y-1">
+                    <li>1. Kiểm tra hộp thư email của bạn</li>
+                    <li>2. Tìm email từ "Drug Use Prevention System"</li>
+                    <li>3. Nhấp vào liên kết xác thực trong email</li>
+                    <li>4. Sau khi xác thực, bạn có thể đăng nhập</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleResendActivation}
+                disabled={resendingEmail}
+                className={`w-full py-3 rounded-lg font-medium transition ${
+                  resendingEmail
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {resendingEmail ? (
+                  <span className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Đang gửi...
+                  </span>
+                ) : (
+                  <span className="flex items-center justify-center">
+                    <MailOutlined className="mr-2" />
+                    Gửi lại email xác thực
+                  </span>
+                )}
+              </button>
+
+              <Link
+                to="/login"
+                className="block w-full py-3 text-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+              >
+                Về trang đăng nhập
+              </Link>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-200">
+              <p className="text-xs text-gray-500">
+                <strong>Lưu ý:</strong> Email có thể nằm trong thư mục Spam/Junk. 
+                Vui lòng kiểm tra và đánh dấu tin nhắn là an toàn.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-blue-50 to-indigo-100">
@@ -314,7 +414,7 @@ function RegisterPage() {
                     block
                     className="h-12 rounded-lg bg-blue-600 hover:bg-blue-700 border-blue-600 font-medium"
                   >
-                    Tạo tài khoản
+                    {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
                   </Button>
                 </Form.Item>
 

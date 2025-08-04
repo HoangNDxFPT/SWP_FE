@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom"; // Thêm import này
 import api from "../../config/axios";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -6,6 +7,8 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 
 function ReportAppointment() {
+    const location = useLocation(); // Thêm này
+    
     // States
     const [activeTab, setActiveTab] = useState("reports");
     const [reports, setReports] = useState([]);
@@ -42,6 +45,15 @@ function ReportAppointment() {
     const [reportPage, setReportPage] = useState(1);
     const [appointmentPage, setAppointmentPage] = useState(1);
     const pageSize = 10;
+
+    // Thêm useEffect để đọc query parameter
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const tab = searchParams.get('tab');
+        if (tab === 'appointments' || tab === 'reports') {
+            setActiveTab(tab);
+        }
+    }, [location.search]);
 
     // Fetch data when tab changes
     useEffect(() => {
