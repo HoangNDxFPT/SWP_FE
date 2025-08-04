@@ -342,29 +342,97 @@ function AssistAssessment() {
             <>
               {/* Thông tin thang điểm */}
               <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                <h2 className="text-lg font-semibold text-gray-800 mb-3">Thông tin thang điểm ASSIST</h2>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="p-3 bg-green-50 rounded-md border border-green-100">
-                    <div className="flex items-center mb-1">
-                      <span className="w-3 h-3 rounded-full bg-green-500 mr-2"></span>
-                      <span className="font-medium text-green-800">Rủi ro thấp</span>
+                <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Thông tin thang điểm ASSIST
+                </h2>
+                
+                <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                      </svg>
                     </div>
-                    <p className="text-sm text-gray-600">0-9 điểm</p>
-                  </div>
-                  <div className="p-3 bg-yellow-50 rounded-md border border-yellow-100">
-                    <div className="flex items-center mb-1">
-                      <span className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></span>
-                      <span className="font-medium text-yellow-800">Rủi ro trung bình</span>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-700">
+                        <strong>Cách tính điểm:</strong> Mỗi chất sẽ có điểm riêng. Mức độ rủi ro tổng thể sẽ được xác định dựa trên <strong>điểm cao nhất</strong> trong số các chất bạn đã chọn.
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600">10-19 điểm</p>
                   </div>
-                  <div className="p-3 bg-red-50 rounded-md border border-red-100">
-                    <div className="flex items-center mb-1">
-                      <span className="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
-                      <span className="font-medium text-red-800">Rủi ro cao</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200 hover:shadow-sm transition-shadow">
+                    <div className="flex items-center mb-2">
+                      <div className="w-4 h-4 rounded-full bg-green-500 mr-3 flex-shrink-0"></div>
+                      <span className="font-semibold text-green-800">Rủi ro thấp</span>
                     </div>
-                    <p className="text-sm text-gray-600">20+ điểm</p>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p className="text-xs text-green-700">
+                        • Sử dụng ở mức độ thấp
+                      </p>
+                      <p className="text-xs text-green-700">
+                        • Khuyến nghị: Tự theo dõi và giảm thiểu
+                      </p>
+                    </div>
                   </div>
+
+                  <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200 hover:shadow-sm transition-shadow">
+                    <div className="flex items-center mb-2">
+                      <div className="w-4 h-4 rounded-full bg-yellow-500 mr-3 flex-shrink-0"></div>
+                      <span className="font-semibold text-yellow-800">Rủi ro trung bình</span>
+                    </div>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p className="text-xs text-yellow-700">
+                        • Có dấu hiệu sử dụng có hại
+                      </p>
+                      <p className="text-xs text-yellow-700">
+                        • Khuyến nghị: Can thiệp ngắn hạn
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-red-50 rounded-lg border border-red-200 hover:shadow-sm transition-shadow">
+                    <div className="flex items-center mb-2">
+                      <div className="w-4 h-4 rounded-full bg-red-500 mr-3 flex-shrink-0"></div>
+                      <span className="font-semibold text-red-800">Rủi ro cao</span>
+                    </div>
+                    <div className="text-sm text-gray-700 space-y-1">
+                      <p className="text-xs text-red-700">
+                        • Có thể đã phụ thuộc
+                      </p>
+                      <p className="text-xs text-red-700">
+                        • Khuyến nghị: Điều trị chuyên sâu
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Thông tin bổ sung về đánh giá đa chất */}
+                <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Lưu ý quan trọng:
+                  </h4>
+                  <ul className="text-xs text-gray-600 space-y-1 ml-5">
+                    <li className="flex items-start">
+                      <span className="w-1 h-1 rounded-full bg-gray-400 mt-2 mr-2 flex-shrink-0"></span>
+                      <span>Bạn sẽ được đánh giá riêng cho từng chất đã chọn</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="w-1 h-1 rounded-full bg-gray-400 mt-2 mr-2 flex-shrink-0"></span>
+                      <span>Mức độ rủi ro chung sẽ dựa trên chất có điểm cao nhất</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="w-1 h-1 rounded-full bg-gray-400 mt-2 mr-2 flex-shrink-0"></span>
+                      <span>Kết quả sẽ bao gồm khuyến nghị cụ thể cho từng mức độ rủi ro</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
 
@@ -419,7 +487,7 @@ function AssistAssessment() {
                           <span className="text-gray-800">{question.questionText}</span>
                           <div className="text-sm text-blue-600 mt-1 font-medium flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                              <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                              <path fillRule="evenodd" d="M2 5a2 2 0 002-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm14 1a1 1 0 11-2 0 1 1 0 012 0zM2 13a2 2 0 002-2h12a2 2 0 012 2v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2zm14 1a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
                             </svg>
                             <span>Về chất: {question.substanceName}</span>
                             {question.substanceDescription && (

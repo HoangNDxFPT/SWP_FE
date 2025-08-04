@@ -265,17 +265,53 @@ export default function AssessmentManage() {
   );
 
   return (
-    <div className="w-full transition-all duration-300">
+    <div className="min-h-screen bg-gray-50">
       <ToastContainer position="top-right" autoClose={3000} />
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Quản lý câu hỏi đánh giá
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
-          Tạo và quản lý câu hỏi cho các bộ công cụ đánh giá tâm lý
-        </p>
+      {/* Header - Giống Dashboard */}
+      <div className="bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 px-6 py-12 rounded-3xl shadow-lg mx-6 mt-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center text-white">
+            <div>
+              <div className="flex items-center space-x-4 mb-4">
+                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </div>
+                <h1 className="text-4xl font-bold">Quản Lý Câu Hỏi Đánh Giá</h1>
+              </div>
+              <p className="text-blue-100 text-lg">
+                Tạo và quản lý câu hỏi cho các bộ công cụ đánh giá tâm lý
+              </p>
+            </div>
+            
+            <div className="mt-6 lg:mt-0 text-right">
+              <div className="text-blue-100 text-sm mb-1">Hôm nay</div>
+              <div className="text-xl font-bold">{new Date().toLocaleDateString('vi-VN', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}</div>
+              <div className="text-blue-200 text-sm mt-1">
+                {new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+
+        {/* Header Action Bar */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Danh sách câu hỏi đánh giá</h2>
+            <p className="text-gray-600 mt-1">Quản lý câu hỏi cho {ASSESSMENT_TYPES.find(t => t.value === assessmentType)?.label}</p>
+          </div>
+        </div>
 
       {/* Control Panel */}
       <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -314,82 +350,98 @@ export default function AssessmentManage() {
         </button>
       </div>
 
-      {/* Questions List - Điều chỉnh grid columns dựa trên trạng thái sidebar */}
+      {/* Questions List */}
       {loading ? (
-        <div className="flex justify-center py-10">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-600"></div>
-        </div>
-      ) : paginatedQuestions.length === 0 ? (
-        <div className="bg-white shadow-sm rounded-lg px-4 py-6 md:px-6 md:py-8 text-center border border-gray-200">
-          <svg className="mx-auto h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-          </svg>
-          <h3 className="mt-4 text-xl font-medium text-gray-900">Không có câu hỏi nào</h3>
-          <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-            Chưa có câu hỏi nào cho loại đánh giá này. Hãy thêm câu hỏi đầu tiên để bắt đầu.
-          </p>
-          <div className="mt-6">
-            <button
-              onClick={() => {
-                resetQuestionForm();
-                setShowCreateModal(true);
-              }}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Thêm câu hỏi
-            </button>
+        <div className="flex justify-center py-12">
+          <div className="bg-white rounded-lg shadow-sm p-8">
+            <div className="flex flex-col items-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-500 border-t-transparent mb-4"></div>
+              <p className="text-gray-600">Đang tải câu hỏi...</p>
+            </div>
           </div>
         </div>
+      ) : paginatedQuestions.length === 0 ? (
+        <div className="bg-white shadow-sm rounded-xl px-6 py-12 text-center border border-gray-200">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Không có câu hỏi nào</h3>
+          <p className="text-gray-500 max-w-md mx-auto mb-6">
+            Chưa có câu hỏi nào cho loại đánh giá <strong>{ASSESSMENT_TYPES.find(t => t.value === assessmentType)?.label}</strong>. Hãy thêm câu hỏi đầu tiên để bắt đầu.
+          </p>
+          <button
+            onClick={() => {
+              resetQuestionForm();
+              setShowCreateModal(true);
+            }}
+            className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Thêm câu hỏi đầu tiên
+          </button>
+        </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-          {paginatedQuestions.map((question, index) => (
-            <div key={question.id} className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="text-xs font-medium text-indigo-600 bg-indigo-50 px-2 py-1 rounded-full">
-                    Câu hỏi #{index + 1}
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">{paginatedQuestions.map((question, index) => (
+            <div key={question.id} className="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-2">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      Câu hỏi #{index + 1}
+                    </span>
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      {assessmentType}
+                    </span>
                   </div>
                   <div className="flex space-x-1">
                     <button
-                      className="text-gray-400 hover:text-gray-600 p-1"
+                      className="text-gray-400 hover:text-indigo-600 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
                       onClick={() => openEditModal(question)}
+                      title="Chỉnh sửa"
                     >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
                     </button>
                     <button
-                      className="text-red-400 hover:text-red-600 p-1"
+                      className="text-gray-400 hover:text-red-600 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
                       onClick={() => handleDeleteQuestion(question.id)}
+                      title="Xóa"
                     >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
                 </div>
 
-                <h2 className="text-lg font-medium text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 leading-relaxed">
                   {question.questionText}
-                </h2>
+                </h3>
 
                 <div>
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">
-                    Các đáp án ({question.answers?.length || 0})
-                  </h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-medium text-gray-700">
+                      Các đáp án
+                    </h4>
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                      {question.answers?.length || 0} đáp án
+                    </span>
+                  </div>
                   <div className="space-y-2">
                     {question.answers && question.answers.slice(0, 2).map((answer, idx) => (
                       <div
                         key={answer.id || idx}
-                        className="flex justify-between items-center p-2 bg-gray-50 rounded-md"
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded-lg border border-gray-100"
                       >
-                        <p className="text-sm text-gray-800 truncate">
+                        <p className="text-sm text-gray-800 flex-1 pr-3">
                           {answer.answerText || answer.text}
                         </p>
-                        <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap">
                           {answer.score} điểm
                         </span>
                       </div>
@@ -400,7 +452,7 @@ export default function AssessmentManage() {
                           setSelectedQuestion(question);
                           setShowQuestionDetail(true);
                         }}
-                        className="text-sm text-indigo-600 hover:text-indigo-800 mt-2 inline-flex items-center"
+                        className="w-full text-sm text-indigo-600 hover:text-indigo-800 mt-2 inline-flex items-center justify-center p-2 border border-indigo-200 rounded-lg hover:bg-indigo-50 transition-colors"
                       >
                         <span>Xem tất cả {question.answers.length} đáp án</span>
                         <svg className="ml-1 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -412,48 +464,63 @@ export default function AssessmentManage() {
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-3 flex justify-between items-center border-t border-gray-200">
+              <div className="bg-gray-50 px-6 py-3 flex justify-between items-center border-t border-gray-100">
                 <div className="text-xs text-gray-500">
                   ID: {question.id}
                 </div>
                 <button
-                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                  className="text-indigo-600 hover:text-indigo-800 text-sm font-medium hover:underline transition-colors"
                   onClick={() => {
                     setSelectedQuestion(question);
                     setShowQuestionDetail(true);
                   }}
                 >
-                  Chi tiết
+                  Chi tiết →
                 </button>
               </div>
             </div>
           ))}
         </div>
       )}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center items-center gap-2 py-6">
+        <div className="flex justify-center items-center gap-2 py-8">
           <button
-            className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(currentPage - 1)}
           >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
             Trước
           </button>
-          {[...Array(totalPages)].map((_, idx) => (
-            <button
-              key={idx}
-              className={`px-3 py-1 rounded border ${currentPage === idx + 1 ? "bg-indigo-600 text-white" : "bg-gray-100 hover:bg-gray-200"}`}
-              onClick={() => setCurrentPage(idx + 1)}
-            >
-              {idx + 1}
-            </button>
-          ))}
+          
+          <div className="flex items-center gap-1">
+            {[...Array(totalPages)].map((_, idx) => (
+              <button
+                key={idx}
+                className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  currentPage === idx + 1 
+                    ? "bg-indigo-600 text-white shadow-sm" 
+                    : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
+                }`}
+                onClick={() => setCurrentPage(idx + 1)}
+              >
+                {idx + 1}
+              </button>
+            ))}
+          </div>
+          
           <button
-            className="px-3 py-1 rounded border bg-gray-100 hover:bg-gray-200"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             disabled={currentPage === totalPages}
             onClick={() => setCurrentPage(currentPage + 1)}
           >
             Sau
+            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path>
+            </svg>
           </button>
         </div>
       )}
@@ -919,6 +986,7 @@ export default function AssessmentManage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

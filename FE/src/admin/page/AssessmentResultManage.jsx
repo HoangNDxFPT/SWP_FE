@@ -4,6 +4,8 @@ import { format, parseISO } from "date-fns";
 import { vi } from "date-fns/locale";
 import { Bar, Pie } from 'react-chartjs-2';
 import { Chart as ChartJS } from 'chart.js/auto';
+// Thêm imports cho xuất báo cáo
+import * as XLSX from 'xlsx';
 
 export default function AssessmentResultManage() {
   const [assessments, setAssessments] = useState([]);
@@ -22,6 +24,9 @@ export default function AssessmentResultManage() {
 
   // Thêm state mới cho việc lọc bài toàn cục
   const [filterGlobalType, setFilterGlobalType] = useState("");
+
+  // Thêm state cho xuất báo cáo
+  const [isExporting, setIsExporting] = useState(false);
 
   // Lấy tất cả bài khảo sát đã hoàn thành
   useEffect(() => {
@@ -128,9 +133,181 @@ export default function AssessmentResultManage() {
     return assessments.filter(a => a.type === filterGlobalType);
   };
 
+  // Function xuất Excel cho tất cả assessments
+  const exportAllAssessmentsToExcel = () => {
+    setIsExporting(true);
+    try {
+      const data = getFilteredAssessments().map(a => ({
+        'ID': a.id,
+        'Loại đánh giá': a.type,
+        'Người làm': a.member?.fullName || '',
+        'Email': a.member?.email || '',
+        'Ngày tạo': formatDate(a.createdAt),
+        'Trạng thái': 'Đã nộp'
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Danh sách Assessment");
+
+      // Tự động điều chỉnh độ rộng cột
+      const colWidths = [
+        { wch: 8 },   // ID
+        { wch: 15 },  // Loại đánh giá
+        { wch: 25 },  // Người làm
+        { wch: 30 },  // Email
+        { wch: 20 },  // Ngày tạo
+        { wch: 12 }   // Trạng thái
+      ];
+      ws['!cols'] = colWidths;
+
+      const fileName = `Danh_sach_Assessment_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error('Lỗi khi xuất Excel:', error);
+      alert('Có lỗi xảy ra khi xuất file Excel!');
+    }
+    setIsExporting(false);
+  };
+
+  // Function xuất Excel cho kết quả chi tiết của user
+  const exportUserResultsToExcel = () => {
+    if (!selectedUser || filteredResults.length === 0) {
+      alert('Vui lòng chọn người dùng có kết quả để xuất báo cáo!');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      const selectedUserInfo = users.find(u => u.id == selectedUser);
+      
+      // Sheet 1: Thông tin tổng quan
+      const summaryData = [{
+        'Họ tên': selectedUserInfo?.fullName || '',
+        'Email': selectedUserInfo?.email || '',
+        'Tổng số bài đánh giá': filteredResults.length,
+        'Số bài ASSIST': filteredResults.filter(r => r.assessmentType === 'ASSIST').length,
+        'Số bài CRAFFT': filteredResults.filter(r => r.assessmentType === 'CRAFFT').length,
+        'Nguy cơ cao': filteredResults.filter(r => r.riskLevel === 'HIGH').length,
+        'Nguy cơ trung bình': filteredResults.filter(r => r.riskLevel === 'MEDIUM').length,
+        'Nguy cơ thấp': filteredResults.filter(r => r.riskLevel === 'LOW').length
+      }];
+
+      // Sheet 2: Chi tiết kết quả
+      const detailData = filteredResults.map(r => ({
+        'ID kết quả': r.assessmentResultId,
+        'Loại đánh giá': r.assessmentType,
+        'Điểm số': r.score,
+        'Mức độ rủi ro': r.riskLevel === 'LOW' ? 'Thấp' : 
+                       r.riskLevel === 'MEDIUM' ? 'Trung bình' : 'Cao',
+        'Khuyến nghị': r.recommendation,
+        'Ngày thực hiện': formatDate(r.submittedAt),
+        'Số khóa học đề xuất': r.recommendedCourses?.length || 0
+      }));
+
+      // Tạo workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Thêm sheet tổng quan
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      wsSummary['!cols'] = Array(8).fill({ wch: 20 });
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Tổng quan");
+
+      // Thêm sheet chi tiết
+      const wsDetail = XLSX.utils.json_to_sheet(detailData);
+      wsDetail['!cols'] = [
+        { wch: 12 }, // ID kết quả
+        { wch: 15 }, // Loại đánh giá
+        { wch: 10 }, // Điểm số
+        { wch: 15 }, // Mức độ rủi ro
+        { wch: 50 }, // Khuyến nghị
+        { wch: 20 }, // Ngày thực hiện
+        { wch: 18 }  // Số khóa học đề xuất
+      ];
+      XLSX.utils.book_append_sheet(wb, wsDetail, "Chi tiết kết quả");
+
+      const fileName = `Bao_cao_${selectedUserInfo?.fullName?.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error('Lỗi khi xuất Excel:', error);
+      alert('Có lỗi xảy ra khi xuất file Excel!');
+    }
+    setIsExporting(false);
+  };
+
+  // Function xuất báo cáo thống kê tổng hợp
+  const exportStatisticsReport = () => {
+    setIsExporting(true);
+    try {
+      // Tính toán thống kê
+      const totalAssessments = assessments.length;
+      const totalUsers = users.length;
+      const assistCount = assessments.filter(a => a.type === 'ASSIST').length;
+      const crafftCount = assessments.filter(a => a.type === 'CRAFFT').length;
+
+      // Thống kê theo tháng
+      const monthlyStats = {};
+      assessments.forEach(a => {
+        const month = formatDate(a.createdAt).substring(3, 10); // MM/yyyy
+        monthlyStats[month] = (monthlyStats[month] || 0) + 1;
+      });
+
+      // Tạo data cho Excel
+      const summaryData = [{
+        'Tổng số bài đánh giá': totalAssessments,
+        'Tổng số người dùng': totalUsers,
+        'Số bài ASSIST': assistCount,
+        'Số bài CRAFFT': crafftCount,
+        'Tỷ lệ ASSIST (%)': totalAssessments ? ((assistCount / totalAssessments) * 100).toFixed(1) : 0,
+        'Tỷ lệ CRAFFT (%)': totalAssessments ? ((crafftCount / totalAssessments) * 100).toFixed(1) : 0
+      }];
+
+      const monthlyData = Object.entries(monthlyStats).map(([month, count]) => ({
+        'Tháng': month,
+        'Số lượng bài đánh giá': count
+      }));
+
+      // Tạo workbook
+      const wb = XLSX.utils.book_new();
+      
+      // Sheet thống kê tổng
+      const wsSummary = XLSX.utils.json_to_sheet(summaryData);
+      wsSummary['!cols'] = Array(6).fill({ wch: 18 });
+      XLSX.utils.book_append_sheet(wb, wsSummary, "Thống kê tổng");
+
+      // Sheet thống kê theo tháng
+      const wsMonthly = XLSX.utils.json_to_sheet(monthlyData);
+      wsMonthly['!cols'] = [{ wch: 15 }, { wch: 20 }];
+      XLSX.utils.book_append_sheet(wb, wsMonthly, "Theo tháng");
+
+      const fileName = `Bao_cao_thong_ke_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error('Lỗi khi xuất báo cáo thống kê:', error);
+      alert('Có lỗi xảy ra khi xuất báo cáo thống kê!');
+    }
+    setIsExporting(false);
+  };
+
   return (
     <div className="w-full">
-      <h1 className="text-2xl md:text-3xl font-bold mb-8 text-blue-900">Quản lý kết quả & thống kê Assessment</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold text-blue-900">Quản lý kết quả & thống kê Assessment</h1>
+        <button 
+          onClick={exportStatisticsReport}
+          disabled={isExporting}
+          className="bg-blue-600 text-white px-4 py-2.5 rounded-lg flex items-center hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+        >
+          {isExporting ? (
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a4 4 0 01-4-4V5a4 4 0 014-4h10a4 4 0 014 4v14a4 4 0 01-4 4z" />
+            </svg>
+          )}
+          Báo cáo thống kê
+        </button>
+      </div>
 
       {/* Thống kê tổng quan */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
@@ -274,8 +451,29 @@ export default function AssessmentResultManage() {
                 </svg>
                 Kết quả của người dùng
               </h3>
-              <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
-                {filteredResults.length} kết quả
+              <div className="flex items-center space-x-3">
+                <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                  {filteredResults.length} kết quả
+                </div>
+                {/* Nút xuất báo cáo cho user */}
+                {filteredResults.length > 0 && (
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={exportUserResultsToExcel}
+                      disabled={isExporting}
+                      className="bg-green-600 text-white px-3 py-1.5 rounded-lg flex items-center hover:bg-green-700 transition-colors text-sm disabled:opacity-50"
+                    >
+                      {isExporting ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-1"></div>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      )}
+                      Excel
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -490,12 +688,20 @@ export default function AssessmentResultManage() {
               </select>
             </div>
           </div>
-          {/* <button className="bg-green-600 text-white px-4 py-2.5 rounded-lg flex items-center hover:bg-green-700 transition-colors shadow-sm">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
+          <button 
+            onClick={exportAllAssessmentsToExcel}
+            disabled={isExporting}
+            className="bg-green-600 text-white px-4 py-2.5 rounded-lg flex items-center hover:bg-green-700 transition-colors shadow-sm disabled:opacity-50"
+          >
+            {isExporting ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            )}
             Xuất Excel
-          </button> */}
+          </button>
         </div>
         {loading ? (
           <div className="text-center py-10">
@@ -632,6 +838,27 @@ export default function AssessmentResultManage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Thêm điều kiện hiển thị khi không có khóa học */}
+              {detailResult.recommendedCourses && detailResult.recommendedCourses.length === 0 && 
+               detailResult.riskLevel === "HIGH" && (
+                <div className="mb-5">
+                  <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    Khuyến nghị tư vấn
+                  </h4>
+                  <div className="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                    <div className="text-orange-800 font-medium">
+                      Mức nguy cơ cao - Cần tư vấn trực tiếp
+                    </div>
+                    <div className="text-sm text-orange-700 mt-1">
+                      Người dùng này cần được tư vấn trực tiếp với chuyên gia thay vì tham gia khóa học tự học.
+                    </div>
                   </div>
                 </div>
               )}
