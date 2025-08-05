@@ -141,6 +141,9 @@ function ProgramListPage() {
   // Filtering
   const getFilteredPrograms = () => {
     let filtered = [...programs];
+
+    const now = new Date();
+    filtered = filtered.filter(program => new Date(program.start_date) >= now);
     if (search.trim() !== '') {
       const searchTerm = search.trim().toLowerCase();
       filtered = filtered.filter(program =>
