@@ -88,13 +88,33 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       });
       setAppointments(response.data);
 
-      const allStatuses = response.data.map(item => item.status); // Lấy tất cả trạng thái từ danh sách lịch hẹn
-    const uniqueStatuses = [...new Set(allStatuses)];
-    console.log("Các trạng thái lịch hẹn đang có trong API:", uniqueStatuses);
+      const now = dayjs().startOf("day");
+      const expiredAppointments = response.data.filter((item) => {
+        if (item.status !== "PENDING") return false;
+        if (!item.endTime) return false; // Nếu không có endTime thì bỏ qua
+        const [endHour, endMinute] = item.endTime.split(":").map(Number);
+        const endDateTime = dayjs(item.date)
+          .hour(endHour)
+          .minute(endMinute)
+          .second(0)
+          .millisecond(0);
+        const expiredTime = endDateTime.add(1, "hour");
+        return now.isAfter(expiredTime);
+      });
 
-      console.log(
-        `✅ Loaded ${response.data.length} appointments with status: ${status}`
-      );
+      // Tự động chuyển trạng thái các cuộc hẹn này sang NOT_COMPLETED
+      if (expiredAppointments.length > 0) {
+        for (const appt of expiredAppointments) {
+          // Gọi API update status
+          await api.put("/appointment/consultant/status", {
+            appointmentId: appt.id,
+            status: "NOT_COMPLETED",
+          });
+        }
+        // Sau khi chuyển trạng thái, fetch lại appointments
+        fetchAppointments(status);
+        return; // Tránh render table khi đang refetch
+      }
     } catch (error) {
       console.error("❌ Error fetching appointments:", error);
       message.error("Không thể tải danh sách lịch hẹn");
@@ -168,49 +188,64 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
     }
   };
 
+  // ✅ Remove Vietnamese tones from a string
+  function removeVietnameseTones(str) {
+    return (str || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/đ/g, "d")
+      .replace(/Đ/g, "D");
+  }
+
   // ✅ Handle search members with auto-complete
   const handleSearchMembers = (searchText) => {
-    if (!searchText || searchText.length < 1) {
-      setSearchOptions([]);
-      return;
-    }
+  if (!searchText || searchText.length < 1) {
+    setSearchOptions([]);
+    return;
+  }
 
-    const filteredMembers = allMembers.filter(
-      (member) =>
-        member.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchText.toLowerCase()) ||
-        member.phoneNumber.includes(searchText)
+  const searchNorm = removeVietnameseTones(searchText).toLowerCase();
+
+  const filteredMembers = allMembers.filter((member) => {
+    const fullNameNorm = removeVietnameseTones(member.fullName || "").toLowerCase();
+    const emailNorm = (member.email || "").toLowerCase();
+    const phoneNorm = (member.phoneNumber || "");
+    return (
+      fullNameNorm.includes(searchNorm) ||
+      emailNorm.includes(searchNorm) ||
+      phoneNorm.includes(searchNorm)
     );
+  });
 
-    const options = filteredMembers.map((member) => ({
-      value: member.id.toString(),
-      label: (
-        <div className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors">
-          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full">
-            <User className="w-5 h-5 text-white" />
+  const options = filteredMembers.map((member) => ({
+    value: member.id ? member.id.toString() : "",
+    label: (
+      <div className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors">
+        <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full">
+          <User className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1">
+          <div className="font-semibold text-gray-800">{member.fullName}</div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Mail className="w-3 h-3" />
+            {member.email}
           </div>
-          <div className="flex-1">
-            <div className="font-semibold text-gray-800">{member.fullName}</div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Mail className="w-3 h-3" />
-              {member.email}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Phone className="w-3 h-3" />
-              {member.phoneNumber}
-            </div>
-            <div className="flex items-center gap-2 text-sm text-gray-400">
-              <MapPin className="w-3 h-3" />
-              {member.address || "Chưa có địa chỉ"}
-            </div>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Phone className="w-3 h-3" />
+            {member.phoneNumber}
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <MapPin className="w-3 h-3" />
+            {member.address || "Chưa có địa chỉ"}
           </div>
         </div>
-      ),
-      member: member,
-    }));
+      </div>
+    ),
+    member: member,
+  }));
 
-    setSearchOptions(options);
-  };
+  setSearchOptions(options);
+};
 
   // ✅ Handle select member
   const handleSelectMember = (value, option) => {
@@ -245,11 +280,26 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         },
       });
 
-      // Filter only available slots
-      const availableSlots = response.data.filter((slot) => slot.available);
-      setAvailableSlots(availableSlots);
+      let slots = response.data.filter((slot) => slot.available);
+
+      // Nếu chọn ngày hôm nay thì chỉ giữ slot kết thúc > thời điểm hiện tại
+      if (date.isSame(dayjs(), "day")) {
+        const now = dayjs();
+        slots = slots.filter((slot) => {
+          const [endHour, endMinute] = slot.endTime.split(":").map(Number);
+          const slotEnd = date
+            .clone()
+            .hour(endHour)
+            .minute(endMinute)
+            .second(0)
+            .millisecond(0);
+          return slotEnd.isAfter(now);
+        });
+      }
+
+      setAvailableSlots(slots);
       console.log(
-        `✅ Found ${availableSlots.length} available slots for ${date.format(
+        `✅ Found ${slots.length} available slots for ${date.format(
           "YYYY-MM-DD"
         )}`
       );
@@ -410,7 +460,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
       key: "status",
       render: (status) => {
         const statusConfig = {
-          PENDING: { color: "orange", text: "Chưa hoàn thành" },
+          PENDING: { color: "orange", text: "Đang chờ" },
 
           COMPLETED: { color: "green", text: "Hoàn thành" },
         };
@@ -436,6 +486,15 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
               onClick={() => updateAppointmentStatus(record.id, "COMPLETED")}
             >
               Hoàn thành
+            </Button>
+            <Button
+              type="default"
+              danger
+              onClick={() =>
+                updateAppointmentStatus(record.id, "NOT_COMPLETED")
+              }
+            >
+              Chưa hoàn thành
             </Button>
           </div>
         );
@@ -530,6 +589,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         const statusConfig = {
           CANCELLED: { color: "red", text: "Đã hủy" },
           COMPLETED: { color: "green", text: "Hoàn thành" },
+          NOT_COMPLETED: { color: "gray", text: "Chưa hoàn thành" },
         };
 
         const config = statusConfig[status] || { color: "gray", text: status };
@@ -555,7 +615,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
     { key: "PENDING", label: "Cuộc hẹn hiện có", color: "orange" },
     { key: "CANCELLED", label: "Đã hủy", color: "red" },
     { key: "COMPLETED", label: "Hoàn thành", color: "green" },
-    { key: "NOT_COMPLETED", label: "Không hoàn thành", color: "gray" },
+    { key: "NOT_COMPLETED", label: "Chưa hoàn thành", color: "gray" },
   ];
 
   return (
