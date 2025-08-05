@@ -49,6 +49,7 @@ function Program() {
     const [showSendSurveyModal, setShowSendSurveyModal] = useState(false);
     const [surveyType, setSurveyType] = useState('PRE');
     const [sendingSurvey, setSendingSurvey] = useState(false);
+    const [showConfirmSendSurvey, setShowConfirmSendSurvey] = useState(false);
 
     // Enrollments state
     const [enrollments, setEnrollments] = useState([]);
@@ -1548,7 +1549,7 @@ function Program() {
                                 </button>
                                 <button
                                     type="button"
-                                    onClick={handleSendSurvey}
+                                    onClick={() => setShowConfirmSendSurvey(true)}
                                     className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none flex items-center"
                                     disabled={sendingSurvey}
                                 >
@@ -1574,6 +1575,33 @@ function Program() {
                     </div>
                 </div>
             )}
+            {showConfirmSendSurvey && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-lg">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-800">Xác nhận gửi khảo sát</h3>
+                        <p className="mb-6 text-gray-600">Bạn có chắc chắn muốn gửi khảo sát cho chương trình này không?</p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-gray-700"
+                                onClick={() => setShowConfirmSendSurvey(false)}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                onClick={async () => {
+                                    setShowConfirmSendSurvey(false);
+                                    await handleSendSurvey();
+                                }}
+                                disabled={sendingSurvey}
+                            >
+                                Xác nhận gửi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
