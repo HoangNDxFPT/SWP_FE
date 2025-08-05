@@ -87,6 +87,11 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         params: { status },
       });
       setAppointments(response.data);
+
+      const allStatuses = response.data.map(item => item.status); // Lấy tất cả trạng thái từ danh sách lịch hẹn
+    const uniqueStatuses = [...new Set(allStatuses)];
+    console.log("Các trạng thái lịch hẹn đang có trong API:", uniqueStatuses);
+
       console.log(
         `✅ Loaded ${response.data.length} appointments with status: ${status}`
       );
@@ -550,6 +555,7 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
     { key: "PENDING", label: "Cuộc hẹn hiện có", color: "orange" },
     { key: "CANCELLED", label: "Đã hủy", color: "red" },
     { key: "COMPLETED", label: "Hoàn thành", color: "green" },
+    { key: "NOT_COMPLETED", label: "Không hoàn thành", color: "gray" },
   ];
 
   return (
