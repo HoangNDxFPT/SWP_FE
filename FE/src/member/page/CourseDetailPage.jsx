@@ -4,12 +4,13 @@ import api from '../../config/axios';
 import { toast } from 'react-toastify';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
-import { FaPlay, FaCheck, FaArrowLeft, FaArrowRight, FaClock, FaQuestionCircle, FaEye, FaRedo } from 'react-icons/fa';
+import { FaPlay, FaCheck, FaArrowLeft, FaArrowRight, FaClock, FaQuestionCircle, FaEye, FaRedo, FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import ReactMarkdown from 'react-markdown';
 
 function CourseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // States
   const [loading, setLoading] = useState(true);
   const [course, setCourse] = useState(null);
@@ -21,6 +22,8 @@ function CourseDetailPage() {
   const [quizResults, setQuizResults] = useState([]);
   const [activeTab, setActiveTab] = useState('lessons');
   const [loadingProgress, setLoadingProgress] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [contentExpanded, setContentExpanded] = useState(false);
 
   // Fetch initial data
   useEffect(() => {
@@ -118,34 +121,34 @@ function CourseDetailPage() {
   const calculateProgress = () => {
     const totalItems = lessons.length + (quiz ? 1 : 0);
     if (totalItems === 0) return 0;
-    
+
     let completed = completedLessons.length;
-    
+
     // Debug quiz results
     console.log('Quiz results for progress calculation:', quizResults);
     console.log('Course name:', course?.name);
-    
-    const bestResult = quizResults.length > 0 
+
+    const bestResult = quizResults.length > 0
       ? Math.max(...quizResults.map(r => (r.score / r.totalQuestions) * 100))
       : 0;
-      
+
     console.log('Best quiz result:', bestResult);
-    
+
     if (bestResult >= 80) {
       completed += 1; // Quiz passed
       console.log('Quiz passed, adding 1 to completed');
     }
-    
+
     const progress = Math.round((completed / totalItems) * 100);
     console.log(`Progress: ${completed}/${totalItems} = ${progress}%`);
-    
+
     return progress;
   };
 
   // Event handlers
   const handleSelectLesson = (lesson) => {
     setCurrentLesson(lesson);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleMarkComplete = async () => {
@@ -162,7 +165,7 @@ function CourseDetailPage() {
 
       if (res.status === 200) {
         toast.success('Đã đánh dấu bài học hoàn thành');
-        
+
         // Update completed lessons
         const progressRes = await api.get(`/progress/user/${user.userId}`);
         if (progressRes.status === 200) {
@@ -193,6 +196,9 @@ function CourseDetailPage() {
       toast.error('Không thể bắt đầu bài kiểm tra');
     }
   };
+
+  // Helper to check if text is long (for markdown, check raw length)
+  const isLongText = (text, limit = 350) => (text || '').length > limit;
 
   if (loading) {
     return (
@@ -231,10 +237,10 @@ function CourseDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      
+
       <main className="flex-grow py-8 px-4">
         <div className="max-w-6xl mx-auto">
-          
+
           {/* Breadcrumb */}
           <nav className="mb-6">
             <ol className="flex items-center space-x-2 text-sm">
@@ -252,8 +258,30 @@ function CourseDetailPage() {
               <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-grow">
                   <h1 className="text-3xl font-bold mb-3">{course.name}</h1>
-                  <p className="text-blue-100 mb-4">{course.description}</p>
-                  
+                  <div className="prose prose-invert prose-sm max-w-none mb-4 relative">
+                    <div
+                      style={
+                        !descExpanded && isLongText(course.description)
+                          ? { maxHeight: 120, overflow: 'hidden', position: 'relative' }
+                          : {}
+                      }
+                    >
+                      <ReactMarkdown>{course.description || ''}</ReactMarkdown>
+                      {!descExpanded && isLongText(course.description) && (
+                        <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-blue-800 to-transparent pointer-events-none"></div>
+                      )}
+                    </div>
+                    {isLongText(course.description) && (
+                      <button
+                        className="mt-2 text-xs text-blue-200 hover:underline flex items-center"
+                        onClick={() => setDescExpanded(v => !v)}
+                        type="button"
+                      >
+                        {descExpanded ? <>Thu gọn <FaChevronUp className="ml-1" /></> : <>Xem thêm <FaChevronDown className="ml-1" /></>}
+                      </button>
+                    )}
+                  </div>
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div className="flex items-center">
                       <FaPlay className="mr-2" />
@@ -272,26 +300,13 @@ function CourseDetailPage() {
                     </div>
                   </div>
                 </div>
-                
-                {course.url && course.url !== 'no' && (
-                  <div className="w-full lg:w-64">
-                    <img
-                      src={course.url}
-                      alt={course.name}
-                      className="w-full h-32 lg:h-40 object-cover rounded-lg"
-                      onError={(e) => {
-                        e.target.src = "https://res.cloudinary.com/dwjtg28ti/image/upload/v1751184828/raw_wdvcwx.png";
-                      }}
-                    />
-                  </div>
-                )}
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="p-4 bg-gray-50">
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${calculateProgress()}%` }}
                 ></div>
@@ -299,11 +314,11 @@ function CourseDetailPage() {
               <p className="text-sm text-gray-600 mt-2">
                 Hoàn thành {completedLessons.length}/{lessons.length} bài học
                 {(() => {
-                  const bestResult = quizResults.length > 0 
+                  const bestResult = quizResults.length > 0
                     ? Math.max(...quizResults.map(r => (r.score / r.totalQuestions) * 100))
                     : 0;
-                  return quiz && bestResult >= 80 ? " và bài kiểm tra" : 
-                         quiz ? ` (bài kiểm tra: ${Math.round(bestResult)}%)` : "";
+                  return quiz && bestResult >= 80 ? " và bài kiểm tra" :
+                    quiz ? ` (bài kiểm tra: ${Math.round(bestResult)}%)` : "";
                 })()}
               </p>
             </div>
@@ -315,31 +330,28 @@ function CourseDetailPage() {
               <nav className="flex">
                 <button
                   onClick={() => setActiveTab('lessons')}
-                  className={`px-6 py-3 text-sm font-medium ${
-                    activeTab === 'lessons'
+                  className={`px-6 py-3 text-sm font-medium ${activeTab === 'lessons'
                       ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Bài học ({lessons.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('quiz')}
-                  className={`px-6 py-3 text-sm font-medium ${
-                    activeTab === 'quiz'
+                  className={`px-6 py-3 text-sm font-medium ${activeTab === 'quiz'
                       ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Bài kiểm tra
                 </button>
                 <button
                   onClick={() => setActiveTab('quiz-history')}
-                  className={`px-6 py-3 text-sm font-medium ${
-                    activeTab === 'quiz-history'
+                  className={`px-6 py-3 text-sm font-medium ${activeTab === 'quiz-history'
                       ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
                       : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                    }`}
                 >
                   Lịch sử ({quizResults.length})
                 </button>
@@ -380,9 +392,70 @@ function CourseDetailPage() {
                           </div>
                         )}
 
-                        {/* Content */}
-                        <div className="prose max-w-none bg-gray-50 p-6 rounded-lg">
-                          <div dangerouslySetInnerHTML={{ __html: currentLesson.content }}></div>
+                        {/* Content - Style Word Document */}
+                        <div className="bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                          {/* Document Header */}
+                          <div className="bg-gray-50 px-6 py-3 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                              📄 Nội dung bài học
+                            </h3>
+                          </div>
+
+                          {/* Document Content */}
+                          <div className="prose prose-lg prose-slate max-w-none relative
+                                           prose-headings:text-gray-900 prose-headings:font-bold
+                                           prose-h1:text-2xl prose-h1:text-center prose-h1:mb-6 prose-h1:mt-0 
+                                           prose-h1:border-b-2 prose-h1:border-blue-500 prose-h1:pb-3
+                                           prose-h2:text-xl prose-h2:mb-4 prose-h2:mt-6
+                                           prose-h3:text-lg prose-h3:mb-3 prose-h3:mt-5
+                                           prose-p:text-gray-700 prose-p:leading-loose prose-p:mb-4 
+                                           prose-p:text-justify prose-p:indent-8
+                                           prose-strong:text-gray-900 prose-strong:font-semibold
+                                           prose-em:text-gray-600
+                                           prose-ul:mb-4 prose-ul:pl-8
+                                           prose-ol:mb-4 prose-ol:pl-8
+                                           prose-li:mb-2 prose-li:leading-relaxed
+                                           prose-blockquote:border-l-4 prose-blockquote:border-blue-500 
+                                           prose-blockquote:bg-blue-50 prose-blockquote:pl-6 prose-blockquote:py-4 
+                                           prose-blockquote:my-6 prose-blockquote:italic
+                                           prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-2 
+                                           prose-code:py-1 prose-code:rounded prose-code:text-sm
+                                           prose-table:w-full prose-table:border-collapse prose-table:my-6
+                                           prose-th:border prose-th:border-gray-300 prose-th:bg-gray-100 
+                                           prose-th:p-3 prose-th:text-left prose-th:font-semibold
+                                           prose-td:border prose-td:border-gray-300 prose-td:p-3
+                                           p-12 max-w-4xl mx-auto"
+                            style={{
+                              fontFamily: '"Times New Roman", serif',
+                              lineHeight: '1.8',
+                              fontSize: '16px',
+                              ...( !contentExpanded && isLongText(currentLesson.content, 800)
+                                ? { maxHeight: 320, overflow: 'hidden', position: 'relative' }
+                                : {}
+                              )
+                            }}>
+                            <ReactMarkdown>{currentLesson.content || ''}</ReactMarkdown>
+                            {!contentExpanded && isLongText(currentLesson.content, 800) && (
+                              <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
+                            )}
+                          </div>
+                          {isLongText(currentLesson.content, 800) && (
+                            <div className="px-8 pb-4 pt-2">
+                              <button
+                                className="text-xs text-blue-600 hover:underline flex items-center"
+                                onClick={() => setContentExpanded(v => !v)}
+                                type="button"
+                              >
+                                {contentExpanded ? <>Thu gọn <FaChevronUp className="ml-1" /></> : <>Xem thêm <FaChevronDown className="ml-1" /></>}
+                              </button>
+                            </div>
+                          )}
+                          {/* Document Footer */}
+                          <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-center">
+                            <p className="text-sm text-gray-500">
+                              📖 Bài {lessons.findIndex(l => l.id === currentLesson.id) + 1} / {lessons.length} - {currentLesson.title}
+                            </p>
+                          </div>
                         </div>
 
                         {/* Navigation */}
@@ -447,19 +520,17 @@ function CourseDetailPage() {
                           <button
                             key={lesson.id}
                             onClick={() => handleSelectLesson(lesson)}
-                            className={`w-full flex items-center p-3 rounded-lg text-left transition ${
-                              currentLesson?.id === lesson.id
+                            className={`w-full flex items-center p-3 rounded-lg text-left transition ${currentLesson?.id === lesson.id
                                 ? 'bg-blue-100 border border-blue-200'
                                 : isLessonCompleted(lesson.id)
-                                ? 'bg-green-50 hover:bg-green-100'
-                                : 'bg-white hover:bg-gray-100'
-                            }`}
+                                  ? 'bg-green-50 hover:bg-green-100'
+                                  : 'bg-white hover:bg-gray-100'
+                              }`}
                           >
-                            <span className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 text-sm ${
-                              isLessonCompleted(lesson.id) 
-                                ? 'bg-green-500 text-white' 
+                            <span className={`w-6 h-6 flex items-center justify-center rounded-full mr-3 text-sm ${isLessonCompleted(lesson.id)
+                                ? 'bg-green-500 text-white'
                                 : 'bg-gray-200 text-gray-700'
-                            }`}>
+                              }`}>
                               {isLessonCompleted(lesson.id) ? <FaCheck /> : index + 1}
                             </span>
                             <div className="flex-grow">
@@ -517,7 +588,7 @@ function CourseDetailPage() {
                           {quizResults.map((result) => {
                             const percentage = Math.round((result.score / result.totalQuestions) * 100);
                             const passed = percentage >= 80;
-                            
+
                             return (
                               <tr key={result.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 text-sm text-gray-900">
@@ -527,9 +598,8 @@ function CourseDetailPage() {
                                   {result.score}/{result.totalQuestions} ({percentage}%)
                                 </td>
                                 <td className="px-6 py-4">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                  }`}>
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${passed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    }`}>
                                     {passed ? <FaCheck className="mr-1" /> : '✗'}
                                     {passed ? 'Đạt' : 'Chưa đạt'}
                                   </span>
@@ -548,7 +618,7 @@ function CourseDetailPage() {
                           })}
                         </tbody>
                       </table>
-                      
+
                       {quiz && (
                         <div className="mt-4 text-center">
                           <button
@@ -581,7 +651,7 @@ function CourseDetailPage() {
           </div>
         </div>
       </main>
-      
+
       <Footer />
     </div>
   );
