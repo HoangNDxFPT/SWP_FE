@@ -59,6 +59,13 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchValue, setSearchValue] = useState("");
 
+  // ✅ State for confirmation modal
+  const [confirmModal, setConfirmModal] = useState({
+    visible: false,
+    appointmentId: null,
+    action: null, // "done" | "undone"
+  });
+
   const updateAppointmentStatus = async (appointmentId, newStatus) => {
     try {
       await api.put("/appointment/consultant/status", {
@@ -199,53 +206,53 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
 
   // ✅ Handle search members with auto-complete
   const handleSearchMembers = (searchText) => {
-  if (!searchText || searchText.length < 1) {
-    setSearchOptions([]);
-    return;
-  }
+    if (!searchText || searchText.length < 1) {
+      setSearchOptions([]);
+      return;
+    }
 
-  const searchNorm = removeVietnameseTones(searchText).toLowerCase();
+    const searchNorm = removeVietnameseTones(searchText).toLowerCase();
 
-  const filteredMembers = allMembers.filter((member) => {
-    const fullNameNorm = removeVietnameseTones(member.fullName || "").toLowerCase();
-    const emailNorm = (member.email || "").toLowerCase();
-    const phoneNorm = (member.phoneNumber || "");
-    return (
-      fullNameNorm.includes(searchNorm) ||
-      emailNorm.includes(searchNorm) ||
-      phoneNorm.includes(searchNorm)
-    );
-  });
+    const filteredMembers = allMembers.filter((member) => {
+      const fullNameNorm = removeVietnameseTones(member.fullName || "").toLowerCase();
+      const emailNorm = (member.email || "").toLowerCase();
+      const phoneNorm = (member.phoneNumber || "");
+      return (
+        fullNameNorm.includes(searchNorm) ||
+        emailNorm.includes(searchNorm) ||
+        phoneNorm.includes(searchNorm)
+      );
+    });
 
-  const options = filteredMembers.map((member) => ({
-    value: member.id ? member.id.toString() : "",
-    label: (
-      <div className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors">
-        <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full">
-          <User className="w-5 h-5 text-white" />
+    const options = filteredMembers.map((member) => ({
+      value: member.id ? member.id.toString() : "",
+      label: (
+        <div className="flex items-center gap-3 p-3 hover:bg-blue-50 rounded-lg transition-colors">
+          <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full">
+            <User className="w-5 h-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-gray-800">{member.fullName}</div>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Mail className="w-3 h-3" />
+              {member.email}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Phone className="w-3 h-3" />
+              {member.phoneNumber}
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <MapPin className="w-3 h-3" />
+              {member.address || "Chưa có địa chỉ"}
+            </div>
+          </div>
         </div>
-        <div className="flex-1">
-          <div className="font-semibold text-gray-800">{member.fullName}</div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Mail className="w-3 h-3" />
-            {member.email}
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Phone className="w-3 h-3" />
-            {member.phoneNumber}
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <MapPin className="w-3 h-3" />
-            {member.address || "Chưa có địa chỉ"}
-          </div>
-        </div>
-      </div>
-    ),
-    member: member,
-  }));
+      ),
+      member: member,
+    }));
 
-  setSearchOptions(options);
-};
+    setSearchOptions(options);
+  };
 
   // ✅ Handle select member
   const handleSelectMember = (value, option) => {
@@ -483,7 +490,13 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
           <div className="flex gap-2">
             <Button
               type="primary"
-              onClick={() => updateAppointmentStatus(record.id, "COMPLETED")}
+              onClick={() =>
+                setConfirmModal({
+                  visible: true,
+                  appointmentId: record.id,
+                  action: "done",
+                })
+              }
             >
               Hoàn thành
             </Button>
@@ -491,7 +504,11 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
               type="default"
               danger
               onClick={() =>
-                updateAppointmentStatus(record.id, "NOT_COMPLETED")
+                setConfirmModal({
+                  visible: true,
+                  appointmentId: record.id,
+                  action: "undone",
+                })
               }
             >
               Chưa hoàn thành
@@ -618,6 +635,14 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
     { key: "NOT_COMPLETED", label: "Chưa hoàn thành", color: "gray" },
   ];
 
+  // Thêm hàm này vào trước return:
+  const handleConfirm = async () => {
+    if (!confirmModal.appointmentId || !confirmModal.action) return;
+    const status = confirmModal.action === "done" ? "COMPLETED" : "NOT_COMPLETED";
+    await updateAppointmentStatus(confirmModal.appointmentId, status);
+    setConfirmModal({ visible: false, appointmentId: null, action: null });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -653,11 +678,10 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
                 key={tab.key}
                 type={currentStatus === tab.key ? "primary" : "default"}
                 onClick={() => handleStatusChange(tab.key)}
-                className={`${
-                  currentStatus === tab.key
+                className={`${currentStatus === tab.key
                     ? "bg-gradient-to-r from-blue-500 to-blue-600 border-0"
                     : ""
-                }`}
+                  }`}
               >
                 {tab.label}
               </Button>
@@ -675,9 +699,8 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
         <Spin spinning={loading}>
           {appointments.length === 0 ? (
             <Empty
-              description={`Không có lịch hẹn nào ở trạng thái "${
-                statusTabs.find((t) => t.key === currentStatus)?.label
-              }"`}
+              description={`Không có lịch hẹn nào ở trạng thái "${statusTabs.find((t) => t.key === currentStatus)?.label
+                }"`}
               className="py-8"
             />
           ) : (
@@ -862,8 +885,8 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
                       !selectedDate
                         ? "Vui lòng chọn ngày trước"
                         : availableSlots.length === 0
-                        ? "Không có slot nào khả dụng"
-                        : "Chọn slot thời gian"
+                          ? "Không có slot nào khả dụng"
+                          : "Chọn slot thời gian"
                     }
                     disabled={!selectedDate || availableSlots.length === 0}
                     size="large"
@@ -915,6 +938,24 @@ export default function AppointmentManagement({ onAppointmentCreated }) {
             </Button>
           </div>
         </Form>
+      </Modal>
+
+      {/* ✅ Confirmation Modal for status change */}
+      <Modal
+        open={confirmModal.visible}
+        onCancel={() => setConfirmModal({ visible: false, appointmentId: null, action: null })}
+        onOk={handleConfirm}
+        okText="Xác nhận"
+        cancelText="Hủy"
+        centered
+        width={380} // Thêm dòng này để popup nhỏ và cân đối hơn
+        bodyStyle={{  fontSize: 16 }} // Căn giữa nội dung và tăng chữ
+      >
+        <p style={{ margin: "24px 0 8px 0" }}>
+          {confirmModal.action === "done"
+            ? "Bạn có chắc chắn muốn đánh dấu lịch hẹn này là HOÀN THÀNH?"
+            : "Bạn có chắc chắn muốn đánh dấu lịch hẹn này là CHƯA HOÀN THÀNH?"}
+        </p>
       </Modal>
 
       {/* ✅ Custom Styles */}
